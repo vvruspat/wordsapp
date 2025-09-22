@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "expo start",
     "dev:ios": "expo run:ios --no-build-cache --device",
+    "dev:iphone": "eas build --platform ios",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
