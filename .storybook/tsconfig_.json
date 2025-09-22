@@ -1,0 +1,12 @@
+{
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"allowJs": false,
+		"allowSyntheticDefaultImports": true,
+		"strict": true,
+		"types": ["vite/client", "jest", "node", "@types/jest"]
+	},
+	"files": [],
+	"include": [],
+	"extends": "@repo/typescript-config/uikit.json"
+}
