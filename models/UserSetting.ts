@@ -2,7 +2,7 @@ import { Model } from "@nozbe/watermelondb";
 import { field } from "@nozbe/watermelondb/decorators";
 
 export default class UserSetting extends Model {
-	static table = "user_settings";
+	static table = "user_profile";
 
 	@field("user_id")
 	userId!: string;

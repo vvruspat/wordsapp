@@ -1,5 +1,5 @@
-import { StyleSheet } from "react-native";
 import { Colors } from "@/mob-ui/brand/colors";
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
 	screen: {
@@ -10,18 +10,19 @@ export const styles = StyleSheet.create({
 		justifyContent: "flex-start",
 		paddingHorizontal: 16,
 		alignItems: "flex-start",
-		// backgroundColor: Colors.backgrounds.primaryBackground,
+		marginTop: 16,
 	},
 
 	formWrapper: {
-		gap: 32,
+		flex: 1,
+		gap: 48,
 		width: "100%",
 		alignItems: "center",
 		justifyContent: "center",
 	},
 
 	fieldsGroup: {
-		gap: 16,
+		gap: 24,
 		width: "100%",
 	},
 

@@ -31,7 +31,7 @@ export const schema = appSchema({
 			],
 		}),
 		tableSchema({
-			name: "user_settings",
+			name: "user_profile",
 			columns: [
 				{ name: "user_id", type: "string", isIndexed: true },
 				{ name: "setting_key", type: "string" },

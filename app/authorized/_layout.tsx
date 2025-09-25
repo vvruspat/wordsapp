@@ -1,7 +1,7 @@
+import { Colors } from "@/mob-ui/brand/colors";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Colors } from "@/mob-ui/brand/colors";
 
 export default function RootLayout() {
 	const { t } = useTranslation();
@@ -40,12 +40,12 @@ export default function RootLayout() {
 				}}
 			/>
 			<Tabs.Screen
-				name="settings"
+				name="profile"
 				options={{
-					title: t("dashboard_settings"),
+					title: t("dashboard_profile"),
 					headerShown: false,
 					tabBarIcon: ({ color }) => (
-						<FontAwesome5 name="cog" size={24} color={color} />
+						<FontAwesome5 name="user" size={24} color={color} />
 					),
 				}}
 			/>
