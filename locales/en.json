@@ -10,6 +10,7 @@
   "sign_up_message": "Create your account to get started",
   "label_your_email": "Your email",
   "verify_enter_code": "Enter the code we sent to your email",
+  "resend_code": "Resend code",
   "placeholder_name": "Your name",
   "label_name": "Name",
   "label_email": "E-Mail",
@@ -44,5 +45,16 @@
   "app_match_words_header": "Match the words with their translations",
   "app_listening_practice_title": "Listening practice",
   "app_listening_practice_description": "Listen to the word and choose the translation",
-  "app_listening_practice_header": "Listen to the word and choose the translation"
+  "app_listening_practice_header": "Listen to the word and choose the translation",
+
+  "English": "English",
+  "Spanish": "Spanish",
+  "Dutch": "Dutch",
+  "French": "French",
+  "German": "German",
+  "Russian": "Russian",
+  "Japanese": "Japanese",
+  "Portuguese": "Portuguese",
+  "Arabic": "Arabic",
+  "Hindi": "Hindi"
 }

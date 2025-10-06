@@ -1,10 +1,12 @@
+import { WButton, WCharInput, WText } from "@/mob-ui";
+import { $fetch } from "@/utils/fetch";
 import { authenticateAsync } from "expo-local-authentication";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { WCharInput, WText } from "@/mob-ui";
 import { styles } from "../general.styles";
 
 const PIN_LENGTH = 4;
@@ -12,11 +14,50 @@ const PIN_LENGTH = 4;
 export default function Verify() {
 	const router = useRouter();
 
+	const { email } = useLocalSearchParams<{ email: string }>();
+	const [error, setError] = useState<string>();
+
 	const { t } = useTranslation();
+
+	const onCodeChangeHandler = async (text: string) => {
+		if (text.length === PIN_LENGTH) {
+			try {
+				await $fetch("/auth/verify-email", "post", {
+					body: { code: text, email },
+				});
+
+				await SecureStore.setItemAsync("userId", "1"); // mock user ID
+
+				const result = await authenticateAsync({
+					promptMessage: "Authenticate to access the app",
+				});
+
+				if (!result.success) {
+					router.push("/");
+				} else {
+					router.push("/authorized/learning");
+				}
+			} catch (e) {
+				setError((e as Error).message);
+			}
+		}
+	};
+
+	const onCodeResendHandler = async () => {
+		try {
+			await $fetch("/auth/verify-email/resend", "post", {
+				body: { email },
+			});
+		} catch (e) {
+			setError((e as Error).message);
+		}
+	};
 
 	return (
 		<SafeAreaView mode="padding" style={styles.page}>
 			<View style={styles.formWrapper}>
+				{error && <WText mode="primary">{error}</WText>}
+
 				<WText mode="primary" size="2xl" align="center">
 					{t("verify_enter_code")}
 				</WText>
@@ -25,25 +66,12 @@ export default function Verify() {
 					length={PIN_LENGTH}
 					secureTextEntry={false}
 					keyboardType="visible-password"
-					onChangeText={async (text) => {
-						if (text.length === PIN_LENGTH) {
-							// verify code with backend
-							// if success:
-
-							await SecureStore.setItemAsync("userId", "1"); // mock user ID
-							await authenticateAsync({
-								promptMessage: "Authenticate to access the app",
-							}).then((result) => {
-								if (!result.success) {
-									router.push("/");
-								} else {
-									router.push("/authorized/learning");
-								}
-							});
-							router.push("/authorized/learning");
-						}
-					}}
+					onChangeText={onCodeChangeHandler}
 				/>
+
+				<WButton mode="tertiary" onPress={onCodeResendHandler}>
+					<Text>{t("resend_code")}</Text>
+				</WButton>
 			</View>
 		</SafeAreaView>
 	);

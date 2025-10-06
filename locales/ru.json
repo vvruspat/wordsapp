@@ -44,5 +44,16 @@
   "app_match_words_header": "Соотнесите слова с их переводами",
   "app_listening_practice_title": "Практика аудирования",
   "app_listening_practice_description": "Прослушайте слово и выберите перевод",
-  "app_listening_practice_header": "Прослушайте слово и выберите перевод"
+  "app_listening_practice_header": "Прослушайте слово и выберите перевод",
+
+  "English": "Английский",
+  "Spanish": "Испанский",
+  "Dutch": "Нидерландский",
+  "French": "Французский",
+  "German": "Немецкий",
+  "Russian": "Русский",
+  "Japanese": "Японский",
+  "Portuguese": "Португальский",
+  "Arabic": "Арабский",
+  "Hindi": "Хинди"
 }

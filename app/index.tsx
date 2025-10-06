@@ -3,22 +3,16 @@ import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLear
 import { SelectLanguageButton } from "@/components/SelectLanguageButton";
 import { LANGUAGES, LanguageItem } from "@/constants/languages";
 import { WButton, WInput, WText } from "@/mob-ui";
+import { $fetch } from "@/utils/fetch";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
+import { Text, TextInputChangeEvent, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../general.styles";
 
 export default function SignUp() {
 	const router = useRouter();
-
-	const { t, i18n } = useTranslation();
-
-	const handleContinueClick = () => {
-		// send email
-		router.push("/verify");
-	};
 
 	const [
 		isSelectLanguageISpeakModalVisible,
@@ -33,6 +27,41 @@ export default function SignUp() {
 	const [languageToLearn, setLanguageToLearn] =
 		useState<LanguageItem["isoCode"]>("nl");
 
+	const [name, setName] = useState("");
+	const [email, setEmail] = useState("");
+	const [error, setError] = useState<string>();
+
+	const { t, i18n } = useTranslation();
+
+	const handleContinueClick = async () => {
+		try {
+			await $fetch("/auth/signup", "post", {
+				body: {
+					name,
+					email,
+					language_speak: languageISpeak,
+					language_learn: languageToLearn,
+				},
+			});
+
+			router.push({ pathname: "/verify", params: { email } });
+		} catch (e) {
+			setError((e as Error).message);
+		}
+	};
+
+	const onNameChange = (e: TextInputChangeEvent) => {
+		const text = e.nativeEvent.text;
+
+		setName(text);
+	};
+
+	const onEmailChange = (e: TextInputChangeEvent) => {
+		const text = e.nativeEvent.text;
+
+		setEmail(text);
+	};
+
 	useEffect(() => {
 		const languageItem = LANGUAGES.find((l) => l.isoCode === languageISpeak);
 
@@ -45,12 +74,29 @@ export default function SignUp() {
 	return (
 		<SafeAreaView mode="padding" style={styles.page}>
 			<View style={styles.formWrapper}>
+				{error && (
+					<WText mode="primary" size="lg" weight="bold" align="center">
+						{error}
+					</WText>
+				)}
 				<WText mode="primary" size="3xl" weight="bold" align="center">
 					{t("sign_up_message")}
 				</WText>
 				<View style={styles.fieldsGroup}>
-					<WInput placeholder={t("placeholder_name")} label={t("label_name")} />
-					<WInput placeholder="example@domain.com" label={t("label_email")} />
+					<WInput
+						autoCorrect={false}
+						placeholder={t("placeholder_name")}
+						label={t("label_name")}
+						onChange={onNameChange}
+					/>
+					<WInput
+						autoCapitalize="none"
+						autoCorrect={false}
+						keyboardType="email-address"
+						placeholder="example@domain.com"
+						label={t("label_email")}
+						onChange={onEmailChange}
+					/>
 
 					<SelectLanguageButton
 						label={t("language_i_speak_label")}
