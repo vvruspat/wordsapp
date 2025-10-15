@@ -1,8 +1,7 @@
-import { WButton, WCharInput, WText } from "@/mob-ui";
+import { WButton, WCharInput, WText, WTimer } from "@/mob-ui";
 import { $fetch } from "@/utils/fetch";
 import { authenticateAsync } from "expo-local-authentication";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
@@ -25,8 +24,6 @@ export default function Verify() {
 				await $fetch("/auth/verify-email", "post", {
 					body: { code: text, email },
 				});
-
-				await SecureStore.setItemAsync("userId", "1"); // mock user ID
 
 				const result = await authenticateAsync({
 					promptMessage: "Authenticate to access the app",
@@ -68,6 +65,8 @@ export default function Verify() {
 					keyboardType="visible-password"
 					onChangeText={onCodeChangeHandler}
 				/>
+
+				<WTimer mode="primary" duration={180} onComplete={() => {}} />
 
 				<WButton mode="tertiary" onPress={onCodeResendHandler}>
 					<Text>{t("resend_code")}</Text>

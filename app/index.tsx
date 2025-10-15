@@ -35,7 +35,7 @@ export default function SignUp() {
 
 	const handleContinueClick = async () => {
 		try {
-			await $fetch("/auth/signup", "post", {
+			const response = await $fetch("/auth/signup", "post", {
 				body: {
 					name,
 					email,
@@ -43,6 +43,16 @@ export default function SignUp() {
 					language_learn: languageToLearn,
 				},
 			});
+
+			const accessToken = response?.data?.access_token;
+			const refreshToken = response?.data?.refresh_token;
+
+			if (!accessToken || !refreshToken) {
+				setError(t("sign_up_error_generic"));
+				return;
+			}
+
+			// разобраться почему у респонза тип never
 
 			router.push({ pathname: "/verify", params: { email } });
 		} catch (e) {

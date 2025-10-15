@@ -8,6 +8,7 @@
   "language_i_speak_label": "The language I speak",
   "language_i_learn_label": "The language I want to learn",
   "sign_up_message": "Create your account to get started",
+  "sign_up_error_generic": "An error occurred during sign up. Please try again.",
   "label_your_email": "Your email",
   "verify_enter_code": "Enter the code we sent to your email",
   "resend_code": "Resend code",

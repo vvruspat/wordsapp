@@ -285,6 +285,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Sign in to an existing account */
         post: operations["AuthController_signin"];
         delete?: never;
         options?: never;
@@ -301,6 +302,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Create a new user account */
         post: operations["AuthController_signup"];
         delete?: never;
         options?: never;
@@ -315,7 +317,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Send password reset email */
         get: operations["AuthController_sendResetPasswordEmail"];
+        /** Reset user password with token */
         put: operations["AuthController_resetPassword"];
         post?: never;
         delete?: never;
@@ -333,6 +337,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Verify email with verification code */
         post: operations["AuthController_sendVerificationEmail"];
         delete?: never;
         options?: never;
@@ -349,6 +354,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Resend email verification code */
         post: operations["AuthController_resendVerificationEmail"];
         delete?: never;
         options?: never;
@@ -365,6 +371,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Refresh access token */
         post: operations["AuthController_refreshToken"];
         delete?: never;
         options?: never;
@@ -915,6 +922,14 @@ export interface components {
              */
             password: string;
         };
+        PostSignInResponseDto: {
+            /** @description JWT access token */
+            access_token: string;
+            /** @description JWT refresh token */
+            refresh_token: string;
+            /** @description User information without password */
+            user: components["schemas"]["UserDto"];
+        };
         PostSignUpRequestDto: {
             email: string;
             name: string;
@@ -928,6 +943,14 @@ export interface components {
              * @example es
              */
             language_learn: string;
+        };
+        PostSignUpResponseDto: {
+            /** @description JWT access token */
+            access_token: string;
+            /** @description JWT refresh token */
+            refresh_token: string;
+            /** @description User information without password */
+            user: components["schemas"]["UserDto"];
         };
         PutResetPasswordRequestDto: {
             /**
@@ -951,6 +974,14 @@ export interface components {
         PostRefreshTokenRequestDto: {
             /** @description Refresh token */
             refresh_token: string;
+        };
+        PostRefreshTokenResponseDto: {
+            /** @description JWT access token */
+            access_token: string;
+            /** @description JWT refresh token */
+            refresh_token: string;
+            /** @description User information without password */
+            user: components["schemas"]["UserDto"];
         };
     };
     responses: never;
@@ -2041,7 +2072,17 @@ export interface operations {
             };
         };
         responses: {
+            /** @description User successfully signed in */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostSignInResponseDto"];
+                };
+            };
+            /** @description Invalid credentials */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2062,7 +2103,24 @@ export interface operations {
             };
         };
         responses: {
+            /** @description User successfully created */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostSignUpResponseDto"];
+                };
+            };
+            /** @description Invalid input data or user already exists */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User already exists */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2081,7 +2139,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description Password reset email sent successfully */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid email */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not found */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2102,7 +2175,22 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Password successfully reset */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid input data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid or expired token */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2123,7 +2211,22 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Email successfully verified */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid or expired verification code */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not found */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2144,7 +2247,22 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Verification email sent successfully */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid email */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not found */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2165,7 +2283,17 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Token successfully refreshed */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostRefreshTokenResponseDto"];
+                };
+            };
+            /** @description Invalid or expired refresh token */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
