@@ -1,4 +1,5 @@
 import { WText, WTextProps } from "@/mob-ui/atoms";
+import { useIsFocused } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
 
 type WTimerProps = WTextProps & {
@@ -16,19 +17,22 @@ export const WTimer = ({
 	...textProps
 }: WTimerProps) => {
 	const timer = useRef<number | null>(null);
-	const [currentTime, setCurrentTime] = useState(startTime);
+	const [currentTime, setCurrentTime] = useState(
+		isCountingUp ? startTime : duration,
+	);
 
-	// Sync prop startTime into local state when it changes
-	useEffect(() => {
-		if (timer.current) {
-			clearInterval(timer.current);
-		}
-		setCurrentTime(startTime);
-	}, [startTime]);
+	const isFocused = useIsFocused();
+
+	console.log("WTimer rendered with:", {
+		startTime,
+		duration,
+		isCountingUp,
+		currentTime,
+	});
 
 	// Start/stop interval only when counting direction changes
 	useEffect(() => {
-		timer.current = window.setInterval(() => {
+		timer.current = setInterval(() => {
 			setCurrentTime((prevCurrentTime) =>
 				isCountingUp ? prevCurrentTime + 1 : prevCurrentTime - 1,
 			);
@@ -37,9 +41,19 @@ export const WTimer = ({
 		return () => {
 			if (timer.current) {
 				clearInterval(timer.current);
+				setCurrentTime(duration);
 			}
 		};
-	}, [isCountingUp]);
+	}, [isCountingUp, duration]);
+
+	// Cleanup on unmount
+	useEffect(() => {
+		if (!isFocused) {
+			if (timer.current) {
+				clearInterval(timer.current);
+			}
+		}
+	}, [isFocused]);
 
 	// Handle completion
 	useEffect(() => {
@@ -49,6 +63,7 @@ export const WTimer = ({
 		) {
 			if (timer.current) {
 				clearInterval(timer.current);
+				setCurrentTime(duration);
 			}
 			onComplete?.();
 		}

@@ -12,6 +12,8 @@
   "label_your_email": "Your email",
   "verify_enter_code": "Enter the code we sent to your email",
   "resend_code": "Resend code",
+  "skip_verification": "Skip verification",
+  "verification_error_generic": "An error occurred during verification. Please try again.",
   "placeholder_name": "Your name",
   "label_name": "Name",
   "label_email": "E-Mail",

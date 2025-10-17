@@ -5,6 +5,7 @@ import { LANGUAGES, LanguageItem } from "@/constants/languages";
 import { WButton, WInput, WText } from "@/mob-ui";
 import { $fetch } from "@/utils/fetch";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, TextInputChangeEvent, View } from "react-native";
@@ -52,7 +53,8 @@ export default function SignUp() {
 				return;
 			}
 
-			// разобраться почему у респонза тип never
+			await SecureStore.setItemAsync("access_token", accessToken);
+			await SecureStore.setItemAsync("refresh_token", refreshToken);
 
 			router.push({ pathname: "/verify", params: { email } });
 		} catch (e) {

@@ -14,6 +14,7 @@ import Word from "@/models/Word";
 import { Database } from "@nozbe/watermelondb";
 import SQLiteAdapter from "@nozbe/watermelondb/adapters/sqlite";
 import { DatabaseProvider } from "@nozbe/watermelondb/DatabaseProvider";
+import { useIsFocused } from "@react-navigation/native";
 import { authenticateAsync } from "expo-local-authentication";
 import { Stack, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -54,15 +55,24 @@ export default function RootLayout() {
 	const { t } = useTranslation();
 	const router = useRouter();
 
+	const isFocused = useIsFocused();
+
 	useEffect(() => {
+		if (!isFocused) {
+			return;
+		}
+
 		(async () => {
-			const userId = await SecureStore.getItemAsync("userId");
-			if (!userId) {
+			const access_token = await SecureStore.getItemAsync("access_token");
+
+			console.log("Access token:", access_token);
+
+			if (!access_token) {
 				setIsReady(true);
 				return;
 			}
 
-			if (userId) {
+			if (access_token) {
 				await authenticateAsync({
 					promptMessage: "Authenticate to access the app",
 				}).then((result) => {
@@ -77,13 +87,13 @@ export default function RootLayout() {
 				});
 			}
 		})();
-	}, []);
+	}, [isFocused]);
 
 	useEffect(() => {
 		if (isAuthenticated) {
 			router.push("/authorized/learning");
 		}
-	}, [isAuthenticated, router.push]);
+	}, [isAuthenticated, router]);
 
 	if (!isReady) {
 		return (

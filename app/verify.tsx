@@ -15,6 +15,7 @@ export default function Verify() {
 
 	const { email } = useLocalSearchParams<{ email: string }>();
 	const [error, setError] = useState<string>();
+	const [isReadyToResend, setIsReadyToResend] = useState<boolean>(false);
 
 	const { t } = useTranslation();
 
@@ -45,6 +46,8 @@ export default function Verify() {
 			await $fetch("/auth/verify-email/resend", "post", {
 				body: { email },
 			});
+
+			setIsReadyToResend(false);
 		} catch (e) {
 			setError((e as Error).message);
 		}
@@ -66,10 +69,24 @@ export default function Verify() {
 					onChangeText={onCodeChangeHandler}
 				/>
 
-				<WTimer mode="primary" duration={180} onComplete={() => {}} />
+				{!isReadyToResend && (
+					<WTimer
+						mode="primary"
+						duration={180}
+						onComplete={() => setIsReadyToResend(true)}
+					/>
+				)}
 
-				<WButton mode="tertiary" onPress={onCodeResendHandler}>
+				<WButton
+					mode="tertiary"
+					onPress={onCodeResendHandler}
+					disabled={!isReadyToResend}
+				>
 					<Text>{t("resend_code")}</Text>
+				</WButton>
+
+				<WButton mode="secondary" onPress={() => router.push("/")}>
+					<Text>{t("skip_verification")}</Text>
 				</WButton>
 			</View>
 		</SafeAreaView>
