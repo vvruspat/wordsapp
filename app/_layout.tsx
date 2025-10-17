@@ -65,8 +65,6 @@ export default function RootLayout() {
 		(async () => {
 			const access_token = await SecureStore.getItemAsync("access_token");
 
-			console.log("Access token:", access_token);
-
 			if (!access_token) {
 				setIsReady(true);
 				return;
