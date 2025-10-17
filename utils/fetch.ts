@@ -1,8 +1,11 @@
 import type { paths as Paths } from "@repo/types";
+import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { genericErrorMessage } from "./genericErrorMessage";
 
-const server = process.env.API_SERVER;
+const { API_SERVER: server } = Constants.expoConfig?.extra ?? {};
+
+console.log("API Server:", server);
 
 type ValidUrl = keyof Paths;
 type ValidMethod<U extends ValidUrl> = keyof Paths[U];
@@ -87,8 +90,6 @@ export const $fetch = async <U extends ValidUrl, M extends ValidMethod<U>>(
 	try {
 		const { body, query, headers } = options;
 
-		const isServer = typeof window === "undefined";
-
 		const queryString = query
 			? `?${new URLSearchParams(query as Record<string, string>).toString()}`
 			: "";
@@ -124,22 +125,19 @@ export const $fetch = async <U extends ValidUrl, M extends ValidMethod<U>>(
 		const isOctetStream =
 			contentTypeHeader["content-type"] === "application/octet-stream";
 
-		const res = await fetch(
-			`${isServer ? server : "/api"}${String(urlWithParams)}${queryString}`,
-			{
-				method: method as string,
-				headers: {
-					...contentTypeHeader,
-					...authHeader,
-					...headers,
-				},
-				body: body
-					? isOctetStream
-						? (body as unknown as File)
-						: JSON.stringify(body)
-					: undefined,
+		const res = await fetch(`${server}${String(urlWithParams)}${queryString}`, {
+			method: method as string,
+			headers: {
+				...contentTypeHeader,
+				...authHeader,
+				...headers,
 			},
-		);
+			body: body
+				? isOctetStream
+					? (body as unknown as File)
+					: JSON.stringify(body)
+				: undefined,
+		});
 
 		const bodyInfo = body ? `Body: ${JSON.stringify(body)}` : "";
 		const logMsg = `$fetch: ${method as string} ${urlWithParams}, Status: ${res.status} ${bodyInfo}`;
