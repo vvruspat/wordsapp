@@ -142,7 +142,15 @@ export default function SignUp() {
 					/>
 				</View>
 				<WButton mode="primary" fullWidth onPress={handleContinueClick}>
-					<Text>{t("button_continue")}</Text>
+					<Text>{t("button_sign_up")}</Text>
+				</WButton>
+
+				<WButton
+					mode="tertiary"
+					fullWidth
+					onPress={() => router.push({ pathname: "/signin" })}
+				>
+					<Text>{t("button_sign_in")}</Text>
 				</WButton>
 			</View>
 		</SafeAreaView>
