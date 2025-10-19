@@ -53,6 +53,10 @@
   "app_listening_practice_title": "Listening practice",
   "app_listening_practice_description": "Listen to the word and choose the translation",
   "app_listening_practice_header": "Listen to the word and choose the translation",
+  "mix_training_title": "Mix training",
+  "mix_training_instruction": "Select the trainings you want to combine",
+  "mix_training_start": "Start mix",
+  "mix_training_button": "Mix training",
 
   "English": "English",
   "Spanish": "Spanish",
