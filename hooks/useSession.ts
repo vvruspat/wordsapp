@@ -1,24 +1,67 @@
 import User from "@/models/User";
 import { $fetch } from "@/utils/fetch";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
+import { components } from "@repo/types";
+import { authenticateAsync } from "expo-local-authentication";
+import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 
 export const useSessionUser = () => {
 	const database = useDatabase();
+	const router = useRouter();
+
 	const [user, setUser] = useState<User[] | null>(null);
 
 	const [refreshToken, setRefreshToken] = useState<string | null>(null);
 	const [accessToken, setAccessToken] = useState<string | null>(null);
 
-	useEffect(() => {
-		const progressCollection = database.get<User>("users");
+	const authUser = async (
+		accessToken: string,
+		refreshToken: string,
+		incomeUserData: components["schemas"]["UserDto"],
+	) => {
+		// move to separate function to reuse
+		await SecureStore.setItemAsync("access_token", accessToken);
+		await SecureStore.setItemAsync("refresh_token", refreshToken);
 
-		const subscription = progressCollection
-			.query()
-			.observe()
-			.subscribe(setUser);
+		database.write(async () => {
+			const usersCollection = database.get<User>("users");
+			const usersData = await usersCollection
+				.query(Q.where("userId", incomeUserData.id))
+				.fetch();
+
+			if (usersData[0]) {
+				const userData = await usersCollection.find(usersData[0].id);
+				await userData.update((u) => {
+					u.name = incomeUserData.name;
+					u.email = incomeUserData.email;
+				});
+			} else {
+				await usersCollection.create((u) => {
+					u.userId = incomeUserData.id;
+					u.name = incomeUserData.name;
+					u.email = incomeUserData.email;
+				});
+			}
+		});
+
+		const result = await authenticateAsync({
+			promptMessage: "Authenticate to access the app",
+		});
+
+		if (!result.success) {
+			router.push("/");
+		} else {
+			router.push("/authorized/learning");
+		}
+	};
+
+	useEffect(() => {
+		const usersCollection = database.get<User>("users");
+
+		const subscription = usersCollection.query().observe().subscribe(setUser);
 
 		return () => subscription.unsubscribe();
 	}, [database]);
@@ -72,6 +115,7 @@ export const useSessionUser = () => {
 	return {
 		refreshToken,
 		accessToken,
+		authUser,
 		user: user ? user[0] : null,
 	};
 };

@@ -14,4 +14,9 @@ export const styles = StyleSheet.create({
 		alignItems: "center",
 		justifyContent: "center",
 	},
+	inputRowSmall: {
+		width: 32,
+		height: 32,
+		borderRadius: 8,
+	},
 });

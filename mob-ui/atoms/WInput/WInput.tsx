@@ -1,3 +1,4 @@
+import { typography } from "@/mob-ui/brand/typography";
 import React, {
 	forwardRef,
 	useEffect,
@@ -8,16 +9,14 @@ import React, {
 import {
 	Animated,
 	Easing,
-	NativeSyntheticEvent,
+	FocusEvent,
 	TextInput,
-	TextInputFocusEventData,
 	TextInputProps,
 	TextStyle,
 	TouchableOpacity,
 	View,
 	ViewStyle,
 } from "react-native";
-import { typography } from "@/mob-ui/brand/typography";
 import { WText, WTextProps } from "../WText";
 import { ClearIcon } from "./icons/ClearIcon";
 import { EyeCloseIcon } from "./icons/EyeCloseIcon";
@@ -114,9 +113,7 @@ export const WInput = forwardRef<TextInput, WInputProps>((props, ref) => {
 		}
 	};
 
-	const handleInputFocus = (
-		e: NativeSyntheticEvent<TextInputFocusEventData>,
-	) => {
+	const handleInputFocus = (e: FocusEvent) => {
 		Animated.timing(anim, {
 			toValue: 1,
 			duration: 200,
@@ -126,9 +123,7 @@ export const WInput = forwardRef<TextInput, WInputProps>((props, ref) => {
 		rest.onFocus?.(e);
 	};
 
-	const handleInputBlur = (
-		e: NativeSyntheticEvent<TextInputFocusEventData>,
-	) => {
+	const handleInputBlur = (e: FocusEvent) => {
 		Animated.timing(anim, {
 			toValue: 0,
 			duration: 200,

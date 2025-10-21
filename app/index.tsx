@@ -2,10 +2,10 @@ import SelectLanguageISpeakModal from "@/components/Modals/SelectLanguageISpeakM
 import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLearnModal";
 import { SelectLanguageButton } from "@/components/SelectLanguageButton";
 import { LANGUAGES, LanguageItem } from "@/constants/languages";
+import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WInput, WText } from "@/mob-ui";
 import { $fetch } from "@/utils/fetch";
 import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, TextInputChangeEvent, View } from "react-native";
@@ -14,6 +14,7 @@ import { styles } from "../general.styles";
 
 export default function SignUp() {
 	const router = useRouter();
+	const { authUser } = useSessionUser();
 
 	const [
 		isSelectLanguageISpeakModalVisible,
@@ -47,14 +48,14 @@ export default function SignUp() {
 
 			const accessToken = response?.data?.access_token;
 			const refreshToken = response?.data?.refresh_token;
+			const userData = response?.data?.user;
 
-			if (!accessToken || !refreshToken) {
+			if (!accessToken || !refreshToken || !userData) {
 				setError(t("sign_up_error_generic"));
 				return;
 			}
 
-			await SecureStore.setItemAsync("access_token", accessToken);
-			await SecureStore.setItemAsync("refresh_token", refreshToken);
+			await authUser(accessToken, refreshToken, userData);
 
 			router.push({ pathname: "/verify", params: { email } });
 		} catch (e) {

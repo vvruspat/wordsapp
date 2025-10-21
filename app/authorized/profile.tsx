@@ -42,7 +42,8 @@ export default function Profile() {
 	const [error, setError] = useState<string>();
 
 	const onVerifyEmailPressed = async () => {
-		const { email } = currentUser || {};
+		const { user } = currentUser || {};
+		const email = user?.email;
 
 		alert(`Email ${email}`);
 

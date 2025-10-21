@@ -1,8 +1,6 @@
+import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WInput, WText } from "@/mob-ui";
 import { $fetch } from "@/utils/fetch";
-import { authenticateAsync } from "expo-local-authentication";
-import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, TextInputChangeEvent, View } from "react-native";
@@ -10,7 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../general.styles";
 
 export default function SignIn() {
-	const router = useRouter();
+	const { authUser } = useSessionUser();
 
 	const [password, setPassword] = useState("");
 	const [email, setEmail] = useState("");
@@ -42,6 +40,13 @@ export default function SignIn() {
 				},
 			});
 
+			if (!response?.data) {
+				setError(t("sign_in_error_generic"));
+				return;
+			}
+
+			const incomeUserData = response.data.user;
+
 			const accessToken = response?.data?.access_token;
 			const refreshToken = response?.data?.refresh_token;
 
@@ -50,18 +55,7 @@ export default function SignIn() {
 				return;
 			}
 
-			await SecureStore.setItemAsync("access_token", accessToken);
-			await SecureStore.setItemAsync("refresh_token", refreshToken);
-
-			const result = await authenticateAsync({
-				promptMessage: "Authenticate to access the app",
-			});
-
-			if (!result.success) {
-				router.push("/");
-			} else {
-				router.push("/authorized/learning");
-			}
+			await authUser(accessToken, refreshToken, incomeUserData);
 		} catch (e) {
 			setError((e as Error).message);
 		}

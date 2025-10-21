@@ -1,5 +1,9 @@
+import LearningProgress from "@/models/LearningProgress";
+import { Q } from "@nozbe/watermelondb";
+import { useDatabase } from "@nozbe/watermelondb/hooks";
 import { Word, WordTranslation } from "@repo/types";
 import { useCallback } from "react";
+import { useSessionUser } from "./useSession";
 
 const mockWords: Word[] = [
 	{
@@ -33,7 +37,7 @@ const mockWords: Word[] = [
 		language: "nl",
 		audio: "alstublieft.mp3",
 		transcribtion: "ˌɑl.sty.ˈblift",
-		meaning: "Please / Here you go",
+		meaning: "Please",
 	},
 	{
 		id: 5,
@@ -134,6 +138,9 @@ type Excercise = {
 };
 
 export const useExercise = (): Excercise => {
+	const database = useDatabase();
+	const session = useSessionUser();
+
 	const getWord = useCallback(
 		(): Word => mockWords[Math.floor(Math.random() * mockWords.length)],
 		[],
@@ -154,9 +161,33 @@ export const useExercise = (): Excercise => {
 		console.log("Exercise succeeded");
 	}, []);
 
-	const onFailure = useCallback((wordId: Word["id"]) => {
-		console.log("Exercise failed");
-	}, []);
+	const onFailure = useCallback(
+		async (wordId: Word["id"], excerciseWeight = 0.1) => {
+			if (session?.user) {
+				const result = database
+					.get<LearningProgress>("learning_progress")
+					.query(
+						Q.where("word_id", wordId),
+						Q.where("user_id", session.user.userId),
+					);
+
+				const progressData = (await result.fetch())[0];
+
+				await database.write(async () => {
+					const progress = await database
+						.get("learning_progress")
+						.find(progressData.id);
+					await progress.update(() => {
+						progressData.score = Math.max(
+							0,
+							progressData.score - excerciseWeight,
+						);
+					});
+				});
+			}
+		},
+		[session, database],
+	);
 
 	const getRandomWords = useCallback(
 		(
