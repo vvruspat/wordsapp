@@ -2,22 +2,45 @@ import {
 	LearningCatalogItem,
 	useLearningTrainings,
 } from "@/components/LearningCatalog";
+import {
+	WordExcerciseFailureModal,
+	WordExcerciseSuccessModal,
+} from "@/components/Modals/WordExcerciseResult";
 import { BackgroundContext } from "@/context/BackgroundContext";
+import { ResultModalContext } from "@/context/ResultModalContext";
 import { Colors } from "@/mob-ui/brand/colors";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../../general.styles";
 
 export default function MixTraining() {
 	const { setColor, setOpacity } = useContext(BackgroundContext);
+
 	const [currentTraining, setCurrentTraining] =
 		useState<LearningCatalogItem | null>(null);
 	const trainings = useLearningTrainings();
 
+	const {
+		successModalVisible,
+		failureModalVisible,
+		setSuccessModalVisible,
+		setFailureModalVisible,
+	} = useContext(ResultModalContext);
+
 	const onFinish = useCallback(() => {
 		setCurrentTraining(trainings[Math.floor(Math.random() * trainings.length)]);
 	}, [trainings]);
+
+	const onSuccessModalClose = useCallback(() => {
+		setSuccessModalVisible(false);
+		onFinish();
+	}, [onFinish, setSuccessModalVisible]);
+
+	const onFailureModalClose = useCallback(() => {
+		setFailureModalVisible(false);
+		onFinish();
+	}, [onFinish, setFailureModalVisible]);
 
 	useEffect(() => {
 		setCurrentTraining(trainings[Math.floor(Math.random() * trainings.length)]);
@@ -36,6 +59,17 @@ export default function MixTraining() {
 		<SafeAreaView mode="padding" style={styles.page}>
 			{currentTraining === null && <ActivityIndicator size="large" />}
 			{currentTraining && <currentTraining.component onFinish={onFinish} />}
+
+			<View>
+				<WordExcerciseSuccessModal
+					visible={successModalVisible}
+					onRequestClose={onSuccessModalClose}
+				/>
+				<WordExcerciseFailureModal
+					visible={failureModalVisible}
+					onRequestClose={onFailureModalClose}
+				/>
+			</View>
 		</SafeAreaView>
 	);
 }

@@ -8,6 +8,8 @@ import { TrainingPromptCard } from "./TrainingPromptCard";
 
 type CharInputStatus = WCharInputProps["status"];
 
+const score = 0.2;
+
 export function TypeTranslationExercise({ onFinish }: ExerciseProps) {
 	const [status, setStatus] = useState<CharInputStatus>("default");
 	const { onFailure, onSuccess, getWord, getTranslation } = useExercise();
@@ -42,13 +44,13 @@ export function TypeTranslationExercise({ onFinish }: ExerciseProps) {
 			setStatus(nextStatus);
 
 			if (nextStatus === "success") {
-				onSuccess?.(word.id);
+				onSuccess?.(word.id, score, true);
 				onFinish?.();
 			} else if (
 				nextStatus === "error" &&
 				text.trim().length === translation.translation.trim().length
 			) {
-				onFailure?.(word.id);
+				onFailure?.(word.id, score, true);
 				onFinish?.();
 			}
 		},

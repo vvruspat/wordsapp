@@ -7,6 +7,8 @@ import { StyleSheet, View } from "react-native";
 import { ExerciseProps } from "./common";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
+const score = 0.2;
+
 export function ChooseTranslationExercise({ onFinish }: ExerciseProps) {
 	const {
 		onFailure,
@@ -35,9 +37,9 @@ export function ChooseTranslationExercise({ onFinish }: ExerciseProps) {
 		(option: string) => {
 			setSelectedOption(option);
 			if (option === translation.translation) {
-				onSuccess?.(word.id);
+				onSuccess?.(word.id, score, true);
 			} else {
-				onFailure?.(word.id);
+				onFailure?.(word.id, score, true);
 			}
 
 			onFinish?.();

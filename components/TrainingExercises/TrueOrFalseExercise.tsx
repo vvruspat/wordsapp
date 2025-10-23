@@ -7,6 +7,8 @@ import { View } from "react-native";
 import { ExerciseProps } from "./common";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
+const score = 0.2;
+
 export function TrueOrFalseExercise({ onFinish }: ExerciseProps) {
 	const { t } = useTranslation();
 
@@ -38,9 +40,9 @@ export function TrueOrFalseExercise({ onFinish }: ExerciseProps) {
 			const userThinksCorrect = choice === "yes";
 
 			if (userThinksCorrect === isCorrect) {
-				onSuccess?.(word.id);
+				onSuccess?.(word.id, score, true);
 			} else {
-				onFailure?.(word.id);
+				onFailure?.(word.id, score, true);
 			}
 
 			onFinish?.();
