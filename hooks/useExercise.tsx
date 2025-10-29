@@ -3,7 +3,8 @@ import LearningProgress from "@/models/LearningProgress";
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
 import { Word, WordTranslation } from "@repo/types";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext } from "react";
+import { useExcerciseStore } from "./useExcerciseStore";
 import { useSessionUser } from "./useSession";
 
 const mockWords: Word[] = [
@@ -149,10 +150,12 @@ type Excercise = {
 export const useExercise = (): Excercise => {
 	const database = useDatabase();
 	const session = useSessionUser();
-
-	const [currentWord, setCurrentWord] = useState<Word | null>(null);
-	const [currentTranslation, setCurrentTranslation] =
-		useState<WordTranslation | null>(null);
+	const {
+		currentWord,
+		currentTranslation,
+		setCurrentWord,
+		setCurrentTranslation,
+	} = useExcerciseStore();
 
 	const { setFailureModalVisible, setSuccessModalVisible } =
 		useContext(ResultModalContext);
@@ -161,18 +164,21 @@ export const useExercise = (): Excercise => {
 		const word = mockWords[Math.floor(Math.random() * mockWords.length)];
 		setCurrentWord(word);
 		return word;
-	}, []);
+	}, [setCurrentWord]);
 
 	const getWords = useCallback(
 		(count: number): Word[] => mockWords.slice(0, count),
 		[],
 	);
 
-	const getTranslation = useCallback((wordId: Word["id"]): WordTranslation => {
-		const translation = mockTranslations.find((t) => t.word === wordId)!;
-		setCurrentTranslation(translation);
-		return translation;
-	}, []);
+	const getTranslation = useCallback(
+		(wordId: Word["id"]): WordTranslation => {
+			const translation = mockTranslations.find((t) => t.word === wordId)!;
+			setCurrentTranslation(translation);
+			return translation;
+		},
+		[setCurrentTranslation],
+	);
 
 	const onSuccess = useCallback(
 		async (wordId: Word["id"], excerciseWeight = 0.1, showModal = false) => {

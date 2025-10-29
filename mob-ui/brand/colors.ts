@@ -28,6 +28,8 @@ export const Colors = {
 	},
 	dark: {
 		black: "#000000",
+		black20: "rgba(0, 0, 0, 0.2)",
+		black40: "rgba(0, 0, 0, 0.4)",
 		black60: "rgba(0, 0, 0, 0.6)",
 		dark1: "#1C1E22",
 		dark2: "#25272D",

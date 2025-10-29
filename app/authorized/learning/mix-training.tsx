@@ -6,16 +6,18 @@ import {
 	WordExcerciseFailureModal,
 	WordExcerciseSuccessModal,
 } from "@/components/Modals/WordExcerciseResult";
+import { TrainingAppWrapper } from "@/components/TrainingAppWrapper";
 import { BackgroundContext } from "@/context/BackgroundContext";
 import { ResultModalContext } from "@/context/ResultModalContext";
 import { Colors } from "@/mob-ui/brand/colors";
 import { useCallback, useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { styles } from "../../../general.styles";
 
 export default function MixTraining() {
 	const { setColor, setOpacity } = useContext(BackgroundContext);
+
+	const { t } = useTranslation();
 
 	const [currentTraining, setCurrentTraining] =
 		useState<LearningCatalogItem | null>(null);
@@ -56,7 +58,7 @@ export default function MixTraining() {
 	}, [setColor, setOpacity]);
 
 	return (
-		<SafeAreaView mode="padding" style={styles.page}>
+		<TrainingAppWrapper title={currentTraining ? currentTraining.title : ""}>
 			{currentTraining === null && <ActivityIndicator size="large" />}
 			{currentTraining && <currentTraining.component onFinish={onFinish} />}
 
@@ -70,6 +72,6 @@ export default function MixTraining() {
 					onRequestClose={onFailureModalClose}
 				/>
 			</View>
-		</SafeAreaView>
+		</TrainingAppWrapper>
 	);
 }
