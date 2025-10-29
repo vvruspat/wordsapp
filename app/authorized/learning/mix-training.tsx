@@ -11,13 +11,10 @@ import { BackgroundContext } from "@/context/BackgroundContext";
 import { ResultModalContext } from "@/context/ResultModalContext";
 import { Colors } from "@/mob-ui/brand/colors";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { ActivityIndicator, View } from "react-native";
 
 export default function MixTraining() {
 	const { setColor, setOpacity } = useContext(BackgroundContext);
-
-	const { t } = useTranslation();
 
 	const [currentTraining, setCurrentTraining] =
 		useState<LearningCatalogItem | null>(null);
