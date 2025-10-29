@@ -5,10 +5,10 @@ export default class LearningProgress extends Model {
 	static table = "learning_progress";
 
 	@field("user_id")
-	userId!: string;
+	userId!: number;
 
 	@field("word_id")
-	wordId!: string;
+	wordId!: number;
 
 	@field("score")
 	score!: number;

@@ -1,6 +1,6 @@
+import { WInputProps, WText } from "@/mob-ui/atoms";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, TextInput, TextInputProps, View } from "react-native";
-import { WInputProps, WText } from "@/mob-ui/atoms";
 import { styles as wInputStyles } from "../../atoms/WInput/WInput.styles";
 import { styles } from "./WCharInput.styles";
 
@@ -35,7 +35,15 @@ export const WCharInput = ({
 	};
 
 	return (
-		<View style={{ flexDirection: "row", gap: 8 }}>
+		<View
+			style={{
+				flexDirection: "row",
+				gap: 8,
+				justifyContent: "center",
+				alignItems: "center",
+				flexWrap: "wrap",
+			}}
+		>
 			{[...Array(length)].map((_, index) => (
 				<Pressable
 					// biome-ignore lint/suspicious/noArrayIndexKey: there is no unique id here
@@ -49,13 +57,19 @@ export const WCharInput = ({
 					style={[
 						wInputStyles.inputRow,
 						styles.inputRow,
+						length >= 6 && styles.inputRowSmall,
 						val[index] !== undefined
 							? wInputStyles.inputRowSuccess
 							: wInputStyles.inputRowDefault,
 						status === "error" && wInputStyles.inputRowError,
 					]}
 				>
-					<WText size="4xl" weight="bold" mode="primary" uppercase>
+					<WText
+						size={length >= 6 ? "xl" : "4xl"}
+						weight="bold"
+						mode="primary"
+						uppercase
+					>
 						{secureTextEntry ? "•" : (val[index] ?? "")}
 					</WText>
 				</Pressable>

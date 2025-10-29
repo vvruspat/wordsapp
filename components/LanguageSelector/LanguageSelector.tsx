@@ -60,7 +60,7 @@ export const LanguageSelector = ({
 					<CountryFlag isoCode={item.countryCode} size={28} />
 				</View>
 				<View style={styles.textContainer}>
-					<WText style={styles.name}>{item.name}</WText>
+					<WText style={styles.name}>{t(item.name)}</WText>
 				</View>
 			</TouchableOpacity>
 		);

@@ -1,5 +1,7 @@
 import { LANGUAGES, LanguageItem } from "@/constants/languages";
 import { WText } from "@/mob-ui";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, View } from "react-native";
 import CountryFlag from "react-native-country-flag";
 import { styles } from "./SelectLanguageButton.styles";
@@ -15,8 +17,12 @@ export const SelectLanguageButton = ({
 	languageValue,
 	onPress,
 }: SelectLanguageButtonProps) => {
-	const language =
-		LANGUAGES.find((l) => l.isoCode === languageValue) || LANGUAGES[0];
+	const language = useMemo(
+		() => LANGUAGES.find((l) => l.isoCode === languageValue) || LANGUAGES[0],
+		[languageValue],
+	);
+
+	const { t } = useTranslation();
 
 	return (
 		<Pressable onPress={onPress}>
@@ -29,7 +35,7 @@ export const SelectLanguageButton = ({
 						<CountryFlag isoCode={language.countryCode} size={48} />
 					</View>
 					<View>
-						<WText>{language.name}</WText>
+						<WText>{t(language.name)}</WText>
 					</View>
 				</View>
 			</View>
