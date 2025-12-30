@@ -1,316 +1,589 @@
+import type {
+	LearningCatalogItem,
+	LearningTrainingName,
+} from "@/components/LearningCatalog/types";
+import { useLearningTrainings } from "@/components/LearningCatalog/useLearningTrainings";
+import {
+	WordExcerciseFailureModal,
+	WordExcerciseSuccessModal,
+} from "@/components/Modals/WordExcerciseResult";
+import { ExerciseFinishContext } from "@/context/ExerciseFinishContext";
 import { ResultModalContext } from "@/context/ResultModalContext";
 import LearningProgress from "@/models/LearningProgress";
+import Word from "@/models/Word";
+import WordTranslation from "@/models/WordTranslation";
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
-import { Word, WordTranslation } from "@repo/types";
-import { useCallback, useContext } from "react";
+import {
+	Language,
+	Word as WordDto,
+	WordTranslation as WordTranslationDto,
+} from "@repo/types";
+import {
+	ReactElement,
+	useCallback,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
+import { View } from "react-native";
 import { useExcerciseStore } from "./useExcerciseStore";
 import { useSessionUser } from "./useSession";
 
-const mockWords: Word[] = [
-	{
-		id: 2,
-		created_at: "2024-01-01T00:00:00Z",
-		topic: 1,
-		catalog: 1,
-		word: "Hallo",
-		language: "nl",
-		audio: "hallo.mp3",
-		transcribtion: "ˈɦɑlo",
-		meaning: "Hello",
-	},
-	{
-		id: 3,
-		created_at: "2024-01-01T00:00:00Z",
-		topic: 1,
-		catalog: 1,
-		word: "Dankjewel",
-		language: "nl",
-		audio: "dankjewel.mp3",
-		transcribtion: "dɑŋk.jə.ˈʋɛl",
-		meaning: "Thank you",
-	},
-	{
-		id: 4,
-		created_at: "2024-01-01T00:00:00Z",
-		topic: 2,
-		catalog: 1,
-		word: "Alstublieft",
-		language: "nl",
-		audio: "alstublieft.mp3",
-		transcribtion: "ˌɑl.sty.ˈblift",
-		meaning: "Please",
-	},
-	{
-		id: 5,
-		created_at: "2024-01-01T00:00:00Z",
-		topic: 2,
-		catalog: 1,
-		word: "Tot ziens",
-		language: "nl",
-		audio: "tot_ziens.mp3",
-		transcribtion: "tɔt ˈzins",
-		meaning: "Goodbye",
-	},
-	{
-		id: 6,
-		created_at: "2024-01-01T00:00:00Z",
-		topic: 3,
-		catalog: 1,
-		word: "Slaap lekker",
-		language: "nl",
-		audio: "slaap_lekker.mp3",
-		transcribtion: "slaːp ˈlɛkər",
-		meaning: "Sleep well",
-	},
-	{
-		id: 7,
-		created_at: "2024-01-01T00:00:00Z",
-		topic: 3,
-		catalog: 1,
-		word: "Eet smakelijk",
-		language: "nl",
-		audio: "eet_smakelijk.mp3",
-		transcribtion: "eːt ˈsmaːkələk",
-		meaning: "Enjoy your meal",
-	},
-];
-
-const mockTranslations: WordTranslation[] = [
-	{
-		id: 2,
-		created_at: "2024-01-01T00:00:00Z",
-		word: 2,
-		translation: "Hello",
-		language: "en",
-	},
-	{
-		id: 3,
-		created_at: "2024-01-01T00:00:00Z",
-		word: 3,
-		translation: "Thank you",
-		language: "en",
-	},
-	{
-		id: 4,
-		created_at: "2024-01-01T00:00:00Z",
-		word: 4,
-		translation: "Please / Here you go",
-		language: "en",
-	},
-	{
-		id: 5,
-		created_at: "2024-01-01T00:00:00Z",
-		word: 5,
-		translation: "Goodbye",
-		language: "en",
-	},
-	{
-		id: 6,
-		created_at: "2024-01-01T00:00:00Z",
-		word: 6,
-		translation: "Sleep well",
-		language: "en",
-	},
-	{
-		id: 7,
-		created_at: "2024-01-01T00:00:00Z",
-		word: 7,
-		translation: "Enjoy your meal",
-		language: "en",
-	},
-];
-
 type Excercise = {
-	getWord: () => Word;
-	getWords: (count: number) => Word[];
-	getTranslation: (wordId: number) => WordTranslation;
+	getWord: () => Promise<WordDto>;
+	getWords: (count: number) => Promise<WordDto[]>;
+	getTranslation: (wordId: number) => Promise<WordTranslationDto>;
 	getRandomWords: (
 		count: number,
-		catalog?: Word["catalog"],
-		topic?: Word["topic"],
-	) => Word[];
+		catalog?: WordDto["catalog"],
+		topic?: WordDto["topic"],
+		exclude?: WordDto[],
+	) => Promise<WordDto[]>;
 	getRandomTranslations: (
 		count: number,
-		catalog?: Word["catalog"],
-		topic?: Word["topic"],
-	) => WordTranslation[];
+		catalog?: WordDto["catalog"],
+		topic?: WordDto["topic"],
+		exclude?: WordTranslationDto[],
+	) => Promise<WordTranslationDto[]>;
 	onSuccess: (
-		wordId: Word["id"],
+		wordId: WordDto["id"],
 		excerciseWeight?: number,
 		showModal?: boolean,
+		word?: WordDto,
+		translation?: WordTranslationDto,
 	) => void;
 	onFailure: (
-		wordId: Word["id"],
+		wordId: WordDto["id"],
 		excerciseWeight?: number,
 		showModal?: boolean,
+		word?: WordDto,
+		translation?: WordTranslationDto,
 	) => void;
+	resultModals: () => ReactElement;
+	currentTraining: LearningCatalogItem | null;
 };
 
-export const useExercise = (): Excercise => {
+// Helper function to convert Word model to WordDto
+const wordToDto = (word: Word): WordDto => ({
+	status: "processed",
+	id: word.remoteId,
+	created_at: word.remoteCreatedAt,
+	topic: word.topic,
+	word: word.word,
+	catalog: word.catalog,
+	language: word.language as Language,
+	audio: word.audio,
+	transcribtion: word.transcribtion,
+	meaning: word.meaning,
+});
+
+// Helper function to convert WordTranslation model to WordTranslationDto
+const translationToDto = (
+	translation: WordTranslation,
+): WordTranslationDto => ({
+	id: translation.remoteId,
+	created_at: translation.remoteCreatedAt,
+	word: translation.word,
+	translation: translation.translation,
+	language: translation.language,
+});
+
+export const useExercise = (trainingName?: LearningTrainingName): Excercise => {
 	const database = useDatabase();
 	const session = useSessionUser();
 	const {
-		currentWord,
-		currentTranslation,
 		setCurrentWord,
 		setCurrentTranslation,
+		currentCatalog,
+		currentTopic,
 	} = useExcerciseStore();
 
-	const { setFailureModalVisible, setSuccessModalVisible } =
-		useContext(ResultModalContext);
+	const trainings = useLearningTrainings();
 
-	const getWord = useCallback((): Word => {
-		const word = mockWords[Math.floor(Math.random() * mockWords.length)];
-		setCurrentWord(word);
-		return word;
-	}, [setCurrentWord]);
+	const {
+		successModalVisible,
+		failureModalVisible,
+		setSuccessModalVisible,
+		setFailureModalVisible,
+	} = useContext(ResultModalContext);
+
+	const getWord = useCallback(async (): Promise<WordDto> => {
+		if (!session?.user?.language_learn) {
+			throw new Error("User language_learn is not set");
+		}
+
+		const queryConditions = [Q.where("language", session.user.language_learn)];
+
+		// Only add catalog filter if it's not null or undefined
+		if (currentCatalog != null) {
+			queryConditions.push(Q.where("catalog", currentCatalog));
+		}
+
+		// Only add topic filter if it's not null or undefined
+		if (currentTopic != null) {
+			queryConditions.push(Q.where("topic", currentTopic));
+		}
+
+		const words = await database
+			.get<Word>("words")
+			.query(...queryConditions)
+			.fetch();
+
+		if (words.length === 0) {
+			throw new Error("No words found matching the current filters");
+		}
+
+		const randomWord = words[Math.floor(Math.random() * words.length)];
+		const wordDto = wordToDto(randomWord);
+		setCurrentWord(wordDto);
+		return wordDto;
+	}, [database, session, currentCatalog, currentTopic, setCurrentWord]);
 
 	const getWords = useCallback(
-		(count: number): Word[] => mockWords.slice(0, count),
-		[],
+		async (count: number): Promise<WordDto[]> => {
+			if (!session?.user?.language_learn) {
+				throw new Error("User language_learn is not set");
+			}
+
+			const queryConditions = [
+				Q.where("language", session.user.language_learn),
+			];
+
+			// Only add catalog filter if it's not null or undefined
+			if (currentCatalog != null) {
+				queryConditions.push(Q.where("catalog", currentCatalog));
+			}
+
+			// Only add topic filter if it's not null or undefined
+			if (currentTopic != null) {
+				queryConditions.push(Q.where("topic", currentTopic));
+			}
+
+			const words = await database
+				.get<Word>("words")
+				.query(...queryConditions)
+				.fetch();
+
+			return words.slice(0, count).map(wordToDto);
+		},
+		[database, session, currentCatalog, currentTopic],
 	);
 
 	const getTranslation = useCallback(
-		(wordId: Word["id"]): WordTranslation => {
-			const translation = mockTranslations.find((t) => t.word === wordId)!;
-			setCurrentTranslation(translation);
-			return translation;
+		async (wordId: WordDto["id"]): Promise<WordTranslationDto> => {
+			if (!session?.user?.language_speak) {
+				throw new Error("User language_speak is not set");
+			}
+
+			const translations = await database
+				.get<WordTranslation>("word_translations")
+				.query(
+					Q.where("word", wordId),
+					Q.where("language", session.user.language_speak),
+				)
+				.fetch();
+
+			if (translations.length === 0) {
+				throw new Error(`No translation found for word ${wordId}`);
+			}
+
+			const translation = translations[0];
+			const translationDto = translationToDto(translation);
+			setCurrentTranslation(translationDto);
+			return translationDto;
 		},
-		[setCurrentTranslation],
+		[database, session, setCurrentTranslation],
 	);
 
 	const onSuccess = useCallback(
-		async (wordId: Word["id"], excerciseWeight = 0.1, showModal = false) => {
+		async (
+			wordId: WordDto["id"],
+			excerciseWeight = 0.1,
+			showModal = false,
+			word?: WordDto,
+			translation?: WordTranslationDto,
+		) => {
+			// Update store with word and translation before showing modal
+			if (word) {
+				setCurrentWord(word);
+			}
+			if (translation) {
+				setCurrentTranslation(translation);
+			}
+
 			setSuccessModalVisible(showModal);
 
 			if (session?.user) {
-				const result = database
+				const result = await database
 					.get<LearningProgress>("learning_progress")
 					.query(
-						Q.where("word_id", wordId),
-						Q.where("user_id", session.user.userId),
-					);
-
-				const progressData = (await result.fetch())[0];
+						Q.where("word_id", String(wordId)),
+						Q.where("user_id", String(session.user.userId)),
+					)
+					.fetch();
 
 				await database.write(async () => {
-					const progress = await database
-						.get("learning_progress")
-						.find(progressData.id);
-					await progress.update(() => {
-						progressData.score = Math.max(
-							0,
-							progressData.score + excerciseWeight,
-						);
-					});
+					if (result.length > 0) {
+						const progress = await database
+							.get<LearningProgress>("learning_progress")
+							.find(result[0].id);
+						const currentScore = progress.score;
+						await progress.update((p) => {
+							p.score = Math.max(0, currentScore + excerciseWeight);
+							p.lastReviewed = Date.now();
+						});
+					} else {
+						// Create new learning progress entry
+						await database
+							.get<LearningProgress>("learning_progress")
+							.create((p) => {
+								if (session.user) {
+									p.userId = session.user.userId;
+									p.wordId = wordId;
+									p.score = excerciseWeight;
+									p.lastReviewed = Date.now();
+								}
+							});
+					}
 				});
 			}
 		},
-		[session, database, setSuccessModalVisible],
+		[
+			session,
+			database,
+			setSuccessModalVisible,
+			setCurrentWord,
+			setCurrentTranslation,
+		],
 	);
 
 	const onFailure = useCallback(
-		async (wordId: Word["id"], excerciseWeight = 0.1, showModal = false) => {
+		async (
+			wordId: WordDto["id"],
+			excerciseWeight = 0.1,
+			showModal = false,
+			word?: WordDto,
+			translation?: WordTranslationDto,
+		) => {
+			// Update store with word and translation before showing modal
+			if (word) {
+				setCurrentWord(word);
+			}
+			if (translation) {
+				setCurrentTranslation(translation);
+			}
+
 			setFailureModalVisible(showModal);
 
 			if (session?.user) {
-				const result = database
+				const result = await database
 					.get<LearningProgress>("learning_progress")
 					.query(
-						Q.where("word_id", wordId),
-						Q.where("user_id", session.user.userId),
-					);
-
-				const progressData = (await result.fetch())[0];
+						Q.where("word_id", String(wordId)),
+						Q.where("user_id", String(session.user.userId)),
+					)
+					.fetch();
 
 				await database.write(async () => {
-					const progress = await database
-						.get("learning_progress")
-						.find(progressData.id);
-					await progress.update(() => {
-						progressData.score = Math.max(
-							0,
-							progressData.score - excerciseWeight,
-						);
-					});
+					if (result.length > 0) {
+						const progress = await database
+							.get<LearningProgress>("learning_progress")
+							.find(result[0].id);
+						const currentScore = progress.score;
+						await progress.update((p) => {
+							p.score = Math.max(0, currentScore - excerciseWeight);
+							p.lastReviewed = Date.now();
+						});
+					} else {
+						// Create new learning progress entry with negative score
+						await database
+							.get<LearningProgress>("learning_progress")
+							.create((p) => {
+								if (session.user) {
+									p.userId = session.user.userId;
+									p.wordId = wordId;
+									p.score = Math.max(0, -excerciseWeight);
+									p.lastReviewed = Date.now();
+								}
+							});
+					}
 				});
 			}
 		},
-		[session, database, setFailureModalVisible],
+		[
+			session,
+			database,
+			setFailureModalVisible,
+			setCurrentWord,
+			setCurrentTranslation,
+		],
 	);
 
 	const getRandomWord = useCallback(
-		(
-			exclude: Word[] = [],
-			_catalog?: Word["catalog"],
-			_topic?: Word["topic"],
-		): Word => {
-			let randomIndex = Math.floor(Math.random() * mockWords.length);
-			let randomWord = mockWords[randomIndex];
-
-			while (exclude.some((word) => word.id === randomWord.id)) {
-				randomIndex = Math.floor(Math.random() * mockWords.length);
-				randomWord = mockWords[randomIndex];
+		async (
+			exclude: WordDto[] = [],
+			catalog?: WordDto["catalog"],
+			topic?: WordDto["topic"],
+		): Promise<WordDto> => {
+			if (!session?.user?.language_learn) {
+				throw new Error("User language_learn is not set");
 			}
 
-			return randomWord;
+			const queryConditions = [
+				Q.where("language", session.user.language_learn),
+			];
+
+			// Use provided catalog/topic or fall back to current store values
+			const filterCatalog = catalog ?? currentCatalog;
+			const filterTopic = topic ?? currentTopic;
+
+			// Only add filters if they're not null or undefined
+			if (filterCatalog != null) {
+				queryConditions.push(Q.where("catalog", filterCatalog));
+			}
+
+			if (filterTopic != null) {
+				queryConditions.push(Q.where("topic", filterTopic));
+			}
+
+			const words = await database
+				.get<Word>("words")
+				.query(...queryConditions)
+				.fetch();
+
+			if (words.length === 0) {
+				throw new Error("No words found matching the filters");
+			}
+
+			const excludeIds = new Set(exclude.map((w) => w.id));
+			const availableWords = words.filter((w) => !excludeIds.has(w.remoteId));
+
+			if (availableWords.length === 0) {
+				throw new Error("No words available after excluding specified words");
+			}
+
+			const randomWord =
+				availableWords[Math.floor(Math.random() * availableWords.length)];
+			return wordToDto(randomWord);
 		},
-		[],
+		[database, session, currentCatalog, currentTopic],
 	);
 
 	const getRandomTranslation = useCallback(
-		(
-			exclude: WordTranslation[] = [],
-			_catalog?: Word["catalog"],
-			_topic?: Word["topic"],
-		): WordTranslation => {
-			let randomIndex = Math.floor(Math.random() * mockTranslations.length);
-			let randomTranslation = mockTranslations[randomIndex];
-
-			while (exclude.some((t) => t.id === randomTranslation.id)) {
-				randomIndex = Math.floor(Math.random() * mockTranslations.length);
-				randomTranslation = mockTranslations[randomIndex];
+		async (
+			exclude: WordTranslationDto[] = [],
+			catalog?: WordDto["catalog"],
+			topic?: WordDto["topic"],
+		): Promise<WordTranslationDto> => {
+			if (!session?.user?.language_speak) {
+				throw new Error("User language_speak is not set");
 			}
 
-			return randomTranslation;
+			// First, get words matching catalog/topic filters
+			const queryConditions = [
+				Q.where("language", session.user.language_learn || ""),
+			];
+
+			const filterCatalog = catalog ?? currentCatalog;
+			const filterTopic = topic ?? currentTopic;
+
+			// Only add filters if they're not null or undefined
+			if (filterCatalog != null) {
+				queryConditions.push(Q.where("catalog", filterCatalog));
+			}
+
+			if (filterTopic != null) {
+				queryConditions.push(Q.where("topic", filterTopic));
+			}
+
+			const words = await database
+				.get<Word>("words")
+				.query(...queryConditions)
+				.fetch();
+
+			if (words.length === 0) {
+				throw new Error("No words found matching the filters");
+			}
+
+			const wordIds = words.map((w) => w.remoteId);
+			const excludeIds = new Set(exclude.map((t) => t.id));
+
+			const translations = await database
+				.get<WordTranslation>("word_translations")
+				.query(
+					Q.where("word", Q.oneOf(wordIds)),
+					Q.where("language", session.user.language_speak),
+				)
+				.fetch();
+
+			const availableTranslations = translations.filter(
+				(t) => !excludeIds.has(t.remoteId),
+			);
+
+			if (availableTranslations.length === 0) {
+				throw new Error(
+					"No translations available after excluding specified translations",
+				);
+			}
+
+			const randomTranslation =
+				availableTranslations[
+					Math.floor(Math.random() * availableTranslations.length)
+				];
+			return translationToDto(randomTranslation);
 		},
-		[],
+		[database, session, currentCatalog, currentTopic],
 	);
 
 	const getRandomWords = useCallback(
-		(
+		async (
 			count: number,
-			catalog?: Word["catalog"],
-			topic?: Word["topic"],
-		): Word[] => {
-			const words: Word[] = currentWord ? [currentWord] : [];
+			catalog?: WordDto["catalog"],
+			topic?: WordDto["topic"],
+			exclude: WordDto[] = [],
+		): Promise<WordDto[]> => {
+			const words: WordDto[] = [];
+			const currentExclude = [...exclude];
 
 			for (let i = 0; i < count; i++) {
-				words.push(getRandomWord(words, catalog, topic));
+				try {
+					const word = await getRandomWord(currentExclude, catalog, topic);
+					words.push(word);
+					currentExclude.push(word);
+				} catch {
+					// If we can't get more words, break
+					break;
+				}
 			}
+
 			return words;
 		},
-		[getRandomWord, currentWord],
+		[getRandomWord],
 	);
 
 	const getRandomTranslations = useCallback(
-		(
+		async (
 			count: number,
-			catalog?: Word["catalog"],
-			topic?: Word["topic"],
-		): WordTranslation[] => {
-			const translations: WordTranslation[] = currentTranslation
-				? [currentTranslation]
-				: [];
+			catalog?: WordDto["catalog"],
+			topic?: WordDto["topic"],
+			exclude: WordTranslationDto[] = [],
+		): Promise<WordTranslationDto[]> => {
+			const translations: WordTranslationDto[] = [];
+			const currentExclude = [...exclude];
 
 			for (let i = 0; i < count; i++) {
-				translations.push(getRandomTranslation(translations, catalog, topic));
+				try {
+					const translation = await getRandomTranslation(
+						currentExclude,
+						catalog,
+						topic,
+					);
+					translations.push(translation);
+					currentExclude.push(translation);
+				} catch {
+					// If we can't get more translations, break
+					break;
+				}
 			}
 
 			return translations;
 		},
-		[getRandomTranslation, currentTranslation],
+		[getRandomTranslation],
+	);
+
+	const getNextTraining =
+		useCallback(async (): Promise<LearningCatalogItem | null> => {
+			if (!session?.user?.language_learn) {
+				return trainings[Math.floor(Math.random() * trainings.length)];
+			}
+
+			// Check if there are words available for the current filters
+			const queryConditions = [
+				Q.where("language", session.user.language_learn),
+			];
+
+			// Only add filters if they're not null or undefined
+			if (currentCatalog != null) {
+				queryConditions.push(Q.where("catalog", currentCatalog));
+			}
+
+			if (currentTopic != null) {
+				queryConditions.push(Q.where("topic", currentTopic));
+			}
+
+			const words = await database
+				.get<Word>("words")
+				.query(...queryConditions)
+				.fetch();
+
+			// If no words available, return null or a random training
+			if (words.length === 0) {
+				return trainings[Math.floor(Math.random() * trainings.length)];
+			}
+
+			// Select a random word from available words
+			const randomWord = words[Math.floor(Math.random() * words.length)];
+			const wordDto = wordToDto(randomWord);
+			setCurrentWord(wordDto);
+
+			// Return a random training (this might need adjustment based on requirements)
+			return trainings[Math.floor(Math.random() * trainings.length)];
+		}, [
+			database,
+			session,
+			currentCatalog,
+			currentTopic,
+			trainings,
+			setCurrentWord,
+		]);
+
+	const [currentTraining, setCurrentTraining] =
+		useState<LearningCatalogItem | null>(null);
+
+	// Initialize currentTraining on mount
+	useEffect(() => {
+		getNextTraining().then((training) => {
+			setCurrentTraining(training);
+		});
+	}, [getNextTraining]);
+
+	const { triggerFinish } = useContext(ExerciseFinishContext);
+
+	const onFinish = useCallback(() => {
+		if (!trainingName) {
+			// For mix training, switch to a new random training
+			// Don't trigger finish callback since we're switching to a different component
+			getNextTraining().then((training) => {
+				setCurrentTraining(training);
+			});
+		} else {
+			// For specific training, reload the current exercise
+			triggerFinish();
+		}
+	}, [getNextTraining, trainingName, triggerFinish]);
+
+	const onSuccessModalClose = useCallback(() => {
+		setSuccessModalVisible(false);
+		onFinish();
+	}, [setSuccessModalVisible, onFinish]);
+
+	const onFailureModalClose = useCallback(() => {
+		setFailureModalVisible(false);
+		onFinish();
+	}, [setFailureModalVisible, onFinish]);
+
+	const resultModals = () => (
+		<View>
+			<WordExcerciseSuccessModal
+				visible={successModalVisible}
+				onRequestClose={onSuccessModalClose}
+			/>
+			<WordExcerciseFailureModal
+				visible={failureModalVisible}
+				onRequestClose={onFailureModalClose}
+			/>
+		</View>
 	);
 
 	return {
@@ -321,5 +594,7 @@ export const useExercise = (): Excercise => {
 		getRandomTranslations,
 		onSuccess,
 		onFailure,
+		resultModals,
+		currentTraining,
 	};
 };

@@ -7,10 +7,13 @@ import Category from "@/models/Category";
 import LearningProgress from "@/models/LearningProgress";
 import migrations from "@/models/migrations";
 import { schema } from "@/models/schema";
+import Topic from "@/models/Topic";
 import Translation from "@/models/Translation";
 import User from "@/models/User";
 import UserSetting from "@/models/UserSetting";
+import VocabCatalog from "@/models/VocabCatalog";
 import Word from "@/models/Word";
+import WordTranslation from "@/models/WordTranslation";
 import { Database } from "@nozbe/watermelondb";
 import SQLiteAdapter from "@nozbe/watermelondb/adapters/sqlite";
 import { DatabaseProvider } from "@nozbe/watermelondb/DatabaseProvider";
@@ -25,6 +28,7 @@ import { ActivityIndicator } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import "../i18n";
 
+// Component that handles vocabulary sync - must be inside DatabaseProvider
 const adapter = new SQLiteAdapter({
 	schema,
 	migrations,
@@ -44,6 +48,9 @@ const database = new Database({
 		UserSetting,
 		Word,
 		Translation,
+		WordTranslation,
+		VocabCatalog,
+		Topic,
 		LearningProgress,
 		Category,
 	],

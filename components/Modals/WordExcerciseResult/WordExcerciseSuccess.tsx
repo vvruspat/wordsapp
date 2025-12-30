@@ -1,6 +1,8 @@
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
+import { getBiggestWordLength } from "@/utils/getBiggestWordLength";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, type ModalProps, View } from "react-native";
 import { ThumbsUpIcon } from "./assets/ThumbsUpIcon";
@@ -13,6 +15,25 @@ export const WordExcerciseSuccessModal = ({
 }: WordExcerciseSuccessModalProps) => {
 	const { t } = useTranslation();
 	const { currentWord, currentTranslation } = useExcerciseStore();
+
+	const wordLength = getBiggestWordLength(currentWord?.word || "");
+	const translationLength = getBiggestWordLength(
+		currentTranslation?.translation || "",
+	);
+
+	const maxLength = Math.max(wordLength, translationLength);
+
+	const fontSize = useMemo(() => {
+		if (maxLength <= 10) {
+			return "xl";
+		} else if (maxLength <= 14) {
+			return "lg";
+		} else if (maxLength <= 18) {
+			return "md";
+		} else {
+			return "sm";
+		}
+	}, [maxLength]);
 
 	return (
 		<Modal
@@ -70,30 +91,61 @@ export const WordExcerciseSuccessModal = ({
 						<View
 							style={{
 								flexDirection: "column",
-								alignItems: "center",
+								alignItems: "flex-start",
 								justifyContent: "center",
 								gap: 8,
+								maxWidth: "40%",
 							}}
 						>
-							<WText mode="tertiary" size="sm">
+							<WText
+								mode="tertiary"
+								size="sm"
+								align="center"
+								style={{
+									textAlign: "center",
+									width: "100%",
+								}}
+							>
 								{t("word")}
 							</WText>
-							<WText mode="primary" size="xl" weight="bold">
+							<WText
+								mode="primary"
+								size={fontSize}
+								weight="bold"
+								wrap
+								style={{
+									textAlign: "center",
+								}}
+							>
 								{currentWord?.word}
 							</WText>
 						</View>
 						<View
 							style={{
 								flexDirection: "column",
-								alignItems: "center",
+								alignItems: "flex-start",
 								justifyContent: "center",
 								gap: 8,
+								maxWidth: "40%",
 							}}
 						>
-							<WText mode="tertiary" size="sm">
+							<WText
+								mode="tertiary"
+								size="sm"
+								align="center"
+								style={{ textAlign: "center", width: "100%" }}
+							>
 								{t("translation")}
 							</WText>
-							<WText mode="primary" size="xl" weight="bold">
+							<WText
+								mode="primary"
+								size={fontSize}
+								weight="bold"
+								wrap
+								style={{
+									textAlign: "center",
+								}}
+							>
 								{currentTranslation?.translation}
 							</WText>
 						</View>

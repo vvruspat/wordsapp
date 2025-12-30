@@ -1,5 +1,5 @@
-import { StyleSheet } from "react-native";
 import { Colors } from "@/mob-ui/brand/colors";
+import { StyleSheet } from "react-native";
 
 export const trainingAppWrapperStyles = StyleSheet.create({
 	headerRow: {
@@ -8,6 +8,7 @@ export const trainingAppWrapperStyles = StyleSheet.create({
 		justifyContent: "space-between",
 		width: "100%",
 		maxWidth: "100%",
+		gap: 16,
 	},
 	title: {
 		flex: 1,

@@ -1,8 +1,6 @@
 import { WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
-import type { Training } from "@repo/types";
-import { useCallback, useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { useCallback } from "react";
 import {
 	FlatList,
 	ListRenderItemInfo,
@@ -10,55 +8,11 @@ import {
 	StyleProp,
 	ViewStyle,
 } from "react-native";
-import {
-	ChooseTranslationExercise,
-	ListeningPracticeExercise,
-	MatchWordsExercise,
-	TrueOrFalseExercise,
-	TypeTranslationExercise,
-} from "../TrainingExercises";
+import { trainingComponents } from "./components";
+import { apps, type LearningCatalogItem } from "./types";
 
-export const apps = {
-	true_or_false: {
-		titleColor: Colors.dark.black,
-		backgroundColor: "#F9A1FF",
-		descriptionColor: Colors.dark.dark1,
-		component: TrueOrFalseExercise,
-	},
-	choose_translation: {
-		titleColor: Colors.dark.black,
-		backgroundColor: "#8FDAFF",
-		descriptionColor: Colors.dark.dark1,
-		component: ChooseTranslationExercise,
-	},
-	type_translation: {
-		titleColor: Colors.dark.black,
-		backgroundColor: "#FFA83E",
-		descriptionColor: Colors.dark.dark1,
-		component: TypeTranslationExercise,
-	},
-	match_words: {
-		titleColor: Colors.dark.black,
-		backgroundColor: "#C6F432",
-		descriptionColor: Colors.dark.dark1,
-		component: MatchWordsExercise,
-	},
-	listening_practice: {
-		titleColor: Colors.dark.black,
-		backgroundColor: "#B394FD",
-		descriptionColor: Colors.dark.dark1,
-		component: ListeningPracticeExercise,
-	},
-} as const;
-
-export type LearningTrainingName = keyof typeof apps;
 export type LearningTrainingComponent =
-	(typeof apps)[LearningTrainingName]["component"];
-
-export type LearningCatalogItem = Training & {
-	name: LearningTrainingName;
-	component: LearningTrainingComponent;
-};
+	(typeof trainingComponents)[keyof typeof trainingComponents];
 
 export type LearningCatalogProps = {
 	trainings: readonly LearningCatalogItem[];
@@ -146,63 +100,3 @@ export function LearningCatalog({
 }
 
 export type { apps as learningAppStyles };
-
-export function useLearningTrainings(): readonly LearningCatalogItem[] {
-	const { t } = useTranslation();
-
-	return useMemo<LearningCatalogItem[]>(
-		() => [
-			{
-				id: 1,
-				created_at: "2023-01-01T00:00:00Z",
-				title: t("app_true_or_false_title"),
-				description: t("app_true_or_false_description"),
-				score: 0,
-				name: "true_or_false",
-				image: "",
-				component: apps.true_or_false.component,
-			},
-			{
-				id: 2,
-				created_at: "2023-01-02T00:00:00Z",
-				title: t("app_choose_translation_title"),
-				description: t("app_choose_translation_description"),
-				score: 0,
-				name: "choose_translation",
-				image: "",
-				component: apps.choose_translation.component,
-			},
-			{
-				id: 3,
-				created_at: "2023-01-03T00:00:00Z",
-				title: t("app_type_translation_title"),
-				description: t("app_type_translation_description"),
-				score: 0,
-				name: "type_translation",
-				image: "",
-				component: apps.type_translation.component,
-			},
-			{
-				id: 4,
-				created_at: "2023-01-04T00:00:00Z",
-				title: t("app_match_words_title"),
-				description: t("app_match_words_description"),
-				score: 0,
-				name: "match_words",
-				image: "",
-				component: apps.match_words.component,
-			},
-			{
-				id: 5,
-				created_at: "2023-01-04T00:00:00Z",
-				title: t("app_listening_practice_title"),
-				description: t("app_listening_practice_description"),
-				score: 0,
-				name: "listening_practice",
-				image: "",
-				component: apps.listening_practice.component,
-			},
-		],
-		[t],
-	);
-}

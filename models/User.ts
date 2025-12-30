@@ -14,12 +14,20 @@ export default class User extends Model implements Omit<IUser, "id"> {
 	@field("email")
 	email!: string;
 
-	@field("created_at")
-	created_at!: string;
+	@field("remote_created_at")
+	remoteCreatedAt!: string;
 
 	@field("language_speak")
 	language_speak!: string;
 
+	@field("language_learn")
+	language_learn!: string;
+
 	@field("email_verified")
 	email_verified?: boolean;
+
+	// Computed property to satisfy interface requirement
+	get created_at(): string {
+		return this.remoteCreatedAt;
+	}
 }

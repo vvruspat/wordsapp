@@ -1,10 +1,23 @@
+import { useSessionUser } from "@/hooks/useSession";
+import { useVocabularySync } from "@/hooks/useVocabularySync";
 import { Colors } from "@/mob-ui/brand/colors";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { Language } from "@repo/types";
 import { Tabs } from "expo-router";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 export default function RootLayout() {
 	const { t } = useTranslation();
+
+	const { syncVocabulary } = useVocabularySync();
+	const { user } = useSessionUser();
+
+	useEffect(() => {
+		if (user) {
+			syncVocabulary(user.language_learn as Language);
+		}
+	}, [syncVocabulary, user]);
 
 	return (
 		<Tabs
