@@ -1,17 +1,20 @@
+import { Colors } from "@/mob-ui/brand/colors";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useAudioPlayer } from "expo-audio";
+import * as FileSystem from "expo-file-system/legacy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
-import { Colors } from "@/mob-ui/brand/colors";
 import { styles } from "./PlayWordButton.styles";
 
 export type PlayWordButtonProps = {
 	autoplay?: boolean;
+	audio: string;
 };
 
-export const PlayWordButton = ({ autoplay }: PlayWordButtonProps) => {
-	const audioSource = require("../../assets/audio/test.mp3");
-	const player = useAudioPlayer(audioSource);
+export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
+	console.log("audio", audio);
+	const audioPath = `${FileSystem.documentDirectory}assets/audio/${audio}`;
+	const player = useAudioPlayer(audioPath);
 	const [isPlaying, setIsPlaying] = useState(false);
 
 	const scaleAnim = useRef(new Animated.Value(1)).current;

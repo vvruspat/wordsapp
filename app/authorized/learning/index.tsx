@@ -1,14 +1,12 @@
-import {
-	LearningCatalog,
-	useLearningTrainings,
-} from "@/components/LearningCatalog";
+import { LearningCatalog } from "@/components/LearningCatalog";
+import { useLearningTrainings } from "@/components/LearningCatalog/useLearningTrainings";
 import { BackgroundContext } from "@/context/BackgroundContext";
 import { WButton, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 import { router } from "expo-router";
 import { useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../../general.styles";
 
@@ -57,7 +55,7 @@ export default function Learning() {
 						router.push({ pathname: "/authorized/learning/mix-training" })
 					}
 				>
-					<WText>{t("mix_training_button")}</WText>
+					<Text>{t("mix_training_button")}</Text>
 				</WButton>
 			</View>
 		</SafeAreaView>

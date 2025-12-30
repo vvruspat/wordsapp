@@ -1,16 +1,19 @@
 import { PlayWordButton } from "@/components/PlayWordButton";
+import { ExerciseFinishContext } from "@/context/ExerciseFinishContext";
 import { useExercise } from "@/hooks/useExercise";
+import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WText } from "@/mob-ui";
-import { useCallback, useMemo } from "react";
+import { Word, WordTranslation } from "@repo/types";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
-import { ExerciseProps } from "./common";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const score = 0.2;
 
-export function TrueOrFalseExercise({ onFinish }: ExerciseProps) {
+export function TrueOrFalseExercise() {
 	const { t } = useTranslation();
+	const { user } = useSessionUser();
 
 	const {
 		onFailure,
@@ -20,11 +23,67 @@ export function TrueOrFalseExercise({ onFinish }: ExerciseProps) {
 		getRandomTranslations,
 	} = useExercise();
 
-	const word = getWord();
-	const translation = getTranslation(word.id);
-	const randomTranslations = getRandomTranslations(1, word.catalog, word.topic);
+	const { registerFinishCallback } = useContext(ExerciseFinishContext);
+
+	const [word, setWord] = useState<Word | null>(null);
+	const [translation, setTranslation] = useState<WordTranslation | null>(null);
+	const [randomTranslations, setRandomTranslations] = useState<
+		WordTranslation[]
+	>([]);
+
+	const loadData = useCallback(
+		async (retryCount = 0): Promise<void> => {
+			if (!user?.language_learn) {
+				return;
+			}
+
+			const MAX_RETRIES = 5;
+
+			try {
+				const loadedWord = await getWord();
+				const loadedTranslation = await getTranslation(loadedWord.id);
+				setWord(loadedWord);
+				setTranslation(loadedTranslation);
+				const loadedRandomTranslations = await getRandomTranslations(
+					1,
+					loadedWord.catalog,
+					loadedWord.topic,
+					[loadedTranslation],
+				);
+				setRandomTranslations(loadedRandomTranslations);
+			} catch (error) {
+				console.error("Failed to load exercise data:", error);
+				if (
+					error instanceof Error &&
+					error.message.includes("No translation found") &&
+					retryCount < MAX_RETRIES
+				) {
+					// Retry with a new word if translation is missing
+					console.log(
+						`Retrying with new word (attempt ${retryCount + 1}/${MAX_RETRIES})`,
+					);
+					return loadData(retryCount + 1);
+				}
+				// If max retries reached or different error, log and stop
+				console.error("Failed to load exercise data after retries:", error);
+			}
+		},
+		[user, getWord, getTranslation, getRandomTranslations],
+	);
+
+	useEffect(() => {
+		loadData();
+	}, [loadData]);
+
+	useEffect(() => {
+		registerFinishCallback(loadData);
+	}, [registerFinishCallback, loadData]);
 
 	const { statement, isCorrect } = useMemo(() => {
+		if (!translation || randomTranslations.length === 0) {
+			return { statement: "", isCorrect: false };
+		}
+
 		const shouldUseCorrect = Math.random() >= 0.5;
 
 		return {
@@ -37,18 +96,21 @@ export function TrueOrFalseExercise({ onFinish }: ExerciseProps) {
 
 	const handleAnswer = useCallback(
 		(choice: "yes" | "no") => {
+			if (!word || !translation) return;
 			const userThinksCorrect = choice === "yes";
 
 			if (userThinksCorrect === isCorrect) {
-				onSuccess?.(word.id, score, true);
+				onSuccess?.(word.id, score, true, word, translation);
 			} else {
-				onFailure?.(word.id, score, true);
+				onFailure?.(word.id, score, true, word, translation);
 			}
-
-			onFinish?.();
 		},
-		[isCorrect, word, onFailure, onSuccess, onFinish],
+		[isCorrect, word, translation, onFailure, onSuccess],
 	);
+
+	if (!word || !translation || randomTranslations.length === 0) {
+		return null; // or a loading spinner
+	}
 
 	return (
 		<>
@@ -57,7 +119,7 @@ export function TrueOrFalseExercise({ onFinish }: ExerciseProps) {
 					<WText mode="primary" size="xl">
 						{statement}
 					</WText>
-					<PlayWordButton />
+					<PlayWordButton audio={word.audio} />
 				</View>
 			</TrainingPromptCard>
 

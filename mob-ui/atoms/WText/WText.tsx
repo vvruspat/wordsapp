@@ -1,5 +1,5 @@
-import { StyleSheet, Text, TextProps } from "react-native";
 import { typography } from "@/mob-ui/brand/typography";
+import { StyleSheet, Text, TextProps } from "react-native";
 import { styles } from "./WText.styles";
 
 export type WTextProps = TextProps & {
@@ -7,6 +7,7 @@ export type WTextProps = TextProps & {
 	mode?: "primary" | "secondary" | "tertiary";
 	weight?: "bold" | "semibold" | "medium" | "regular" | "light" | "thin";
 	align?: "left" | "center" | "right";
+	wrap?: boolean;
 	uppercase?: boolean;
 };
 
@@ -16,6 +17,7 @@ export const WText = ({
 	mode = "primary",
 	weight = "regular",
 	align = "left",
+	wrap = false,
 	uppercase,
 	style,
 	...rest
@@ -31,6 +33,7 @@ export const WText = ({
 					{ textAlign: align },
 					{ fontSize: typography.fontSize[size] },
 					uppercase && { textTransform: "uppercase" },
+					wrap && { textWrap: "wrap", whiteSpace: "wrap" },
 				],
 				style,
 			)}

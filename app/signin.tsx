@@ -55,6 +55,8 @@ export default function SignIn() {
 				return;
 			}
 
+			console.log("incomeUserData", incomeUserData);
+
 			await authUser(accessToken, refreshToken, incomeUserData);
 		} catch (e) {
 			setError((e as Error).message);
