@@ -24,6 +24,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useRef,
 	useState,
 } from "react";
 import { View } from "react-native";
@@ -31,6 +32,7 @@ import { useExcerciseStore } from "./useExcerciseStore";
 import { useSessionUser } from "./useSession";
 
 type Excercise = {
+	onFinish: () => void;
 	getWord: () => Promise<WordDto>;
 	getWords: (count: number) => Promise<WordDto[]>;
 	getTranslation: (wordId: number) => Promise<WordTranslationDto>;
@@ -100,6 +102,12 @@ export const useExercise = (trainingName?: LearningTrainingName): Excercise => {
 	} = useExcerciseStore();
 
 	const trainings = useLearningTrainings();
+	const trainingsRef = useRef(trainings);
+
+	// Keep ref in sync with trainings, but don't cause rerenders
+	useEffect(() => {
+		trainingsRef.current = trainings;
+	}, [trainings]);
 
 	const {
 		successModalVisible,
@@ -107,6 +115,11 @@ export const useExercise = (trainingName?: LearningTrainingName): Excercise => {
 		setSuccessModalVisible,
 		setFailureModalVisible,
 	} = useContext(ResultModalContext);
+
+	const { triggerFinish } = useContext(ExerciseFinishContext);
+
+	const [currentTraining, setCurrentTraining] =
+		useState<LearningCatalogItem | null>(null);
 
 	const getWord = useCallback(async (): Promise<WordDto> => {
 		if (!session?.user?.language_learn) {
@@ -494,8 +507,13 @@ export const useExercise = (trainingName?: LearningTrainingName): Excercise => {
 
 	const getNextTraining =
 		useCallback(async (): Promise<LearningCatalogItem | null> => {
+			const currentTrainings = trainingsRef.current;
+			// Note: components show as undefined in console.log because React components
+			// cannot be serialized to JSON, but they exist at runtime
 			if (!session?.user?.language_learn) {
-				return trainings[Math.floor(Math.random() * trainings.length)];
+				return currentTrainings[
+					Math.floor(Math.random() * currentTrainings.length)
+				];
 			}
 
 			// Check if there are words available for the current filters
@@ -519,7 +537,9 @@ export const useExercise = (trainingName?: LearningTrainingName): Excercise => {
 
 			// If no words available, return null or a random training
 			if (words.length === 0) {
-				return trainings[Math.floor(Math.random() * trainings.length)];
+				return currentTrainings[
+					Math.floor(Math.random() * currentTrainings.length)
+				];
 			}
 
 			// Select a random word from available words
@@ -528,27 +548,10 @@ export const useExercise = (trainingName?: LearningTrainingName): Excercise => {
 			setCurrentWord(wordDto);
 
 			// Return a random training (this might need adjustment based on requirements)
-			return trainings[Math.floor(Math.random() * trainings.length)];
-		}, [
-			database,
-			session,
-			currentCatalog,
-			currentTopic,
-			trainings,
-			setCurrentWord,
-		]);
-
-	const [currentTraining, setCurrentTraining] =
-		useState<LearningCatalogItem | null>(null);
-
-	// Initialize currentTraining on mount
-	useEffect(() => {
-		getNextTraining().then((training) => {
-			setCurrentTraining(training);
-		});
-	}, [getNextTraining]);
-
-	const { triggerFinish } = useContext(ExerciseFinishContext);
+			return currentTrainings[
+				Math.floor(Math.random() * currentTrainings.length)
+			];
+		}, [database, session, currentCatalog, currentTopic, setCurrentWord]);
 
 	const onFinish = useCallback(() => {
 		if (!trainingName) {
@@ -586,6 +589,19 @@ export const useExercise = (trainingName?: LearningTrainingName): Excercise => {
 		</View>
 	);
 
+	// Store getNextTraining in a ref to avoid useEffect dependency issues
+	const getNextTrainingRef = useRef(getNextTraining);
+	useEffect(() => {
+		getNextTrainingRef.current = getNextTraining;
+	}, [getNextTraining]);
+
+	// Initialize currentTraining on mount only
+	useEffect(() => {
+		getNextTrainingRef.current().then((training) => {
+			setCurrentTraining(training);
+		});
+	}, []); // Only run on mount
+
 	return {
 		getWord,
 		getWords,
@@ -594,6 +610,7 @@ export const useExercise = (trainingName?: LearningTrainingName): Excercise => {
 		getRandomTranslations,
 		onSuccess,
 		onFailure,
+		onFinish,
 		resultModals,
 		currentTraining,
 	};

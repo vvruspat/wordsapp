@@ -5,14 +5,14 @@ import { shuffleArray } from "@/utils";
 import { Word, WordTranslation } from "@repo/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
-import { ExerciseProps } from "./common";
 
 export type MatchWordPair = {
 	word: Word;
 	translation: WordTranslation;
 };
 
-export function MatchWordsExercise({ onFinish }: ExerciseProps) {
+export function MatchWordsExercise() {
+	console.log("MatchWordsExercise");
 	const { user } = useSessionUser();
 	const [selectedTranslation, setSelectedTranslation] =
 		useState<WordTranslation | null>(null);
@@ -21,7 +21,8 @@ export function MatchWordsExercise({ onFinish }: ExerciseProps) {
 	const [burnedPairs, setBurnedPairs] = useState<MatchWordPair[]>([]);
 	const [failedWords, setFailedWords] = useState<Set<Word["id"]>>(new Set());
 
-	const { onFailure, onSuccess, getWords, getTranslation } = useExercise();
+	const { onFailure, onSuccess, onFinish, getWords, getTranslation } =
+		useExercise();
 
 	const [pairs, setPairs] = useState<MatchWordPair[]>([]);
 
@@ -57,10 +58,7 @@ export function MatchWordsExercise({ onFinish }: ExerciseProps) {
 					return loadPairs(retryCount + 1);
 				}
 				// If max retries reached or different error, log and stop
-				console.error(
-					"Failed to load exercise data after retries:",
-					error,
-				);
+				console.error("Failed to load exercise data after retries:", error);
 			}
 		};
 
@@ -84,7 +82,10 @@ export function MatchWordsExercise({ onFinish }: ExerciseProps) {
 					onSuccess?.(pair.word.id, 0.1, false, pair.word, pair.translation);
 				}
 
+				console.log("onFinish", prev.length + 1, pairs.length);
+
 				if (prev.length + 1 === pairs.length) {
+					console.log("onFinish called");
 					onFinish?.();
 				}
 
@@ -123,12 +124,26 @@ export function MatchWordsExercise({ onFinish }: ExerciseProps) {
 					new Set(prev).add(selectedWord.id).add(translation.word),
 				);
 				const wrongWordPair = pairs.find((p) => p.word.id === selectedWord.id);
-				const wrongTranslationPair = pairs.find((p) => p.translation.id === translation.id);
+				const wrongTranslationPair = pairs.find(
+					(p) => p.translation.id === translation.id,
+				);
 				if (wrongWordPair) {
-					onFailure(selectedWord.id, 0.1, false, wrongWordPair.word, wrongWordPair.translation);
+					onFailure(
+						selectedWord.id,
+						0.1,
+						false,
+						wrongWordPair.word,
+						wrongWordPair.translation,
+					);
 				}
 				if (wrongTranslationPair) {
-					onFailure(translation.word, 0.1, false, wrongTranslationPair.word, wrongTranslationPair.translation);
+					onFailure(
+						translation.word,
+						0.1,
+						false,
+						wrongTranslationPair.word,
+						wrongTranslationPair.translation,
+					);
 				}
 				setSelectedTranslation(null);
 			}
@@ -157,12 +172,26 @@ export function MatchWordsExercise({ onFinish }: ExerciseProps) {
 					new Set(prev).add(word.id).add(selectedTranslation.word),
 				);
 				const wrongWordPair = pairs.find((p) => p.word.id === word.id);
-				const wrongTranslationPair = pairs.find((p) => p.translation.id === selectedTranslation.id);
+				const wrongTranslationPair = pairs.find(
+					(p) => p.translation.id === selectedTranslation.id,
+				);
 				if (wrongWordPair) {
-					onFailure(word.id, 0.1, false, wrongWordPair.word, wrongWordPair.translation);
+					onFailure(
+						word.id,
+						0.1,
+						false,
+						wrongWordPair.word,
+						wrongWordPair.translation,
+					);
 				}
 				if (wrongTranslationPair) {
-					onFailure(selectedTranslation.word, 0.1, false, wrongTranslationPair.word, wrongTranslationPair.translation);
+					onFailure(
+						selectedTranslation.word,
+						0.1,
+						false,
+						wrongTranslationPair.word,
+						wrongTranslationPair.translation,
+					);
 				}
 				setSelectedWord(null);
 			}

@@ -12,6 +12,7 @@ import { TrainingPromptCard } from "./TrainingPromptCard";
 const score = 0.2;
 
 export function ListeningPracticeExercise() {
+	console.log("ListeningPracticeExercise");
 	const { user } = useSessionUser();
 
 	const {

@@ -13,6 +13,7 @@ type CharInputStatus = WCharInputProps["status"];
 const score = 0.2;
 
 export function TypeTranslationExercise() {
+	console.log("TypeTranslationExercise");
 	const [status, setStatus] = useState<CharInputStatus>("default");
 	const { user } = useSessionUser();
 	const { onFailure, onSuccess, getWord, getTranslation } = useExercise();

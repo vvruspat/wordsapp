@@ -12,6 +12,7 @@ import { TrainingPromptCard } from "./TrainingPromptCard";
 const score = 0.2;
 
 export function ChooseTranslationExercise() {
+	console.log("ChooseTranslationExercise");
 	const { user } = useSessionUser();
 
 	const {
