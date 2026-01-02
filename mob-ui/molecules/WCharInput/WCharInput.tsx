@@ -1,5 +1,6 @@
+import { ExerciseContext } from "@/context/ExerciseContext";
 import { WInputProps, WText } from "@/mob-ui/atoms";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Pressable, TextInput, TextInputProps, View } from "react-native";
 import { styles as wInputStyles } from "../../atoms/WInput/WInput.styles";
 import { styles } from "./WCharInput.styles";
@@ -20,9 +21,27 @@ export const WCharInput = ({
 	const [val, setVal] = useState(defaultValue ?? "");
 	const inputRef = useRef<TextInput>(null);
 
+	const { addCompleteListener, removeCompleteListener } =
+		useContext(ExerciseContext);
+
+	const reset = useCallback(() => {
+		setVal("");
+		inputRef.current?.clear();
+		inputRef.current?.focus();
+	}, []);
+
+	const onExerciseComplete = useCallback(async () => {
+		reset();
+	}, [reset]);
+
 	useEffect(() => {
-		if (inputRef.current) {
-			inputRef.current.focus();
+		addCompleteListener(onExerciseComplete);
+		return () => removeCompleteListener(onExerciseComplete);
+	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
+
+	useEffect(() => {
+		if (typeof inputRef === "object" && inputRef?.current) {
+			inputRef.current.focus?.();
 		}
 	}, []);
 
@@ -50,7 +69,7 @@ export const WCharInput = ({
 					key={index}
 					testID={`pin-input-${index}`}
 					onPress={() => {
-						if (inputRef.current) {
+						if (typeof inputRef === "object" && inputRef?.current) {
 							inputRef.current.focus();
 						}
 					}}

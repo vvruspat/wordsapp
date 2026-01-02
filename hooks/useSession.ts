@@ -1,4 +1,4 @@
-import User from "@/models/User";
+import User from "@/db/models/User";
 import { $fetch } from "@/utils/fetch";
 import { setUILanguage } from "@/utils/setUILanguage";
 import { Q } from "@nozbe/watermelondb";

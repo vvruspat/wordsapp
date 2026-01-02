@@ -1,21 +1,9 @@
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { BackgroundProvider } from "@/context/BackgroundContext";
+import database from "@/db/database";
 import { styles } from "@/general.styles";
 import { WZStack } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
-import Category from "@/models/Category";
-import LearningProgress from "@/models/LearningProgress";
-import migrations from "@/models/migrations";
-import { schema } from "@/models/schema";
-import Topic from "@/models/Topic";
-import Translation from "@/models/Translation";
-import User from "@/models/User";
-import UserSetting from "@/models/UserSetting";
-import VocabCatalog from "@/models/VocabCatalog";
-import Word from "@/models/Word";
-import WordTranslation from "@/models/WordTranslation";
-import { Database } from "@nozbe/watermelondb";
-import SQLiteAdapter from "@nozbe/watermelondb/adapters/sqlite";
 import { DatabaseProvider } from "@nozbe/watermelondb/DatabaseProvider";
 import { useIsFocused } from "@react-navigation/native";
 import { authenticateAsync } from "expo-local-authentication";
@@ -27,34 +15,6 @@ import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import "../i18n";
-
-// Component that handles vocabulary sync - must be inside DatabaseProvider
-const adapter = new SQLiteAdapter({
-	schema,
-	migrations,
-	jsi: false,
-	dbName: "wordsapp",
-	// (optional, but you should implement this method)
-	onSetUpError: (_error) => {
-		// Database failed to load -- offer the user to reload the app or log out
-	},
-});
-
-// Then, make a Watermelon database from it!
-const database = new Database({
-	adapter,
-	modelClasses: [
-		User,
-		UserSetting,
-		Word,
-		Translation,
-		WordTranslation,
-		VocabCatalog,
-		Topic,
-		LearningProgress,
-		Category,
-	],
-});
 
 export default function RootLayout() {
 	const [isAuthenticated, setAuthenticated] = useState(false);

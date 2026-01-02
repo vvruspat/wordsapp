@@ -1,40 +1,48 @@
 import { Colors } from "@/mob-ui/brand/colors";
-import type { Training } from "@repo/types";
-import type React from "react";
 
-export const apps = {
-  true_or_false: {
-    titleColor: Colors.dark.black,
-    backgroundColor: "#F9A1FF",
-    descriptionColor: Colors.dark.dark1,
-  },
-  choose_translation: {
-    titleColor: Colors.dark.black,
-    backgroundColor: "#8FDAFF",
-    descriptionColor: Colors.dark.dark1,
-  },
-  type_translation: {
-    titleColor: Colors.dark.black,
-    backgroundColor: "#FFA83E",
-    descriptionColor: Colors.dark.dark1,
-  },
-  match_words: {
-    titleColor: Colors.dark.black,
-    backgroundColor: "#C6F432",
-    descriptionColor: Colors.dark.dark1,
-  },
-  listening_practice: {
-    titleColor: Colors.dark.black,
-    backgroundColor: "#B394FD",
-    descriptionColor: Colors.dark.dark1,
-  },
+export const EXERCISES_APPS = {
+	true_or_false: {
+		id: "true_or_false",
+		titleColor: Colors.dark.black,
+		titleId: "app_true_or_false_title",
+		backgroundColor: Colors.backgrounds.purple,
+		descriptionColor: Colors.dark.dark1,
+		descriptionId: "app_true_or_false_description",
+	},
+	choose_translation: {
+		id: "choose_translation",
+		titleColor: Colors.dark.black,
+		titleId: "app_choose_translation_title",
+		backgroundColor: Colors.backgrounds.cyan,
+		descriptionColor: Colors.dark.dark1,
+		descriptionId: "app_choose_translation_description",
+	},
+	type_translation: {
+		id: "type_translation",
+		titleColor: Colors.dark.black,
+		titleId: "app_type_translation_title",
+		backgroundColor: Colors.backgrounds.blue,
+		descriptionColor: Colors.dark.dark1,
+		descriptionId: "app_type_translation_description",
+	},
+	match_words: {
+		id: "match_words",
+		titleColor: Colors.dark.black,
+		titleId: "app_match_words_title",
+		backgroundColor: Colors.backgrounds.orange,
+		descriptionColor: Colors.dark.dark1,
+		descriptionId: "app_match_words_description",
+	},
+	listening_practice: {
+		id: "listening_practice",
+		titleColor: Colors.dark.black,
+		titleId: "app_listening_practice_title",
+		backgroundColor: Colors.backgrounds.yellow,
+		descriptionColor: Colors.dark.dark1,
+		descriptionId: "app_listening_practice_description",
+	},
 } as const;
 
-export type LearningTrainingName = keyof typeof apps;
+export type LearningTrainingName = keyof typeof EXERCISES_APPS;
 
-export type LearningCatalogItem = Training & {
-  name: LearningTrainingName;
-  component: React.ComponentType;
-};
-
-export type { apps as learningAppStyles };
+export default EXERCISES_APPS;

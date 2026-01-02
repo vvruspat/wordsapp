@@ -19,4 +19,3 @@ export default class WordTranslation extends Model {
 	@field("language")
 	language!: string;
 }
-

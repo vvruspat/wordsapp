@@ -1,5 +1,4 @@
 import { LearningCatalog } from "@/components/LearningCatalog";
-import { useLearningTrainings } from "@/components/LearningCatalog/useLearningTrainings";
 import { BackgroundContext } from "@/context/BackgroundContext";
 import { WButton, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
@@ -13,7 +12,6 @@ import { styles } from "../../../general.styles";
 export default function Learning() {
 	const { setColor, setOpacity } = useContext(BackgroundContext);
 	const { t } = useTranslation();
-	const trainings = useLearningTrainings();
 
 	useEffect(() => {
 		setColor(Colors.backgrounds.green);
@@ -40,10 +38,9 @@ export default function Learning() {
 				</WText>
 
 				<LearningCatalog
-					trainings={trainings}
-					onTrainingPress={(training) =>
+					onTrainingPress={(trainingId) =>
 						router.push({
-							pathname: `/authorized/learning/${training.name}`,
+							pathname: `/authorized/learning/${trainingId}`,
 						})
 					}
 				/>

@@ -14,7 +14,10 @@ export const WordExcerciseSuccessModal = ({
 	...modalProps
 }: WordExcerciseSuccessModalProps) => {
 	const { t } = useTranslation();
-	const { currentWord, currentTranslation } = useExcerciseStore();
+	const { currentPairs } = useExcerciseStore();
+	const currentPair = currentPairs[0];
+	const currentWord = currentPair?.word;
+	const currentTranslation = currentPair?.translation;
 
 	const wordLength = getBiggestWordLength(currentWord?.word || "");
 	const translationLength = getBiggestWordLength(
