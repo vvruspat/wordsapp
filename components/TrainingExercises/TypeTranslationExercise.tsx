@@ -1,9 +1,7 @@
 import { PlayWordButton } from "@/components/PlayWordButton";
-import { ExerciseFinishContext } from "@/context/ExerciseFinishContext";
-import { useExercise } from "@/hooks/useExercise";
-import { useSessionUser } from "@/hooks/useSession";
+import { ExerciseContext } from "@/context/ExerciseContext";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WCharInput, WCharInputProps } from "@/mob-ui";
-import { Word, WordTranslation } from "@repo/types";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { View } from "react-native";
 import { TrainingPromptCard } from "./TrainingPromptCard";
@@ -15,59 +13,38 @@ const score = 0.2;
 export function TypeTranslationExercise() {
 	console.log("TypeTranslationExercise");
 	const [status, setStatus] = useState<CharInputStatus>("default");
-	const { user } = useSessionUser();
-	const { onFailure, onSuccess, getWord, getTranslation } = useExercise();
 
-	const [word, setWord] = useState<Word | null>(null);
-	const [translation, setTranslation] = useState<WordTranslation | null>(null);
+	const {
+		addCompleteListener,
+		removeCompleteListener,
+		loadData,
+		onFailure,
+		onSuccess,
+	} = useContext(ExerciseContext);
+	const { currentPairs } = useExcerciseStore();
 
-	const loadWord = useCallback(
-		async (retryCount = 0): Promise<void> => {
-			const MAX_RETRIES = 5;
+	const { word, translation } = currentPairs[0] ?? {
+		word: null,
+		translation: null,
+	};
 
-			try {
-				const loadedWord = await getWord();
-				const loadedTranslation = await getTranslation(loadedWord.id);
-				setWord(loadedWord);
-				setTranslation(loadedTranslation);
-			} catch (error) {
-				console.error("Failed to load exercise data:", error);
-				if (
-					error instanceof Error &&
-					error.message.includes("No translation found") &&
-					retryCount < MAX_RETRIES
-				) {
-					// Retry with a new word if translation is missing
-					console.log(
-						`Retrying with new word (attempt ${retryCount + 1}/${MAX_RETRIES})`,
-					);
-					return loadWord(retryCount + 1);
-				}
-				// If max retries reached or different error, log and stop
-				console.error("Failed to load exercise data after retries:", error);
-			}
-		},
-		[getWord, getTranslation],
-	);
-
-	useEffect(() => {
-		// Wait for user to be loaded before attempting to load exercise data
-		if (!user?.language_learn) {
-			return;
-		}
-		loadWord();
-	}, [user, loadWord]);
-
-	const onExcerciseFinish = useCallback(async () => {
+	const load = useCallback(async () => {
 		setStatus("default");
-		await loadWord();
-	}, [loadWord]);
+		await loadData(1, 0, 4);
+	}, [loadData]);
 
-	const { registerFinishCallback } = useContext(ExerciseFinishContext);
+	const onExerciseComplete = useCallback(async () => {
+		await load();
+	}, [load]);
 
 	useEffect(() => {
-		registerFinishCallback(onExcerciseFinish);
-	}, [onExcerciseFinish, registerFinishCallback]);
+		load();
+	}, [load]);
+
+	useEffect(() => {
+		addCompleteListener(onExerciseComplete);
+		return () => removeCompleteListener(onExerciseComplete);
+	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
 	const evaluateStatus = useCallback(
 		(text: string): CharInputStatus => {
@@ -98,12 +75,12 @@ export function TypeTranslationExercise() {
 			setStatus(nextStatus);
 
 			if (nextStatus === "success") {
-				onSuccess?.(word.id, score, true, word, translation);
+				onSuccess?.(word.remoteId, score);
 			} else if (
 				nextStatus === "error" &&
 				text.trim().length === translation.translation.trim().length
 			) {
-				onFailure?.(word.id, score, true, word, translation);
+				onFailure?.(word.remoteId, score);
 			}
 		},
 		[translation, word, evaluateStatus, onFailure, onSuccess],

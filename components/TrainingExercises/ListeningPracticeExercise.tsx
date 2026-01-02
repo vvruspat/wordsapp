@@ -1,10 +1,8 @@
 import { PlayWordButton } from "@/components/PlayWordButton";
-import { ExerciseFinishContext } from "@/context/ExerciseFinishContext";
-import { useExercise } from "@/hooks/useExercise";
-import { useSessionUser } from "@/hooks/useSession";
+import { ExerciseContext } from "@/context/ExerciseContext";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WText } from "@/mob-ui";
 import { shuffleArray } from "@/utils";
-import { Word, WordTranslation } from "@repo/types";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { TrainingPromptCard } from "./TrainingPromptCard";
@@ -13,72 +11,38 @@ const score = 0.2;
 
 export function ListeningPracticeExercise() {
 	console.log("ListeningPracticeExercise");
-	const { user } = useSessionUser();
 
 	const {
+		addCompleteListener,
+		removeCompleteListener,
+		loadData,
 		onFailure,
 		onSuccess,
-		getWord,
-		getTranslation,
-		getRandomTranslations,
-	} = useExercise();
+	} = useContext(ExerciseContext);
+	const { currentPairs, currentRandomTranslations: randomTranslations } =
+		useExcerciseStore();
 
-	const { registerFinishCallback } = useContext(ExerciseFinishContext);
+	const { word, translation } = currentPairs[0] ?? {
+		word: null,
+		translation: null,
+	};
 
-	const [word, setWord] = useState<Word | null>(null);
-	const [translation, setTranslation] = useState<WordTranslation | null>(null);
-	const [randomTranslations, setRandomTranslations] = useState<
-		WordTranslation[]
-	>([]);
-
-	const loadData = useCallback(
-		async (retryCount = 0): Promise<void> => {
-			if (!user?.language_learn) {
-				return;
-			}
-
-			const MAX_RETRIES = 5;
-
-			try {
-				const loadedWord = await getWord();
-				const loadedTranslation = await getTranslation(loadedWord.id);
-				setWord(loadedWord);
-				setTranslation(loadedTranslation);
-				const loadedRandomTranslations = await getRandomTranslations(
-					3,
-					loadedWord.catalog,
-					loadedWord.topic,
-					[loadedTranslation],
-				);
-				setRandomTranslations(loadedRandomTranslations);
-				setSelectedOption(null);
-			} catch (error) {
-				console.error("Failed to load exercise data:", error);
-				if (
-					error instanceof Error &&
-					error.message.includes("No translation found") &&
-					retryCount < MAX_RETRIES
-				) {
-					// Retry with a new word if translation is missing
-					console.log(
-						`Retrying with new word (attempt ${retryCount + 1}/${MAX_RETRIES})`,
-					);
-					return loadData(retryCount + 1);
-				}
-				// If max retries reached or different error, log and stop
-				console.error("Failed to load exercise data after retries:", error);
-			}
-		},
-		[user, getWord, getTranslation, getRandomTranslations],
-	);
-
-	useEffect(() => {
-		loadData();
+	const load = useCallback(async () => {
+		await loadData(1, 0, 3);
 	}, [loadData]);
 
+	const onExerciseComplete = useCallback(async () => {
+		await load();
+	}, [load]);
+
 	useEffect(() => {
-		registerFinishCallback(loadData);
-	}, [registerFinishCallback, loadData]);
+		load();
+	}, [load]);
+
+	useEffect(() => {
+		addCompleteListener(onExerciseComplete);
+		return () => removeCompleteListener(onExerciseComplete);
+	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
 	const options = useMemo(() => {
 		if (!translation || randomTranslations.length === 0) {
@@ -90,7 +54,7 @@ export function ListeningPracticeExercise() {
 			...randomTranslations.map((t) => t.translation),
 		];
 
-		return shuffleArray(Array.from(options)).slice(0, 4);
+		return shuffleArray(Array.from(options));
 	}, [randomTranslations, translation]);
 
 	const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -100,9 +64,9 @@ export function ListeningPracticeExercise() {
 			if (!word || !translation) return;
 			setSelectedOption(option);
 			if (option === translation.translation) {
-				onSuccess?.(word.id, score, true, word, translation);
+				onSuccess?.(word.remoteId, score);
 			} else {
-				onFailure?.(word.id, score, true, word, translation);
+				onFailure?.(word.remoteId, score);
 			}
 		},
 		[translation, word, onFailure, onSuccess],

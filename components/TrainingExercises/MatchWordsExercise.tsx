@@ -1,73 +1,56 @@
 import { MatchWordCard } from "@/components/MatchWordCard/MatchWordCard";
-import { useExercise } from "@/hooks/useExercise";
-import { useSessionUser } from "@/hooks/useSession";
+import { ExerciseContext } from "@/context/ExerciseContext";
+import Word from "@/db/models/Word";
+import WordTranslation from "@/db/models/WordTranslation";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { shuffleArray } from "@/utils";
-import { Word, WordTranslation } from "@repo/types";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 
 export type MatchWordPair = {
 	word: Word;
-	translation: WordTranslation;
+	translation?: WordTranslation;
 };
 
 export function MatchWordsExercise() {
 	console.log("MatchWordsExercise");
-	const { user } = useSessionUser();
-	const [selectedTranslation, setSelectedTranslation] =
-		useState<WordTranslation | null>(null);
-	const [selectedWord, setSelectedWord] = useState<Word | null>(null);
 
 	const [burnedPairs, setBurnedPairs] = useState<MatchWordPair[]>([]);
-	const [failedWords, setFailedWords] = useState<Set<Word["id"]>>(new Set());
+	const [failedWords, setFailedWords] = useState<Set<Word["remoteId"]>>(
+		new Set(),
+	);
 
-	const { onFailure, onSuccess, onFinish, getWords, getTranslation } =
-		useExercise();
+	const [selectedWord, setSelectedWord] = useState<Word | null>(null);
+	const [selectedTranslation, setSelectedTranslation] =
+		useState<WordTranslation | null>(null);
 
-	const [pairs, setPairs] = useState<MatchWordPair[]>([]);
+	const {
+		addCompleteListener,
+		removeCompleteListener,
+		loadData,
+		onFailure,
+		onSuccess,
+		complete,
+	} = useContext(ExerciseContext);
+	const { currentPairs: pairs } = useExcerciseStore();
+	const shuffledPairs = useMemo(() => shuffleArray(pairs), [pairs]);
+
+	const load = useCallback(async () => {
+		await loadData(4, 0, 4);
+	}, [loadData]);
+
+	const onExerciseComplete = useCallback(async () => {
+		await load();
+	}, [load]);
 
 	useEffect(() => {
-		// Wait for user to be loaded before attempting to load exercise data
-		if (!user?.language_learn) {
-			return;
-		}
+		load();
+	}, [load]);
 
-		const loadPairs = async (retryCount = 0): Promise<void> => {
-			const MAX_RETRIES = 5;
-
-			try {
-				const words = await getWords(4);
-				const loadedPairs: MatchWordPair[] = await Promise.all(
-					words.map(async (word) => {
-						const translation = await getTranslation(word.id);
-						return { word, translation };
-					}),
-				);
-				setPairs(loadedPairs);
-			} catch (error) {
-				console.error("Failed to load exercise data:", error);
-				if (
-					error instanceof Error &&
-					error.message.includes("No translation found") &&
-					retryCount < MAX_RETRIES
-				) {
-					// Retry with new words if translation is missing
-					console.log(
-						`Retrying with new words (attempt ${retryCount + 1}/${MAX_RETRIES})`,
-					);
-					return loadPairs(retryCount + 1);
-				}
-				// If max retries reached or different error, log and stop
-				console.error("Failed to load exercise data after retries:", error);
-			}
-		};
-
-		loadPairs();
-	}, [user, getWords, getTranslation]);
-
-	const shuffledPairs = useMemo(() => {
-		return shuffleArray(pairs);
-	}, [pairs]);
+	useEffect(() => {
+		addCompleteListener(onExerciseComplete);
+		return () => removeCompleteListener(onExerciseComplete);
+	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
 	const onMatch = useCallback(
 		(pair: MatchWordPair) => {
@@ -78,21 +61,24 @@ export function MatchWordsExercise() {
 
 				const next = [...prev, pair];
 
-				if (!failedWords.has(pair.word.id)) {
-					onSuccess?.(pair.word.id, 0.1, false, pair.word, pair.translation);
+				if (!failedWords.has(pair.word.remoteId)) {
+					onSuccess?.(pair.word.remoteId, 0.1, false);
 				}
 
-				console.log("onFinish", prev.length + 1, pairs.length);
+				console.log("onFinish", prev, prev.length + 1, pairs.length);
 
 				if (prev.length + 1 === pairs.length) {
 					console.log("onFinish called");
-					onFinish?.();
+					setFailedWords(new Set());
+					complete();
+
+					return [];
 				}
 
 				return next;
 			});
 		},
-		[onSuccess, onFinish, pairs, failedWords],
+		[onSuccess, complete, pairs, failedWords],
 	);
 
 	const resetSelections = useCallback(() => {
@@ -102,7 +88,11 @@ export function MatchWordsExercise() {
 
 	const handleTranslationPress = useCallback(
 		(translation: WordTranslation) => {
-			if (burnedPairs.some((pair) => pair.translation.id === translation.id)) {
+			if (
+				burnedPairs.some(
+					(pair) => pair.translation?.remoteId === translation.remoteId,
+				)
+			) {
 				return;
 			}
 
@@ -121,29 +111,19 @@ export function MatchWordsExercise() {
 			} else {
 				// if choosen wrong pair, mark both word and translation as failed
 				setFailedWords((prev) =>
-					new Set(prev).add(selectedWord.id).add(translation.word),
+					new Set(prev).add(selectedWord.remoteId).add(translation.word),
 				);
-				const wrongWordPair = pairs.find((p) => p.word.id === selectedWord.id);
+				const wrongWordPair = pairs.find(
+					(p) => p.word.remoteId === selectedWord.remoteId,
+				);
 				const wrongTranslationPair = pairs.find(
-					(p) => p.translation.id === translation.id,
+					(p) => p.translation?.remoteId === translation.remoteId,
 				);
 				if (wrongWordPair) {
-					onFailure(
-						selectedWord.id,
-						0.1,
-						false,
-						wrongWordPair.word,
-						wrongWordPair.translation,
-					);
+					onFailure(selectedWord.remoteId, 0.1, false);
 				}
 				if (wrongTranslationPair) {
-					onFailure(
-						translation.word,
-						0.1,
-						false,
-						wrongTranslationPair.word,
-						wrongTranslationPair.translation,
-					);
+					onFailure(translation.word, 0.1, false);
 				}
 				setSelectedTranslation(null);
 			}
@@ -153,12 +133,14 @@ export function MatchWordsExercise() {
 
 	const handleWordPress = useCallback(
 		(word: Word) => {
-			if (burnedPairs.some((pair) => pair.word.id === word.id)) {
+			if (burnedPairs.some((pair) => pair.word.remoteId === word.remoteId)) {
 				return;
 			}
 
 			if (!selectedTranslation) {
-				setSelectedWord((prev) => (prev?.id === word.id ? null : word));
+				setSelectedWord((prev) =>
+					prev?.remoteId === word.remoteId ? null : word,
+				);
 				return;
 			}
 
@@ -169,29 +151,19 @@ export function MatchWordsExercise() {
 				resetSelections();
 			} else {
 				setFailedWords((prev) =>
-					new Set(prev).add(word.id).add(selectedTranslation.word),
+					new Set(prev).add(word.remoteId).add(selectedTranslation.word),
 				);
-				const wrongWordPair = pairs.find((p) => p.word.id === word.id);
+				const wrongWordPair = pairs.find(
+					(p) => p.word.remoteId === word.remoteId,
+				);
 				const wrongTranslationPair = pairs.find(
-					(p) => p.translation.id === selectedTranslation.id,
+					(p) => p.translation?.remoteId === selectedTranslation.remoteId,
 				);
 				if (wrongWordPair) {
-					onFailure(
-						word.id,
-						0.1,
-						false,
-						wrongWordPair.word,
-						wrongWordPair.translation,
-					);
+					onFailure(word.remoteId, 0.1, false);
 				}
 				if (wrongTranslationPair) {
-					onFailure(
-						selectedTranslation.word,
-						0.1,
-						false,
-						wrongTranslationPair.word,
-						wrongTranslationPair.translation,
-					);
+					onFailure(selectedTranslation.word, 0.1, false);
 				}
 				setSelectedWord(null);
 			}
@@ -223,14 +195,15 @@ export function MatchWordsExercise() {
 			<View style={{ flex: 1, gap: 16 }}>
 				{pairs.map((pair) => (
 					<MatchWordCard
-						key={pair.word.id}
+						key={pair.word.remoteId}
 						onPress={() => handleWordPress(pair.word)}
 						state={
 							burnedPairs.some(
-								(burenedPair) => burenedPair.word.id === pair.word.id,
+								(burenedPair) =>
+									burenedPair.word.remoteId === pair.word.remoteId,
 							)
 								? "correct"
-								: selectedWord?.id === pair.word.id
+								: selectedWord?.remoteId === pair.word.remoteId
 									? "selected"
 									: "default"
 						}
@@ -242,9 +215,11 @@ export function MatchWordsExercise() {
 			<View style={{ flex: 1, gap: 16 }}>
 				{shuffledPairs.map((pair) => (
 					<MatchWordCard
-						key={pair.translation.id}
-						text={pair.translation.translation}
-						onPress={() => handleTranslationPress(pair.translation)}
+						key={pair.translation?.remoteId}
+						text={pair.translation?.translation ?? ""}
+						onPress={() =>
+							pair.translation && handleTranslationPress(pair.translation)
+						}
 						state={
 							burnedPairs.some(
 								(burnedPair) => burnedPair.translation === pair.translation,

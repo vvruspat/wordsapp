@@ -1,6 +1,6 @@
 import { Colors } from "@/mob-ui/brand/colors";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { useAudioPlayer } from "expo-audio";
+import { AudioStatus, useAudioPlayer } from "expo-audio";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
@@ -8,14 +8,12 @@ import { styles } from "./PlayWordButton.styles";
 
 export type PlayWordButtonProps = {
 	autoplay?: boolean;
-	audio: string;
+	audio: string | null | undefined;
 };
 
 export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
-	console.log("audio", audio);
-	const audioPath = `${FileSystem.documentDirectory}assets/audio/${audio}`;
-	const player = useAudioPlayer(audioPath);
 	const [isPlaying, setIsPlaying] = useState(false);
+	const [hasError, setHasError] = useState(false);
 
 	const scaleAnim = useRef(new Animated.Value(1)).current;
 	const colorAnim = useRef(new Animated.Value(0)).current;
@@ -25,20 +23,68 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		outputRange: [Colors.greys.grey10, Colors.backgrounds.green],
 	});
 
-	useEffect(() => {
-		player.addListener("playbackStatusUpdate", (status) => {
-			setIsPlaying(status.playing);
-			if (status.currentTime >= status.duration) {
-				player.seekTo(0);
-			}
-		});
+	// Safely get audio path
+	const audioPath = (() => {
+		if (!audio || !FileSystem.documentDirectory) {
+			return null;
+		}
+		const filename = audio.split("/").pop();
+		if (!filename) {
+			return null;
+		}
+		return `${FileSystem.documentDirectory}assets/audio/${filename}`;
+	})();
 
-		if (autoplay) player.play();
-	}, [player, autoplay]);
+	const player = useAudioPlayer(audioPath ?? "");
+
+	useEffect(() => {
+		if (!audioPath) {
+			setHasError(true);
+			return;
+		}
+
+		const listener = (status: AudioStatus) => {
+			setIsPlaying(status.playing);
+			if (
+				status.duration &&
+				status.duration > 0 &&
+				status.currentTime >= status.duration
+			) {
+				try {
+					player.seekTo(0);
+				} catch (error) {
+					console.error("Error seeking audio:", error);
+				}
+			}
+		};
+
+		player.addListener("playbackStatusUpdate", listener);
+
+		if (autoplay) {
+			try {
+				player.play();
+			} catch (error) {
+				console.error("Error playing audio:", error);
+				setHasError(true);
+			}
+		}
+
+		return () => {
+			player.removeListener("playbackStatusUpdate", listener);
+		};
+	}, [player, autoplay, audioPath]);
 
 	const onPlayPressed = useCallback(() => {
-		player.play();
-	}, [player]);
+		if (!audioPath || hasError) {
+			return;
+		}
+		try {
+			player.play();
+		} catch (error) {
+			console.error("Error playing audio:", error);
+			setHasError(true);
+		}
+	}, [player, audioPath, hasError]);
 
 	useEffect(() => {
 		if (isPlaying) {
@@ -75,13 +121,18 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		}
 	}, [isPlaying, scaleAnim, colorAnim]);
 
+	if (!audio || !audioPath || hasError) {
+		return null;
+	}
+
 	return (
-		<Pressable onPress={onPlayPressed}>
+		<Pressable onPress={onPlayPressed} disabled={hasError}>
 			<Animated.View
 				style={[
 					styles.button,
 					{ transform: [{ scale: scaleAnim }] },
 					{ backgroundColor },
+					hasError && { opacity: 0.5 },
 				]}
 			>
 				<AntDesign name="sound" size={24} color={Colors.greys.white} />

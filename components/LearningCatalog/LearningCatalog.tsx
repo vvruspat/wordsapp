@@ -1,6 +1,7 @@
 import { WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
 	FlatList,
 	ListRenderItemInfo,
@@ -8,16 +9,11 @@ import {
 	StyleProp,
 	ViewStyle,
 } from "react-native";
-import { trainingComponents } from "./components";
-import { apps, type LearningCatalogItem } from "./types";
-
-export type LearningTrainingComponent =
-	(typeof trainingComponents)[keyof typeof trainingComponents];
+import { EXERCISES_APPS, LearningTrainingName } from "./types";
 
 export type LearningCatalogProps = {
-	trainings: readonly LearningCatalogItem[];
-	onTrainingPress?: (training: LearningCatalogItem) => void;
-	isTrainingSelected?: (training: LearningCatalogItem) => boolean;
+	onTrainingPress?: (trainingId: LearningTrainingName) => void;
+	isTrainingSelected?: (trainingId: LearningTrainingName) => boolean;
 	numColumns?: number;
 	style?: StyleProp<ViewStyle>;
 	contentContainerStyle?: StyleProp<ViewStyle>;
@@ -25,7 +21,6 @@ export type LearningCatalogProps = {
 };
 
 export function LearningCatalog({
-	trainings,
 	onTrainingPress,
 	isTrainingSelected,
 	numColumns = 2,
@@ -33,26 +28,32 @@ export function LearningCatalog({
 	contentContainerStyle,
 	columnWrapperStyle,
 }: LearningCatalogProps) {
+	const { t } = useTranslation();
+
 	const handlePress = useCallback(
-		(training: LearningCatalogItem) => {
-			onTrainingPress?.(training);
+		(trainingId: LearningTrainingName) => {
+			onTrainingPress?.(trainingId);
 		},
 		[onTrainingPress],
 	);
 
 	const renderItem = useCallback(
-		({ item }: ListRenderItemInfo<LearningCatalogItem>) => {
-			const palette = apps[item.name] ?? {
+		({
+			item,
+		}: ListRenderItemInfo<
+			(typeof EXERCISES_APPS)[keyof typeof EXERCISES_APPS]
+		>) => {
+			const palette = item ?? {
 				titleColor: Colors.dark.black,
 				backgroundColor: Colors.dark.dark4,
 				descriptionColor: Colors.dark.dark1,
 			};
-			const selected = isTrainingSelected?.(item) ?? false;
+			const selected = isTrainingSelected?.(item.id) ?? false;
 
 			return (
 				<Pressable
 					style={{ flex: 1 }}
-					onPress={() => handlePress(item)}
+					onPress={() => handlePress(item.id)}
 					disabled={!onTrainingPress}
 				>
 					<WCard
@@ -69,25 +70,25 @@ export function LearningCatalog({
 							size="lg"
 							style={{ color: palette.titleColor }}
 						>
-							{item.title}
+							{t(item.titleId)}
 						</WText>
 						<WText
 							mode="tertiary"
 							size="sm"
 							style={{ color: palette.descriptionColor }}
 						>
-							{item.description}
+							{t(item.descriptionId)}
 						</WText>
 					</WCard>
 				</Pressable>
 			);
 		},
-		[handlePress, isTrainingSelected, onTrainingPress],
+		[handlePress, isTrainingSelected, onTrainingPress, t],
 	);
 
 	return (
 		<FlatList
-			data={Array.from(trainings)}
+			data={Object.values(EXERCISES_APPS)}
 			renderItem={renderItem}
 			keyExtractor={(item) => item.id.toString()}
 			numColumns={numColumns}
@@ -98,5 +99,3 @@ export function LearningCatalog({
 		/>
 	);
 }
-
-export type { apps as learningAppStyles };

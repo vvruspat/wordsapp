@@ -1,35 +1,37 @@
-import { Word, WordTranslation } from "@repo/types";
+import Word from "@/db/models/Word";
+import WordTranslation from "@/db/models/WordTranslation";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 type ExcerciseState = {
-	currentWord: Word | null;
-	currentTranslation: WordTranslation | null;
+	currentPairs: {
+		word: Word;
+		translation?: WordTranslation;
+	}[];
 	currentCatalog: number | null;
 	currentTopic: number | null;
+	currentRandomWords: Word[];
+	currentRandomTranslations: WordTranslation[];
 };
 
 type ExcerciseActions = {
-	setCurrentWord: (word: Word | null) => void;
-	setCurrentTranslation: (translation: WordTranslation | null) => void;
+	setCurrentPairs: (
+		pairs: { word: Word; translation?: WordTranslation }[],
+	) => void;
 	setCurrentCatalog: (catalog: number | null) => void;
 	setCurrentTopic: (topic: number | null) => void;
+	setCurrentRandomWords: (words: Word[]) => void;
+	setCurrentRandomTranslations: (translations: WordTranslation[]) => void;
 };
 
 export const useExcerciseStore = create<ExcerciseState & ExcerciseActions>()(
 	immer((set) => ({
-		currentWord: null,
-		currentTranslation: null,
+		currentPairs: [],
 		currentCatalog: null,
 		currentTopic: null,
-		setCurrentWord: (word: Word | null) =>
-			set((state) => {
-				state.currentWord = word;
-			}),
-		setCurrentTranslation: (translation: WordTranslation | null) =>
-			set((state) => {
-				state.currentTranslation = translation;
-			}),
+		currentRandomWords: [],
+		currentRandomTranslations: [],
+
 		setCurrentCatalog: (catalog: number | null) =>
 			set((state) => {
 				state.currentCatalog = catalog;
@@ -37,6 +39,18 @@ export const useExcerciseStore = create<ExcerciseState & ExcerciseActions>()(
 		setCurrentTopic: (topic: number | null) =>
 			set((state) => {
 				state.currentTopic = topic;
+			}),
+		setCurrentPairs: (pairs: { word: Word; translation?: WordTranslation }[]) =>
+			set((state) => {
+				state.currentPairs = pairs;
+			}),
+		setCurrentRandomWords: (words: Word[]) =>
+			set((state) => {
+				state.currentRandomWords = words;
+			}),
+		setCurrentRandomTranslations: (translations: WordTranslation[]) =>
+			set((state) => {
+				state.currentRandomTranslations = translations;
 			}),
 	})),
 );

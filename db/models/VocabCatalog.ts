@@ -25,4 +25,3 @@ export default class VocabCatalog extends Model {
 	@field("image")
 	image?: string | null;
 }
-

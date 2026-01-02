@@ -1,1 +1,1 @@
-export * from "./WCharInput";
+export { WCharInput, type WCharInputProps } from "./WCharInput";

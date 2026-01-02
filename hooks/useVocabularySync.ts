@@ -1,7 +1,7 @@
-import Topic from "@/models/Topic";
-import VocabCatalog from "@/models/VocabCatalog";
-import Word from "@/models/Word";
-import WordTranslation from "@/models/WordTranslation";
+import Topic from "@/db/models/Topic";
+import VocabCatalog from "@/db/models/VocabCatalog";
+import Word from "@/db/models/Word";
+import WordTranslation from "@/db/models/WordTranslation";
 import { $fetch } from "@/utils/fetch";
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
@@ -231,7 +231,7 @@ export const useVocabularySync = () => {
 						if (word.audio) {
 							const localAudioPath = await downloadAudioFile(
 								word.audio,
-								word.id,
+								word.remoteId,
 							);
 							return { ...word, audio: localAudioPath };
 						}
@@ -305,12 +305,12 @@ export const useVocabularySync = () => {
 					for (const word of wordsWithLocalAudio) {
 						const existing = await database
 							.get<Word>("words")
-							.query(Q.where("remote_id", word.id))
+							.query(Q.where("remote_id", word.remoteId))
 							.fetch();
 
 						if (existing.length > 0) {
 							await existing[0].update((w) => {
-								w.remoteId = word.id;
+								w.remoteId = word.remoteId;
 								w.remoteCreatedAt = word.created_at;
 								w.topic = Number(word.topic);
 								w.word = word.word;
@@ -322,7 +322,7 @@ export const useVocabularySync = () => {
 							});
 						} else {
 							await database.get<Word>("words").create((w) => {
-								w.remoteId = word.id;
+								w.remoteId = word.remoteId;
 								w.remoteCreatedAt = word.created_at;
 								w.topic = Number(word.topic);
 								w.word = word.word;

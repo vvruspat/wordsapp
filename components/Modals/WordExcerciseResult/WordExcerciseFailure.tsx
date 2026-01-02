@@ -1,6 +1,8 @@
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
+import { getBiggestWordLength } from "@/utils/getBiggestWordLength";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, type ModalProps, View } from "react-native";
 import { SadSmileIcon } from "./assets/SadSmileIcon";
@@ -12,7 +14,29 @@ export const WordExcerciseFailureModal = ({
 	...modalProps
 }: WordExcerciseFailureModalProps) => {
 	const { t } = useTranslation();
-	const { currentWord, currentTranslation } = useExcerciseStore();
+	const { currentPairs } = useExcerciseStore();
+
+	const currentPair = currentPairs[0];
+	const currentWord = currentPair?.word;
+	const currentTranslation = currentPair?.translation;
+	const wordLength = getBiggestWordLength(currentWord?.word || "");
+	const translationLength = getBiggestWordLength(
+		currentTranslation?.translation || "",
+	);
+
+	const maxLength = Math.max(wordLength, translationLength);
+
+	const fontSize = useMemo(() => {
+		if (maxLength <= 10) {
+			return "xl";
+		} else if (maxLength <= 14) {
+			return "lg";
+		} else if (maxLength <= 18) {
+			return "md";
+		} else {
+			return "sm";
+		}
+	}, [maxLength]);
 
 	return (
 		<Modal
@@ -78,7 +102,7 @@ export const WordExcerciseFailureModal = ({
 							<WText mode="tertiary" size="sm">
 								{t("word")}
 							</WText>
-							<WText mode="primary" size="xl" weight="bold">
+							<WText mode="primary" size={fontSize} weight="bold">
 								{currentWord?.word}
 							</WText>
 						</View>
@@ -93,7 +117,7 @@ export const WordExcerciseFailureModal = ({
 							<WText mode="tertiary" size="sm">
 								{t("translation")}
 							</WText>
-							<WText mode="primary" size="xl" weight="bold">
+							<WText mode="primary" size={fontSize} weight="bold">
 								{currentTranslation?.translation}
 							</WText>
 						</View>

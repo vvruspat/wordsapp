@@ -1,13 +1,10 @@
-import { ExerciseFinishProvider } from "@/context/ExerciseFinishContext";
-import { ResultModalProvider } from "@/context/ResultModalContext";
+import { ExerciseProvider } from "@/context/ExerciseContext";
 import { Slot } from "expo-router";
 
 export default function TrainingLayout() {
 	return (
-		<ResultModalProvider>
-			<ExerciseFinishProvider>
-				<Slot />
-			</ExerciseFinishProvider>
-		</ResultModalProvider>
+		<ExerciseProvider>
+			<Slot />
+		</ExerciseProvider>
 	);
 }
