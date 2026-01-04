@@ -3,6 +3,7 @@
 import { Q } from "@nozbe/watermelondb";
 import { Word as WordRemote } from "@repo/types";
 import database from "../database";
+import VocabCatalog from "../models/VocabCatalog";
 import Word from "../models/Word";
 
 const words = database.collections.get<Word>("words");
@@ -130,5 +131,15 @@ export const wordsRepository = {
 		const randomWords = words.sort(() => Math.random() - 0.5).slice(0, count);
 
 		return randomWords;
+	},
+
+	async getTopicsByCatalog(
+		catalog: VocabCatalog["remoteId"],
+	): Promise<Set<Word["topic"]>> {
+		const words = await database
+			.get<Word>("words")
+			.query(Q.where("catalog", catalog))
+			.fetch();
+		return new Set(words.map((word) => word.topic));
 	},
 };

@@ -1,6 +1,5 @@
 import { Model } from "@nozbe/watermelondb";
 import { field } from "@nozbe/watermelondb/decorators";
-import { Language } from "@repo/types";
 
 export default class Topic extends Model {
 	static table = "topics";
@@ -18,7 +17,7 @@ export default class Topic extends Model {
 	description!: string;
 
 	@field("language")
-	language!: Language;
+	language!: string;
 
 	@field("image")
 	image?: string | null;

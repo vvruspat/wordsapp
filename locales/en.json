@@ -42,6 +42,8 @@
 	"dashboard_learning": "Learning",
 	"dashboard_vocabulary": "Vocabulary",
 	"dashboard_profile": "Profile",
+	"level_title": "Level",
+	"topics_title": "Topics",
 	"app_true_or_false_title": "Correct translation",
 	"app_true_or_false_description": "Decide if the translation is correct or not",
 	"app_true_or_false_header": "Is this the correct translation?",

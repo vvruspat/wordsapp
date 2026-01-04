@@ -42,6 +42,8 @@
 	"dashboard_learning": "Изучение",
 	"dashboard_vocabulary": "Словарь",
 	"dashboard_profile": "Профиль",
+	"level_title": "Уровень",
+	"topics_title": "Темы",
 	"app_true_or_false_title": "Правильный перевод",
 	"app_true_or_false_description": "Определите, верен перевод или нет",
 	"app_true_or_false_header": "Является ли это правильным переводом?",

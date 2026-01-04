@@ -231,7 +231,7 @@ export const useVocabularySync = () => {
 						if (word.audio) {
 							const localAudioPath = await downloadAudioFile(
 								word.audio,
-								word.remoteId,
+								word.id,
 							);
 							return { ...word, audio: localAudioPath };
 						}
@@ -288,6 +288,7 @@ export const useVocabularySync = () => {
 								t.remoteCreatedAt = topic.created_at;
 								t.title = topic.title;
 								t.description = topic.description ?? "";
+								t.language = topic.language;
 								t.image = topic.image ?? null;
 							});
 						} else {
@@ -296,6 +297,7 @@ export const useVocabularySync = () => {
 								t.remoteCreatedAt = topic.created_at;
 								t.title = topic.title;
 								t.description = topic.description ?? "";
+								t.language = topic.language;
 								t.image = topic.image ?? null;
 							});
 						}
@@ -305,12 +307,12 @@ export const useVocabularySync = () => {
 					for (const word of wordsWithLocalAudio) {
 						const existing = await database
 							.get<Word>("words")
-							.query(Q.where("remote_id", word.remoteId))
+							.query(Q.where("remote_id", word.id))
 							.fetch();
 
 						if (existing.length > 0) {
 							await existing[0].update((w) => {
-								w.remoteId = word.remoteId;
+								w.remoteId = word.id;
 								w.remoteCreatedAt = word.created_at;
 								w.topic = Number(word.topic);
 								w.word = word.word;
@@ -322,7 +324,7 @@ export const useVocabularySync = () => {
 							});
 						} else {
 							await database.get<Word>("words").create((w) => {
-								w.remoteId = word.remoteId;
+								w.remoteId = word.id;
 								w.remoteCreatedAt = word.created_at;
 								w.topic = Number(word.topic);
 								w.word = word.word;

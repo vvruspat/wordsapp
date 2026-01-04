@@ -42,6 +42,8 @@
 	"dashboard_learning": "Leren",
 	"dashboard_vocabulary": "Woordenschat",
 	"dashboard_profile": "Profiel",
+	"level_title": "Niveau",
+	"topics_title": "Onderwerpen",
 	"app_true_or_false_title": "Correcte vertaling",
 	"app_true_or_false_description": "Bepaal of de vertaling correct is",
 	"app_true_or_false_header": "Is dit de juiste vertaling?",
