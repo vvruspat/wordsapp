@@ -99,6 +99,7 @@ export const useVocabularySync = () => {
 		setTopics,
 		setLanguageLearn,
 		setSyncing,
+		setSyncProgress,
 		setLastSyncTime,
 		setError,
 		clearError,
@@ -106,6 +107,8 @@ export const useVocabularySync = () => {
 
 	const syncVocabulary = useCallback(
 		async (languageLearn?: Language) => {
+			let didSucceed = false;
+
 			if (!user) {
 				setError("User not authenticated");
 				return;
@@ -127,6 +130,7 @@ export const useVocabularySync = () => {
 			}
 
 			setSyncing(true);
+			setSyncProgress(0);
 			clearError();
 			setLanguageLearn(targetLanguage);
 
@@ -145,9 +149,9 @@ export const useVocabularySync = () => {
 					setError(
 						`Failed to fetch catalogs: ${catalogsResponse.error?.message}`,
 					);
-					setSyncing(false);
 					return;
 				}
+				setSyncProgress(0.1);
 
 				console.log("Catalogs fetched", catalogsResponse.data);
 				const catalogs: VocabCatalogDto[] = catalogsResponse.data?.items || [];
@@ -165,9 +169,9 @@ export const useVocabularySync = () => {
 
 				if (topicsResponse.status === "error") {
 					setError(`Failed to fetch topics: ${topicsResponse.error?.message}`);
-					setSyncing(false);
 					return;
 				}
+				setSyncProgress(0.2);
 
 				const topics: TopicDto[] = topicsResponse.data?.items || [];
 
@@ -182,9 +186,9 @@ export const useVocabularySync = () => {
 
 				if (wordsResponse.status === "error") {
 					setError(`Failed to fetch words: ${wordsResponse.error?.message}`);
-					setSyncing(false);
 					return;
 				}
+				setSyncProgress(0.35);
 
 				const words: WordDto[] = wordsResponse.data?.items || [];
 
@@ -217,6 +221,7 @@ export const useVocabularySync = () => {
 							translations.push(...translationResponse.data.items);
 						}
 					}
+					setSyncProgress(0.45);
 				} catch (error) {
 					console.warn(`Failed to fetch translation for words:`, error);
 					// Continue with other words even if one fails
@@ -225,7 +230,12 @@ export const useVocabularySync = () => {
 				console.log("Translations fetched", translations);
 
 				console.log("Downloading audio files");
+				setSyncProgress(0.5);
 				// Download audio files for words that have audio URLs
+				const audioCandidates = words.filter((word) => word.audio);
+				const audioCount = audioCandidates.length;
+				let audioCompleted = 0;
+
 				const wordsWithLocalAudio = await Promise.all(
 					words.map(async (word) => {
 						if (word.audio) {
@@ -233,13 +243,23 @@ export const useVocabularySync = () => {
 								word.audio,
 								word.id,
 							);
+							if (audioCount > 0) {
+								audioCompleted += 1;
+								const audioProgress =
+									0.5 + (audioCompleted / audioCount) * 0.3;
+								setSyncProgress(audioProgress);
+							}
 							return { ...word, audio: localAudioPath };
 						}
 						return word;
 					}),
 				);
+				if (audioCount === 0) {
+					setSyncProgress(0.8);
+				}
 
 				console.log("Storing in local database");
+				setSyncProgress(0.85);
 				// Store in local database
 				await database.write(async () => {
 					// Clear existing data for this language (optional - you might want to keep it)
@@ -373,11 +393,16 @@ export const useVocabularySync = () => {
 				setTranslations(translations);
 				setLastSyncTime(Date.now());
 
-				setSyncing(false);
+				setSyncProgress(1);
+				didSucceed = true;
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : "Unknown error occurred";
 				setError(`Sync failed: ${errorMessage}`);
+			} finally {
+				if (!didSucceed) {
+					setSyncProgress(0);
+				}
 				setSyncing(false);
 			}
 		},
@@ -390,6 +415,7 @@ export const useVocabularySync = () => {
 			setTopics,
 			setLanguageLearn,
 			setSyncing,
+			setSyncProgress,
 			setLastSyncTime,
 			setError,
 			clearError,
