@@ -1,7 +1,7 @@
 // taskRepository.ts
 
 import { Q } from "@nozbe/watermelondb";
-import { Word as WordRemote } from "@repo/types";
+import { Word as WordRemote } from "@vvruspat/words-types";
 import database from "../database";
 import VocabCatalog from "../models/VocabCatalog";
 import Word from "../models/Word";

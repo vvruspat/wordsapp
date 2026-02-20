@@ -1,5 +1,5 @@
 import { Q } from "@nozbe/watermelondb";
-import { Topic as TopicRemote } from "@repo/types";
+import { Topic as TopicRemote } from "@vvruspat/words-types";
 import database from "../database";
 import Topic from "../models/Topic";
 
@@ -49,8 +49,7 @@ export const topicsRepository = {
 				if (topicData.title !== undefined) t.title = topicData.title;
 				if (topicData.description !== undefined)
 					t.description = topicData.description;
-				if (topicData.language !== undefined)
-					t.language = topicData.language;
+				if (topicData.language !== undefined) t.language = topicData.language;
 				if (topicData.image !== undefined) t.image = topicData.image;
 			});
 		});
@@ -88,4 +87,3 @@ export const topicsRepository = {
 		return database.get<Topic>("topics").query().fetch();
 	},
 };
-

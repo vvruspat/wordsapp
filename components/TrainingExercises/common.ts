@@ -1,4 +1,4 @@
-import { Word } from "@repo/types";
+import { Word } from "@vvruspat/words-types";
 
 export type ExerciseProps = {
 	onFinish?: () => void;

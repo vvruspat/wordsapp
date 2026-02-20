@@ -4,7 +4,7 @@ import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { useVocabularySync } from "@/hooks/useVocabularySync";
 import { Colors } from "@/mob-ui/brand/colors";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import { Language } from "@repo/types";
+import { Language } from "@vvruspat/words-types";
 import Constants from "expo-constants";
 import { Tabs } from "expo-router";
 import { useEffect, useRef } from "react";

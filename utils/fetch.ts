@@ -1,4 +1,4 @@
-import type { paths as Paths } from "@repo/types";
+import type { paths as Paths } from "@vvruspat/words-types";
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { genericErrorMessage } from "./genericErrorMessage";

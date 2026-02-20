@@ -3,7 +3,7 @@ import { $fetch } from "@/utils/fetch";
 import { setUILanguage } from "@/utils/setUILanguage";
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
-import { components, Language } from "@repo/types";
+import { components, Language } from "@vvruspat/words-types";
 import { authenticateAsync } from "expo-local-authentication";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";

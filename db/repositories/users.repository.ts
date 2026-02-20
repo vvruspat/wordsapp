@@ -1,5 +1,5 @@
 import { Q } from "@nozbe/watermelondb";
-import { User as UserRemote } from "@repo/types";
+import { User as UserRemote } from "@vvruspat/words-types";
 import database from "../database";
 import User from "../models/User";
 

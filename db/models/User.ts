@@ -1,6 +1,6 @@
 import { Model } from "@nozbe/watermelondb";
 import { field } from "@nozbe/watermelondb/decorators";
-import { User as IUser } from "@repo/types";
+import { User as IUser } from "@vvruspat/words-types";
 
 export default class User extends Model implements Omit<IUser, "id"> {
 	static table = "users";

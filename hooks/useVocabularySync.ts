@@ -5,7 +5,7 @@ import WordTranslation from "@/db/models/WordTranslation";
 import { $fetch } from "@/utils/fetch";
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
-import { components, Language } from "@repo/types";
+import { components, Language } from "@vvruspat/words-types";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback } from "react";
 import { useSessionUser } from "./useSession";
@@ -245,8 +245,7 @@ export const useVocabularySync = () => {
 							);
 							if (audioCount > 0) {
 								audioCompleted += 1;
-								const audioProgress =
-									0.5 + (audioCompleted / audioCount) * 0.3;
+								const audioProgress = 0.5 + (audioCompleted / audioCount) * 0.3;
 								setSyncProgress(audioProgress);
 							}
 							return { ...word, audio: localAudioPath };

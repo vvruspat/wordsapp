@@ -1,4 +1,4 @@
-import { AVAILABLE_LANGUAGES, Language } from "@repo/types";
+import { AVAILABLE_LANGUAGES, Language } from "@vvruspat/words-types";
 
 export type LanguageItem = {
 	name: (typeof AVAILABLE_LANGUAGES)[keyof typeof AVAILABLE_LANGUAGES];

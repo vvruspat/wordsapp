@@ -1,4 +1,4 @@
-import { components } from "@repo/types";
+import { components } from "@vvruspat/words-types";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 

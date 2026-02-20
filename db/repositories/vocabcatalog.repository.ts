@@ -1,5 +1,5 @@
 import { Q } from "@nozbe/watermelondb";
-import { VocabCatalog as VocabCatalogRemote } from "@repo/types";
+import { VocabCatalog as VocabCatalogRemote } from "@vvruspat/words-types";
 import database from "../database";
 import VocabCatalog from "../models/VocabCatalog";
 

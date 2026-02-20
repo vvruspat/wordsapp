@@ -6,7 +6,7 @@ import { translationsRepository } from "@/db/repositories/translations.repositor
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
-import { Word } from "@repo/types";
+import { Word } from "@vvruspat/words-types";
 import { createContext, ReactNode, useCallback, useRef, useState } from "react";
 
 type ExerciseType = {
