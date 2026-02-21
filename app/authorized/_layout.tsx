@@ -3,6 +3,7 @@ import { useSessionUser } from "@/hooks/useSession";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { useVocabularySync } from "@/hooks/useVocabularySync";
 import { Colors } from "@/mob-ui/brand/colors";
+import { BottomTabBar } from "@react-navigation/bottom-tabs";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Language } from "@vvruspat/words-types";
 import Constants from "expo-constants";
@@ -68,8 +69,13 @@ export default function RootLayout() {
 
 	return (
 		<View style={styles.container}>
-			<SyncProgressBar />
 			<Tabs
+				tabBar={(props) => (
+					<>
+						<SyncProgressBar />
+						<BottomTabBar {...props} />
+					</>
+				)}
 				screenOptions={{
 					tabBarItemStyle: { paddingTop: 8 },
 					tabBarActiveTintColor: Colors.primary.base,

@@ -76,7 +76,7 @@ const downloadAudioFile = async (
 		const downloadResult = await FileSystem.downloadAsync(audioUrl, localPath);
 		if (downloadResult.status === 200) {
 			console.log(`Downloaded audio for word ${wordId} to ${localPath}`);
-			return fileName;
+			return localPath;
 		} else {
 			console.warn(
 				`Failed to download audio for word ${wordId}: ${downloadResult.status}`,
@@ -231,14 +231,32 @@ export const useVocabularySync = () => {
 
 				console.log("Downloading audio files");
 				setSyncProgress(0.5);
-				// Download audio files for words that have audio URLs
-				const audioCandidates = words.filter((word) => word.audio);
+
+				// Build a map of already-downloaded local audio paths from the DB
+				const existingWords = await database
+					.get<Word>("words")
+					.query(Q.where("language", targetLanguage))
+					.fetch();
+				const existingAudioMap = new Map<number, string>(
+					existingWords
+						.filter((w) => w.audio && !w.audio.startsWith("http"))
+						.map((w) => [w.remoteId, w.audio]),
+				);
+
+				// Download audio files only for words that don't have a local path yet
+				const audioCandidates = words.filter(
+					(word) => word.audio && !existingAudioMap.has(word.id),
+				);
 				const audioCount = audioCandidates.length;
 				let audioCompleted = 0;
 
 				const wordsWithLocalAudio = await Promise.all(
 					words.map(async (word) => {
 						if (word.audio) {
+							const existingLocal = existingAudioMap.get(word.id);
+							if (existingLocal) {
+								return { ...word, audio: existingLocal };
+							}
 							const localAudioPath = await downloadAudioFile(
 								word.audio,
 								word.id,

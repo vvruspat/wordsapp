@@ -2,11 +2,9 @@ import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { Colors } from "@/mob-ui/brand/colors";
 import { memo } from "react";
 import { StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export const SyncProgressBar = memo(() => {
 	const { isSyncing, syncProgress } = useVocabularyStore();
-	const insets = useSafeAreaInsets();
 
 	if (!isSyncing) {
 		return null;
@@ -16,13 +14,7 @@ export const SyncProgressBar = memo(() => {
 	const widthPercent = `${Math.round(clamped * 100)}%`;
 
 	return (
-		<View
-			pointerEvents="none"
-			style={[
-				styles.container,
-				{ paddingBottom: Math.max(8, insets.bottom + 4) },
-			]}
-		>
+		<View pointerEvents="none" style={styles.container}>
 			<View style={styles.track}>
 				<View style={[styles.bar, { width: widthPercent }]} />
 			</View>
@@ -32,12 +24,11 @@ export const SyncProgressBar = memo(() => {
 
 const styles = StyleSheet.create({
 	container: {
-		position: "absolute",
-		left: 0,
-		right: 0,
-		bottom: 0,
 		paddingHorizontal: 16,
-		zIndex: 5,
+		paddingVertical: 4,
+		backgroundColor: Colors.backgrounds.primaryBackground,
+		borderTopWidth: 1,
+		borderTopColor: Colors.greys.whiteAlpha60,
 	},
 	track: {
 		height: 4,
