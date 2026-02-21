@@ -204,7 +204,7 @@ export const useVocabularySync = () => {
 						"get",
 						{
 							query: {
-								words: words.join(","),
+								words: words.map((w) => w.id).join(","),
 								offset: 0,
 								limit: 100000,
 								language: user.language_speak,
@@ -454,7 +454,7 @@ export const useVocabularySync = () => {
 				wordIds.length > 0
 					? await database
 							.get<WordTranslation>("word_translations")
-							.query(Q.where("word", Q.oneOf(wordIds.map(String))))
+							.query(Q.where("word", Q.oneOf(wordIds)))
 							.fetch()
 					: [];
 
