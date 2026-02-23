@@ -1,44 +1,47 @@
-import Word from "@/db/models/Word";
-import WordTranslation from "@/db/models/WordTranslation";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
+import Word from "@/db/models/Word";
+import WordTranslation from "@/db/models/WordTranslation";
 
 type ExcerciseState = {
 	currentPairs: {
 		word: Word;
 		translation?: WordTranslation;
 	}[];
-	currentCatalog: number | null;
-	currentTopic: number | null;
+	currentCatalogs: number[];
+	currentTopics: number[];
 	currentRandomWords: Word[];
 	currentRandomTranslations: WordTranslation[];
+	_hasHydrated: boolean;
 };
 
 type ExcerciseActions = {
 	setCurrentPairs: (
 		pairs: { word: Word; translation?: WordTranslation }[],
 	) => void;
-	setCurrentCatalog: (catalog: number | null) => void;
-	setCurrentTopic: (topic: number | null) => void;
+	setCurrentCatalogs: (catalogs: number[]) => void;
+	setCurrentTopics: (topics: number[]) => void;
 	setCurrentRandomWords: (words: Word[]) => void;
 	setCurrentRandomTranslations: (translations: WordTranslation[]) => void;
+	setHasHydrated: (value: boolean) => void;
 };
 
 export const useExcerciseStore = create<ExcerciseState & ExcerciseActions>()(
 	immer((set) => ({
 		currentPairs: [],
-		currentCatalog: null,
-		currentTopic: null,
+		currentCatalogs: [],
+		currentTopics: [],
 		currentRandomWords: [],
 		currentRandomTranslations: [],
+		_hasHydrated: false,
 
-		setCurrentCatalog: (catalog: number | null) =>
+		setCurrentCatalogs: (catalogs: number[]) =>
 			set((state) => {
-				state.currentCatalog = catalog;
+				state.currentCatalogs = catalogs;
 			}),
-		setCurrentTopic: (topic: number | null) =>
+		setCurrentTopics: (topics: number[]) =>
 			set((state) => {
-				state.currentTopic = topic;
+				state.currentTopics = topics;
 			}),
 		setCurrentPairs: (pairs: { word: Word; translation?: WordTranslation }[]) =>
 			set((state) => {
@@ -51,6 +54,10 @@ export const useExcerciseStore = create<ExcerciseState & ExcerciseActions>()(
 		setCurrentRandomTranslations: (translations: WordTranslation[]) =>
 			set((state) => {
 				state.currentRandomTranslations = translations;
+			}),
+		setHasHydrated: (value: boolean) =>
+			set((state) => {
+				state._hasHydrated = value;
 			}),
 	})),
 );

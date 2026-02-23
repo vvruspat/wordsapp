@@ -1,4 +1,6 @@
 import { SyncProgressBar } from "@/components/SyncProgressBar";
+import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { useVocabularySync } from "@/hooks/useVocabularySync";
@@ -18,7 +20,31 @@ export default function RootLayout() {
 	const { syncVocabulary } = useVocabularySync();
 	const { user } = useSessionUser();
 	const { isSyncing } = useVocabularyStore();
+	const { setCurrentCatalogs, setCurrentTopics, setHasHydrated, _hasHydrated } =
+		useExcerciseStore();
 	const hasSyncedRef = useRef(false);
+
+	useEffect(() => {
+		if (!user?.userId || _hasHydrated) return;
+
+		const userId = user.userId.toString();
+
+		(async () => {
+			const [savedCatalogs, savedTopics] = await Promise.all([
+				userSettingsRepository.get(userId, "selected_catalogs"),
+				userSettingsRepository.get(userId, "selected_topics"),
+			]);
+
+			if (savedCatalogs) {
+				setCurrentCatalogs(JSON.parse(savedCatalogs));
+			}
+			if (savedTopics) {
+				setCurrentTopics(JSON.parse(savedTopics));
+			}
+
+			setHasHydrated(true);
+		})();
+	}, [user?.userId, _hasHydrated, setCurrentCatalogs, setCurrentTopics, setHasHydrated]);
 
 	useEffect(() => {
 		if (!user) {

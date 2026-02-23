@@ -3,6 +3,7 @@
 import { Q } from "@nozbe/watermelondb";
 import { Word as WordRemote } from "@vvruspat/words-types";
 import database from "../database";
+import LearningProgress from "../models/LearningProgress";
 import VocabCatalog from "../models/VocabCatalog";
 import Word from "../models/Word";
 
@@ -76,17 +77,17 @@ export const wordsRepository = {
 	async getRandomWord(
 		language: string,
 		exclude: Word["remoteId"][] = [],
-		catalog?: number,
-		topic?: number,
+		catalogs?: number[],
+		topics?: number[],
 	): Promise<Word> {
 		const queryConditions = [Q.where("language", language)];
 
-		if (catalog) {
-			queryConditions.push(Q.where("catalog", catalog));
+		if (catalogs && catalogs.length > 0) {
+			queryConditions.push(Q.where("catalog", Q.oneOf(catalogs)));
 		}
 
-		if (topic) {
-			queryConditions.push(Q.where("topic", topic));
+		if (topics && topics.length > 0) {
+			queryConditions.push(Q.where("topic", Q.oneOf(topics)));
 		}
 
 		if (exclude.length > 0) {
@@ -111,35 +112,86 @@ export const wordsRepository = {
 		language: string,
 		count: number = 1,
 		exclude: Word["remoteId"][] = [],
-		catalog?: number,
-		topic?: number,
+		catalogs?: number[],
+		topics?: number[],
+		userId?: number,
 	): Promise<Word[]> {
 		const queryConditions = [Q.where("language", language)];
-		if (catalog) {
-			queryConditions.push(Q.where("catalog", catalog));
+		if (catalogs && catalogs.length > 0) {
+			queryConditions.push(Q.where("catalog", Q.oneOf(catalogs)));
 		}
-		if (topic) {
-			queryConditions.push(Q.where("topic", topic));
+		if (topics && topics.length > 0) {
+			queryConditions.push(Q.where("topic", Q.oneOf(topics)));
 		}
 		if (exclude.length > 0) {
 			queryConditions.push(Q.where("remote_id", Q.notIn(exclude)));
 		}
-		const words = await database
+		const candidates = await database
 			.get<Word>("words")
 			.query(...queryConditions)
 			.fetch();
-		const randomWords = words.sort(() => Math.random() - 0.5).slice(0, count);
 
-		return randomWords;
+		if (!userId) {
+			return candidates.sort(() => Math.random() - 0.5).slice(0, count);
+		}
+
+		const progressRecords = await database
+			.get<LearningProgress>("learning_progress")
+			.query(Q.where("user_id", userId))
+			.fetch();
+
+		const progressByWordId = new Map(
+			progressRecords.map((r) => [r.wordId, r]),
+		);
+
+		const oneMonthAgo = new Date();
+		oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+		const untrained: Word[] = [];
+		const stale: Word[] = [];
+		const recent: Word[] = [];
+
+		for (const word of candidates) {
+			const progress = progressByWordId.get(word.remoteId);
+			if (!progress) {
+				untrained.push(word);
+			} else if (new Date(progress.lastReview) < oneMonthAgo) {
+				stale.push(word);
+			} else {
+				recent.push(word);
+			}
+		}
+
+		// Sort stale by last_review ascending (oldest first)
+		stale.sort(
+			(a, b) =>
+				new Date(progressByWordId.get(a.remoteId)?.lastReview ?? 0).getTime() -
+				new Date(progressByWordId.get(b.remoteId)?.lastReview ?? 0).getTime(),
+		);
+
+		// Shuffle untrained and recent
+		untrained.sort(() => Math.random() - 0.5);
+		recent.sort(() => Math.random() - 0.5);
+
+		return [...untrained, ...stale, ...recent].slice(0, count);
 	},
 
-	async getTopicsByCatalog(
-		catalog: VocabCatalog["remoteId"],
+	async getTopicsByCatalogs(
+		catalogs: VocabCatalog["remoteId"][],
 	): Promise<Set<Word["topic"]>> {
+		if (catalogs.length === 0) return new Set();
 		const words = await database
 			.get<Word>("words")
-			.query(Q.where("catalog", catalog))
+			.query(Q.where("catalog", Q.oneOf(catalogs)))
 			.fetch();
 		return new Set(words.map((word) => word.topic));
+	},
+
+	async getByTopicIds(topicIds: number[]): Promise<Word[]> {
+		if (topicIds.length === 0) return [];
+		return database
+			.get<Word>("words")
+			.query(Q.where("topic", Q.oneOf(topicIds)))
+			.fetch();
 	},
 };

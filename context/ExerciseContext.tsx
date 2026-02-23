@@ -1,13 +1,15 @@
+import { Word } from "@vvruspat/words-types";
+import { createContext, ReactNode, useCallback, useRef, useState } from "react";
 import {
 	WordExcerciseFailureModal,
 	WordExcerciseSuccessModal,
 } from "@/components/Modals/WordExcerciseResult";
+import { learningRepository } from "@/db/repositories/learning.repository";
 import { translationsRepository } from "@/db/repositories/translations.repository";
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { useLearningSync } from "@/hooks/useLearningSync";
 import { useSessionUser } from "@/hooks/useSession";
-import { Word } from "@vvruspat/words-types";
-import { createContext, ReactNode, useCallback, useRef, useState } from "react";
 
 type ExerciseType = {
 	showSuccessModal: () => void;
@@ -22,6 +24,7 @@ type ExerciseType = {
 	) => Promise<void>;
 	onFailure: (wordId: Word["id"], score: number, showModal?: boolean) => void;
 	onSuccess: (wordId: Word["id"], score: number, showModal?: boolean) => void;
+	setCurrentTrainingId: (trainingId: number | null) => void;
 };
 
 const ExerciseContext = createContext<ExerciseType>({
@@ -33,6 +36,7 @@ const ExerciseContext = createContext<ExerciseType>({
 	loadData: async () => {},
 	onFailure: () => {},
 	onSuccess: () => {},
+	setCurrentTrainingId: () => {},
 });
 
 export { ExerciseContext };
@@ -44,14 +48,16 @@ export type Exercise = "success" | "failure";
 
 export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const [modalVisible, setModalVisible] = useState<Exercise | null>(null);
+	const [currentTrainingId, setCurrentTrainingId] = useState<number | null>(null);
 
 	const completeListeners = useRef(new Set<() => void>());
 
 	const { user } = useSessionUser();
+	const { syncToBackend } = useLearningSync();
 
 	const {
-		currentCatalog,
-		currentTopic,
+		currentCatalogs,
+		currentTopics,
 		setCurrentPairs,
 		setCurrentRandomWords,
 		setCurrentRandomTranslations,
@@ -106,8 +112,9 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				user?.language_learn ?? "en",
 				numberOfPairs * 4, // multiply by 4 to get more words for the exercise for the case when there are no translations
 				[],
-				currentCatalog ?? undefined,
-				currentTopic ?? undefined,
+				currentCatalogs.length > 0 ? currentCatalogs : undefined,
+				currentTopics.length > 0 ? currentTopics : undefined,
+				user?.userId,
 			);
 			const translations = await translationsRepository.getByWordIds(
 				user?.language_speak ?? "en",
@@ -130,8 +137,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				user?.language_learn ?? "en",
 				numberOfRandomWords,
 				words.map((word) => word.remoteId),
-				currentCatalog ?? undefined,
-				currentTopic ?? undefined,
+				currentCatalogs.length > 0 ? currentCatalogs : undefined,
+				currentTopics.length > 0 ? currentTopics : undefined,
 			);
 
 			const randomTranslations =
@@ -145,32 +152,67 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			setCurrentRandomTranslations(randomTranslations);
 		},
 		[
-			currentCatalog,
-			currentTopic,
+			currentCatalogs,
+			currentTopics,
 			setCurrentPairs,
 			setCurrentRandomWords,
 			setCurrentRandomTranslations,
 			user?.language_speak,
 			user?.language_learn,
+			user?.userId,
 		],
 	);
 
 	const onFailure = useCallback(
-		(wordId: Word["id"], score: number, showModal: boolean = true) => {
-			console.log("onFailure", wordId, score);
-			// TODO: Update score in database
+		(wordId: Word["id"], scoreDelta: number, showModal: boolean = true) => {
+			const pair = useExcerciseStore
+				.getState()
+				.currentPairs.find((p) => p.word.remoteId === wordId);
+			const translationId = pair?.translation?.remoteId;
+
+			if (user?.userId) {
+				learningRepository
+					.recordResult({
+						userId: user.userId,
+						wordId,
+						scoreDelta,
+						result: "failure",
+						translationId,
+						trainingId: currentTrainingId ?? undefined,
+					})
+					.then(() => syncToBackend())
+					.catch(console.error);
+			}
+
 			showModal && showFailureModal();
 		},
-		[showFailureModal],
+		[showFailureModal, user, currentTrainingId, syncToBackend],
 	);
 
 	const onSuccess = useCallback(
-		(wordId: Word["id"], score: number, showModal: boolean = true) => {
-			console.log("onSuccess", wordId, score);
-			// TODO: Update score in database
+		(wordId: Word["id"], scoreDelta: number, showModal: boolean = true) => {
+			const pair = useExcerciseStore
+				.getState()
+				.currentPairs.find((p) => p.word.remoteId === wordId);
+			const translationId = pair?.translation?.remoteId;
+
+			if (user?.userId) {
+				learningRepository
+					.recordResult({
+						userId: user.userId,
+						wordId,
+						scoreDelta,
+						result: "success",
+						translationId,
+						trainingId: currentTrainingId ?? undefined,
+					})
+					.then(() => syncToBackend())
+					.catch(console.error);
+			}
+
 			showModal && showSuccessModal();
 		},
-		[showSuccessModal],
+		[showSuccessModal, user, currentTrainingId, syncToBackend],
 	);
 
 	const value: ExerciseValue = {
@@ -182,6 +224,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		loadData,
 		onFailure,
 		onSuccess,
+		setCurrentTrainingId,
 	};
 
 	return (

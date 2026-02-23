@@ -1,11 +1,26 @@
 import {
-	schemaMigrations,
 	addColumns,
 	createTable,
+	schemaMigrations,
 } from "@nozbe/watermelondb/Schema/migrations";
 
 export default schemaMigrations({
 	migrations: [
+		{
+			toVersion: 3,
+			steps: [
+				addColumns({
+					table: "learning_progress",
+					columns: [
+						{ name: "remote_id", type: "number", isIndexed: true, isOptional: true },
+						{ name: "last_review", type: "string" },
+						{ name: "created_at_remote", type: "string" },
+						{ name: "training", type: "number", isOptional: true },
+						{ name: "translation", type: "number", isOptional: true },
+					],
+				}),
+			],
+		},
 		{
 			toVersion: 2,
 			steps: [
