@@ -66,6 +66,12 @@
 	"mix_training_instruction": "Select the trainings you want to combine",
 	"mix_training_start": "Start mix",
 	"mix_training_button": "Mix training",
+	"app_cards_title": "Flashcards",
+	"app_cards_description": "See a word and decide if you know it",
+	"app_cards_header": "Do you know this word?",
+	"cards_know": "I know",
+	"cards_dont_know": "I don't know",
+	"cards_right_answer": "Right answer",
 
 	"English": "English",
 	"Spanish": "Spanish",

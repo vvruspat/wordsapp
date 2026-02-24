@@ -1,3 +1,4 @@
+export * from "./CardsExercise";
 export * from "./ChooseTranslationExercise";
 export * from "./ListeningPracticeExercise";
 export * from "./MatchWordsExercise";

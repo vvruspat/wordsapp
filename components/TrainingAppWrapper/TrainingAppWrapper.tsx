@@ -17,6 +17,7 @@ import {
 import { LearningTrainingName } from "../LearningCatalog";
 import EXERCISES_APPS from "../LearningCatalog/types";
 import {
+	CardsExercise,
 	ChooseTranslationExercise,
 	ListeningPracticeExercise,
 	MatchWordsExercise,
@@ -145,7 +146,8 @@ export const TrainingAppWrapper = ({
 			{currentExercise === "true_or_false" && <TrueOrFalseExercise />}
 			{currentExercise === "type_translation" && <TypeTranslationExercise />}
 			{currentExercise === "type_word" && <TypeWordExercise />}
-</SafeAreaView>
+			{currentExercise === "cards" && <CardsExercise />}
+		</SafeAreaView>
 	);
 };
 
