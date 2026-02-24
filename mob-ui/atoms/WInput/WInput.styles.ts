@@ -1,6 +1,6 @@
-import { StyleSheet } from "react-native";
 import { Colors } from "@/mob-ui/brand/colors";
 import { typography } from "@/mob-ui/brand/typography";
+import { StyleSheet } from "react-native";
 import { styles as wTextStyles } from "../WText/WText.styles";
 
 export const styles = StyleSheet.create({
@@ -23,6 +23,7 @@ export const styles = StyleSheet.create({
 		borderRadius: 16,
 		paddingHorizontal: 18,
 		paddingVertical: 0,
+		overflow: "hidden",
 		shadowOffset: { width: 0, height: 0 },
 		height: 56,
 	},
@@ -59,6 +60,12 @@ export const styles = StyleSheet.create({
 		padding: 0,
 		/** web only */
 		outlineWidth: 0,
+	},
+
+	blur: {
+		...StyleSheet.absoluteFillObject,
+		borderRadius: 16,
+		backgroundColor: Colors.dark.black40,
 	},
 
 	actionButton: {

@@ -73,6 +73,13 @@
 	"cards_dont_know": "I don't know",
 	"cards_right_answer": "Right answer",
 
+	"profile_save_button": "Save",
+	"profile_save_success": "Profile updated",
+	"profile_save_error": "Failed to update profile",
+	"profile_verify_email_button": "Verify Email",
+	"profile_email_verified": "Email verified",
+	"profile_email_not_verified": "Email not verified",
+
 	"English": "English",
 	"Spanish": "Spanish",
 	"Dutch": "Dutch",

@@ -72,6 +72,14 @@
 	"cards_know": "Ik ken het",
 	"cards_dont_know": "Ik ken het niet",
 	"cards_right_answer": "Juiste antwoord",
+
+	"profile_save_button": "Opslaan",
+	"profile_save_success": "Profiel bijgewerkt",
+	"profile_save_error": "Profiel bijwerken mislukt",
+	"profile_verify_email_button": "E-mail verifiëren",
+	"profile_email_verified": "E-mail geverifieerd",
+	"profile_email_not_verified": "E-mail niet geverifieerd",
+
 	"English": "Engels",
 	"Spanish": "Spaans",
 	"Dutch": "Nederlands",
