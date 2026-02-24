@@ -22,6 +22,7 @@ import {
 	MatchWordsExercise,
 	TrueOrFalseExercise,
 	TypeTranslationExercise,
+	TypeWordExercise,
 } from "../TrainingExercises";
 import { trainingAppWrapperStyles } from "./TrainingAppWrapper.styles";
 
@@ -143,7 +144,8 @@ export const TrainingAppWrapper = ({
 			{currentExercise === "match_words" && <MatchWordsExercise />}
 			{currentExercise === "true_or_false" && <TrueOrFalseExercise />}
 			{currentExercise === "type_translation" && <TypeTranslationExercise />}
-		</SafeAreaView>
+			{currentExercise === "type_word" && <TypeWordExercise />}
+</SafeAreaView>
 	);
 };
 

@@ -4,3 +4,4 @@ export * from "./MatchWordsExercise";
 export * from "./TrainingPromptCard";
 export * from "./TrueOrFalseExercise";
 export * from "./TypeTranslationExercise";
+export * from "./TypeWordExercise";

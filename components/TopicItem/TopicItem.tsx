@@ -15,7 +15,8 @@ export const TopicItem = (props: TopicItemProps) => {
 		<Pressable onPress={props.onPress}>
 			<WCard
 				style={{
-					borderWidth: props.selected ? 2 : 0,
+					boxSizing: "border-box",
+					borderWidth: 2,
 					borderColor: props.selected ? Colors.greys.white : Colors.transparent,
 				}}
 			>
@@ -30,7 +31,12 @@ export const TopicItem = (props: TopicItemProps) => {
 						{props.title}
 					</WText>
 					{props.totalCount !== undefined && (
-						<WText mode="secondary" size="md" align="right" style={{ flexShrink: 0, marginLeft: 8 }}>
+						<WText
+							mode="secondary"
+							size="md"
+							align="right"
+							style={{ flexShrink: 0, marginLeft: 8 }}
+						>
 							{props.learnedCount ?? 0}/{props.totalCount}
 						</WText>
 					)}

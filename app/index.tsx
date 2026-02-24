@@ -1,7 +1,7 @@
 import SelectLanguageISpeakModal from "@/components/Modals/SelectLanguageISpeakModal";
 import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLearnModal";
 import { SelectLanguageButton } from "@/components/SelectLanguageButton";
-import { LANGUAGES, LanguageItem } from "@/constants/languages";
+import { LanguageItem } from "@/constants/languages";
 import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WInput, WText } from "@/mob-ui";
 import { $fetch } from "@/utils/fetch";
@@ -76,12 +76,7 @@ export default function SignUp() {
 	};
 
 	useEffect(() => {
-		const languageItem = LANGUAGES.find((l) => l.isoCode === languageISpeak);
-
-		if (languageItem) {
-			const languageTag = `${languageItem.isoCode}-${languageItem.countryCode}`;
-			i18n.changeLanguage(languageTag);
-		}
+		i18n.changeLanguage(languageISpeak);
 	}, [languageISpeak, i18n]);
 
 	return (

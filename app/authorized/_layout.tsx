@@ -9,13 +9,24 @@ import { BottomTabBar } from "@react-navigation/bottom-tabs";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Language } from "@vvruspat/words-types";
 import Constants from "expo-constants";
+import i18n from "@/i18n";
 import { Tabs } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 
 export default function RootLayout() {
 	const { t } = useTranslation();
+
+	// react-i18next v16 + React 19: useSyncExternalStore subscription can be
+	// unreliable when subscribe deps are unstable. Manually subscribe so that
+	// language changes always trigger a re-render of this layout and its children.
+	const [, forceUpdate] = useState(0);
+	useEffect(() => {
+		const handler = () => forceUpdate((c) => c + 1);
+		i18n.on("languageChanged", handler);
+		return () => i18n.off("languageChanged", handler);
+	}, []);
 
 	const { syncVocabulary } = useVocabularySync();
 	const { user } = useSessionUser();

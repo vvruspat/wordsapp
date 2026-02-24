@@ -1,7 +1,3 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { FlatList, ListRenderItemInfo, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { TopicItem } from "@/components/TopicItem";
 import { VocabCatalogItem } from "@/components/VocabCatalogItem";
 import Topic from "@/db/models/Topic";
@@ -14,13 +10,22 @@ import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { WText } from "@/mob-ui";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { FlatList, ListRenderItemInfo, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../general.styles";
 
 export default function Catalog() {
 	const { t } = useTranslation();
 
-	const { currentCatalogs, currentTopics, setCurrentCatalogs, setCurrentTopics, _hasHydrated } =
-		useExcerciseStore();
+	const {
+		currentCatalogs,
+		currentTopics,
+		setCurrentCatalogs,
+		setCurrentTopics,
+		_hasHydrated,
+	} = useExcerciseStore();
 	const { user } = useSessionUser();
 
 	const [catalogs, setCatalogs] = useState<VocabCatalog[]>([]);
@@ -36,7 +41,9 @@ export default function Catalog() {
 	}, [topics, currentCatalogs]);
 
 	const [filteredTopics, setFilteredTopics] = useState<Topic[]>([]);
-	const [topicStats, setTopicStats] = useState<Map<number, { total: number; learned: number }>>(new Map());
+	const [topicStats, setTopicStats] = useState<
+		Map<number, { total: number; learned: number }>
+	>(new Map());
 
 	useEffect(() => {
 		filterTopics().then((topics) => setFilteredTopics(topics));
@@ -52,7 +59,9 @@ export default function Catalog() {
 				learningRepository.getByUser(user.userId),
 			]);
 
-			const progressByWordId = new Map(progressRecords.map((p) => [p.wordId, p]));
+			const progressByWordId = new Map(
+				progressRecords.map((p) => [p.wordId, p]),
+			);
 
 			const stats = new Map<number, { total: number; learned: number }>();
 			for (const word of words) {
@@ -81,7 +90,11 @@ export default function Catalog() {
 	useEffect(() => {
 		if (!_hasHydrated || !user?.userId) return;
 		userSettingsRepository
-			.set(user.userId.toString(), "selected_catalogs", JSON.stringify(currentCatalogs))
+			.set(
+				user.userId.toString(),
+				"selected_catalogs",
+				JSON.stringify(currentCatalogs),
+			)
 			.catch(console.error);
 	}, [currentCatalogs, _hasHydrated, user?.userId]);
 
@@ -89,7 +102,11 @@ export default function Catalog() {
 	useEffect(() => {
 		if (!_hasHydrated || !user?.userId) return;
 		userSettingsRepository
-			.set(user.userId.toString(), "selected_topics", JSON.stringify(currentTopics))
+			.set(
+				user.userId.toString(),
+				"selected_topics",
+				JSON.stringify(currentTopics),
+			)
 			.catch(console.error);
 	}, [currentTopics, _hasHydrated, user?.userId]);
 
@@ -171,7 +188,7 @@ export default function Catalog() {
 	};
 
 	return (
-		<SafeAreaView mode="padding" style={styles.page}>
+		<SafeAreaView mode="padding" style={{ ...styles.page, paddingBottom: 0 }}>
 			<View
 				style={{
 					gap: 16,

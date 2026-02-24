@@ -41,6 +41,14 @@ export const EXERCISES_APPS = {
 		descriptionColor: Colors.dark.dark1,
 		descriptionId: "app_listening_practice_description",
 	},
+	type_word: {
+		id: "type_word",
+		titleColor: Colors.dark.black,
+		titleId: "app_type_word_title",
+		backgroundColor: Colors.backgrounds.blue,
+		descriptionColor: Colors.dark.dark1,
+		descriptionId: "app_type_word_description",
+	},
 } as const;
 
 export type LearningTrainingName = keyof typeof EXERCISES_APPS;

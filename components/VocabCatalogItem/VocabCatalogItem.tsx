@@ -13,7 +13,7 @@ export const VocabCatalogItem = (props: VocabCatalogItemProps) => {
 		<Pressable onPress={props.onPress}>
 			<WCard
 				style={{
-					borderWidth: props.selected ? 2 : 0,
+					borderWidth: 2,
 					borderColor: props.selected ? Colors.greys.white : Colors.transparent,
 				}}
 			>
