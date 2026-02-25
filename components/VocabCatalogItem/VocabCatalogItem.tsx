@@ -1,25 +1,26 @@
-import { VocabCatalog } from "@repo/types";
+import VocabCatalog from "@/db/models/VocabCatalog";
 import { WCard, WText } from "@/mob-ui";
+import { Colors } from "@/mob-ui/brand/colors";
+import { Pressable } from "react-native";
 
-type VocabCatalogItemProps = VocabCatalog;
+type VocabCatalogItemProps = Pick<VocabCatalog, "title"> & {
+	selected: boolean;
+	onPress: () => void;
+};
 
 export const VocabCatalogItem = (props: VocabCatalogItemProps) => {
 	return (
-		<WCard
-			header={
-				<WText mode="primary" size="xl">
+		<Pressable onPress={props.onPress}>
+			<WCard
+				style={{
+					borderWidth: 2,
+					borderColor: props.selected ? Colors.greys.white : Colors.transparent,
+				}}
+			>
+				<WText mode="primary" size="xl" align="center">
 					{props.title}
 				</WText>
-			}
-			footer={
-				<WText mode="secondary" size="sm">
-					Footer
-				</WText>
-			}
-		>
-			<WText mode="secondary" size="md">
-				{props.description}
-			</WText>
-		</WCard>
+			</WCard>
+		</Pressable>
 	);
 };

@@ -1,4 +1,4 @@
-import { AVAILABLE_LANGUAGES, Language } from "@repo/types";
+import { AVAILABLE_LANGUAGES, Language } from "@vvruspat/words-types";
 
 export type LanguageItem = {
 	name: (typeof AVAILABLE_LANGUAGES)[keyof typeof AVAILABLE_LANGUAGES];
@@ -16,3 +16,8 @@ export const LANGUAGES: LanguageItem[] = [
 	{ name: "Greek", isoCode: "el", countryCode: "GR" },
 	{ name: "Dutch", isoCode: "nl", countryCode: "NL" },
 ] as const;
+
+export const LANGUAGES_TO_LEARN: LanguageItem[] = [
+	{ name: "Dutch", isoCode: "nl", countryCode: "NL" },
+	{ name: "Greek", isoCode: "el", countryCode: "GR" },
+];

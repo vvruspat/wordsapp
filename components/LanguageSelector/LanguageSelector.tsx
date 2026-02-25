@@ -11,6 +11,7 @@ import {
 	View,
 } from "react-native";
 import CountryFlag from "react-native-country-flag";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type LanguageItem = (typeof LANGUAGES)[number];
 
@@ -18,11 +19,13 @@ export type LanguageSelectorProps = {
 	onSelect: (isoCode: LanguageItem["isoCode"]) => void;
 	initialSelectedIso?: LanguageItem["isoCode"];
 	placeholder?: string;
+	languages?: LanguageItem[];
 };
 
 export const LanguageSelector = ({
 	onSelect,
 	initialSelectedIso,
+	languages = LANGUAGES,
 }: LanguageSelectorProps) => {
 	const [query, setQuery] = useState("");
 	const [selectedIso, setSelectedIso] = useState<string | undefined>(
@@ -33,14 +36,14 @@ export const LanguageSelector = ({
 
 	const filtered = useMemo(() => {
 		const q = query.trim().toLowerCase();
-		if (!q) return LANGUAGES;
-		return LANGUAGES.filter(
+		if (!q) return languages;
+		return languages.filter(
 			(l) =>
 				l.name.toLowerCase().includes(q) ||
 				l.isoCode.toLowerCase().includes(q) ||
 				l.countryCode.toLowerCase().includes(q),
 		);
-	}, [query]);
+	}, [query, languages]);
 
 	function handleSelect(item: LanguageItem) {
 		setSelectedIso(item.isoCode);
@@ -68,28 +71,30 @@ export const LanguageSelector = ({
 
 	return (
 		<View style={styles.container}>
-			<TextInput
-				value={query}
-				onChangeText={setQuery}
-				placeholder={t("search_language_placeholder")}
-				style={styles.search}
-				clearButtonMode="while-editing"
-				accessibilityLabel={t("search_language_a11y_label")}
-			/>
+			<SafeAreaView>
+				<TextInput
+					value={query}
+					onChangeText={setQuery}
+					placeholder={t("search_language_placeholder")}
+					style={styles.search}
+					clearButtonMode="while-editing"
+					accessibilityLabel={t("search_language_a11y_label")}
+				/>
 
-			<FlatList
-				data={filtered}
-				keyExtractor={(item) => item.isoCode}
-				renderItem={renderItem}
-				keyboardShouldPersistTaps="handled"
-				ListEmptyComponent={
-					<View style={styles.empty}>
-						<WText style={styles.emptyText}>
-							{t("search_language_not_found")}
-						</WText>
-					</View>
-				}
-			/>
+				<FlatList
+					data={filtered}
+					keyExtractor={(item) => item.isoCode}
+					renderItem={renderItem}
+					keyboardShouldPersistTaps="handled"
+					ListEmptyComponent={
+						<View style={styles.empty}>
+							<WText style={styles.emptyText}>
+								{t("search_language_not_found")}
+							</WText>
+						</View>
+					}
+				/>
+			</SafeAreaView>
 		</View>
 	);
 };
@@ -97,6 +102,8 @@ export const LanguageSelector = ({
 const styles = StyleSheet.create({
 	container: {
 		width: "100%",
+		paddingVertical: 16,
+		paddingHorizontal: 8,
 	},
 	search: {
 		height: 44,

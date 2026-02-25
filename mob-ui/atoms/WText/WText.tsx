@@ -4,7 +4,7 @@ import { styles } from "./WText.styles";
 
 export type WTextProps = TextProps & {
 	size?: keyof typeof typography.fontSize;
-	mode?: "primary" | "secondary" | "tertiary";
+	mode?: "primary" | "secondary" | "tertiary" | "inverted";
 	weight?: "bold" | "semibold" | "medium" | "regular" | "light" | "thin";
 	align?: "left" | "center" | "right";
 	wrap?: boolean;

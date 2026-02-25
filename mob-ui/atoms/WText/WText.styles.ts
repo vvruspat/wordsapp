@@ -1,6 +1,6 @@
-import { StyleSheet } from "react-native";
 import { Colors } from "@/mob-ui/brand/colors";
 import { typography } from "@/mob-ui/brand/typography";
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
 	text: {
@@ -15,6 +15,9 @@ export const styles = StyleSheet.create({
 	},
 	tertiary: {
 		color: Colors.greys.grey6,
+	},
+	inverted: {
+		color: Colors.greys.grey10,
 	},
 
 	bold: {

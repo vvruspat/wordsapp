@@ -1,18 +1,20 @@
 import User from "@/db/models/User";
 import { $fetch } from "@/utils/fetch";
-import { setUILanguage } from "@/utils/setUILanguage";
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
-import { components, Language } from "@repo/types";
+import { components } from "@vvruspat/words-types";
 import { authenticateAsync } from "expo-local-authentication";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export const useSessionUser = () => {
 	const database = useDatabase();
 	const router = useRouter();
+
+	const { i18n } = useTranslation();
 
 	const [user, setUser] = useState<User | null>(null);
 
@@ -166,10 +168,9 @@ export const useSessionUser = () => {
 
 	useEffect(() => {
 		if (user) {
-			console.log("setUILanguage", user.language_speak);
-			setUILanguage(user.language_speak as Language);
+			i18n.changeLanguage(user.language_speak);
 		}
-	}, [user]);
+	}, [user, i18n]);
 
 	return {
 		refreshToken,

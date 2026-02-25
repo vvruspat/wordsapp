@@ -1,5 +1,5 @@
 import { LanguageSelector } from "@/components/LanguageSelector";
-import { LanguageItem } from "@/constants/languages";
+import { LANGUAGES_TO_LEARN, LanguageItem } from "@/constants/languages";
 import { Modal } from "react-native";
 
 export type SelectLanguageToLearnModalProps = {
@@ -20,6 +20,7 @@ export default function SelectLanguageToLearnModal({
 			<LanguageSelector
 				initialSelectedIso={languageValue}
 				onSelect={onSelect}
+				languages={LANGUAGES_TO_LEARN}
 			/>
 		</Modal>
 	);

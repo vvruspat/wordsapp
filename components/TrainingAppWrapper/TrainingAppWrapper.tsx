@@ -4,9 +4,10 @@ import { styles } from "@/general.styles";
 import { WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 import { shuffleArray } from "@/utils";
+import { $fetch } from "@/utils/fetch";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link } from "expo-router";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import {
@@ -16,11 +17,13 @@ import {
 import { LearningTrainingName } from "../LearningCatalog";
 import EXERCISES_APPS from "../LearningCatalog/types";
 import {
+	CardsExercise,
 	ChooseTranslationExercise,
 	ListeningPracticeExercise,
 	MatchWordsExercise,
 	TrueOrFalseExercise,
 	TypeTranslationExercise,
+	TypeWordExercise,
 } from "../TrainingExercises";
 import { trainingAppWrapperStyles } from "./TrainingAppWrapper.styles";
 
@@ -41,9 +44,33 @@ export const TrainingAppWrapper = ({
 	const [currentExercise, setCurrentExercise] =
 		useState<LearningTrainingName | null>(null);
 	const [currentTitle, setCurrentTitle] = useState<string>("");
-	const { addCompleteListener, removeCompleteListener } =
+	const { addCompleteListener, removeCompleteListener, setCurrentTrainingId } =
 		useContext(ExerciseContext);
 	const { setColor, setOpacity } = useContext(BackgroundContext);
+
+	// Cache training name→id to avoid re-fetching on every exercise change
+	const trainingCacheRef = useRef<Record<string, number>>({});
+
+	useEffect(() => {
+		if (!currentExercise) return;
+
+		const cached = trainingCacheRef.current[currentExercise];
+		if (cached) {
+			setCurrentTrainingId(cached);
+			return;
+		}
+
+		$fetch("/training", "get", { query: { offset: 0, limit: 100 } })
+			.then((result) => {
+				if (result.status !== "success" || !result.data?.items) return;
+				for (const item of result.data.items) {
+					trainingCacheRef.current[item.name] = item.id;
+				}
+				const id = trainingCacheRef.current[currentExercise];
+				setCurrentTrainingId(id ?? null);
+			})
+			.catch(console.error);
+	}, [currentExercise, setCurrentTrainingId]);
 
 	const setRandomExercise = useCallback(() => {
 		const randomTraining = shuffleArray(Object.values(EXERCISES_APPS))[0];
@@ -118,6 +145,8 @@ export const TrainingAppWrapper = ({
 			{currentExercise === "match_words" && <MatchWordsExercise />}
 			{currentExercise === "true_or_false" && <TrueOrFalseExercise />}
 			{currentExercise === "type_translation" && <TypeTranslationExercise />}
+			{currentExercise === "type_word" && <TypeWordExercise />}
+			{currentExercise === "cards" && <CardsExercise />}
 		</SafeAreaView>
 	);
 };

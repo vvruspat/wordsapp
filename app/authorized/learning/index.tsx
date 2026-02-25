@@ -5,7 +5,7 @@ import { Colors } from "@/mob-ui/brand/colors";
 import { router } from "expo-router";
 import { useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../../general.styles";
 
@@ -52,7 +52,7 @@ export default function Learning() {
 						router.push({ pathname: "/authorized/learning/mix-training" })
 					}
 				>
-					<Text>{t("mix_training_button")}</Text>
+					<WText mode="inverted">{t("mix_training_button")}</WText>
 				</WButton>
 			</View>
 		</SafeAreaView>

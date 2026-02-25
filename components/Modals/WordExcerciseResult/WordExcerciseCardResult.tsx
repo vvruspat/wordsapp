@@ -1,24 +1,23 @@
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { Modal, type ModalProps, View } from "react-native";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WCard, WText } from "@/mob-ui/atoms";
 import { Colors } from "@/mob-ui/brand/colors";
 import { getBiggestWordLength } from "@/utils/getBiggestWordLength";
-import { ThumbsUpIcon } from "./assets/ThumbsUpIcon";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Modal, type ModalProps, View } from "react-native";
 
-export type WordExcerciseSuccessModalProps = ModalProps;
+export type WordExcerciseCardResultModalProps = ModalProps;
 
-export const WordExcerciseSuccessModal = ({
+export const WordExcerciseCardResultModal = ({
 	onRequestClose,
 	...modalProps
-}: WordExcerciseSuccessModalProps) => {
+}: WordExcerciseCardResultModalProps) => {
 	const { t } = useTranslation();
 	const { currentPairs } = useExcerciseStore();
+
 	const currentPair = currentPairs[0];
 	const currentWord = currentPair?.word;
 	const currentTranslation = currentPair?.translation;
-
 	const wordLength = getBiggestWordLength(currentWord?.word || "");
 	const translationLength = getBiggestWordLength(
 		currentTranslation?.translation || "",
@@ -65,20 +64,8 @@ export const WordExcerciseSuccessModal = ({
 						paddingBottom: 48,
 					}}
 				>
-					<View
-						style={{
-							position: "absolute",
-							top: -80,
-							right: 0,
-							shadowColor: Colors.accents.green,
-							shadowOpacity: 0.8,
-							shadowRadius: 20,
-						}}
-					>
-						<ThumbsUpIcon />
-					</View>
 					<WText mode="primary" size="3xl">
-						{t("excelent")}
+						{t("cards_right_answer")}
 					</WText>
 					<View
 						style={{
@@ -94,67 +81,36 @@ export const WordExcerciseSuccessModal = ({
 						<View
 							style={{
 								flexDirection: "column",
-								alignItems: "flex-start",
+								alignItems: "center",
 								justifyContent: "center",
 								gap: 8,
-								maxWidth: "40%",
 							}}
 						>
-							<WText
-								mode="tertiary"
-								size="sm"
-								align="center"
-								style={{
-									textAlign: "center",
-									width: "100%",
-								}}
-							>
+							<WText mode="tertiary" size="sm">
 								{t("word")}
 							</WText>
-							<WText
-								mode="primary"
-								size={fontSize}
-								weight="bold"
-								wrap
-								style={{
-									textAlign: "center",
-								}}
-							>
+							<WText mode="primary" size={fontSize} weight="bold">
 								{currentWord?.word}
 							</WText>
 						</View>
 						<View
 							style={{
 								flexDirection: "column",
-								alignItems: "flex-start",
+								alignItems: "center",
 								justifyContent: "center",
 								gap: 8,
-								maxWidth: "40%",
 							}}
 						>
-							<WText
-								mode="tertiary"
-								size="sm"
-								align="center"
-								style={{ textAlign: "center", width: "100%" }}
-							>
+							<WText mode="tertiary" size="sm">
 								{t("translation")}
 							</WText>
-							<WText
-								mode="primary"
-								size={fontSize}
-								weight="bold"
-								wrap
-								style={{
-									textAlign: "center",
-								}}
-							>
+							<WText mode="primary" size={fontSize} weight="bold">
 								{currentTranslation?.translation}
 							</WText>
 						</View>
 					</View>
-					<WButton mode="green" onPress={onRequestClose}>
-						<WText>{t("button_continue")}</WText>
+					<WButton mode="primary" fullWidth onPress={onRequestClose}>
+						<WText mode="inverted">{t("button_continue")}</WText>
 					</WButton>
 				</WCard>
 			</View>

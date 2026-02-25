@@ -1,5 +1,5 @@
 import { Q } from "@nozbe/watermelondb";
-import { WordTranslation as WordTranslationRemote } from "@repo/types";
+import { WordTranslation as WordTranslationRemote } from "@vvruspat/words-types";
 import database from "../database";
 import WordTranslation from "../models/WordTranslation";
 

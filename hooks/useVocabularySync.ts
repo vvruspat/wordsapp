@@ -5,7 +5,7 @@ import WordTranslation from "@/db/models/WordTranslation";
 import { $fetch } from "@/utils/fetch";
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
-import { components, Language } from "@repo/types";
+import { components, Language } from "@vvruspat/words-types";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback } from "react";
 import { useSessionUser } from "./useSession";
@@ -76,7 +76,7 @@ const downloadAudioFile = async (
 		const downloadResult = await FileSystem.downloadAsync(audioUrl, localPath);
 		if (downloadResult.status === 200) {
 			console.log(`Downloaded audio for word ${wordId} to ${localPath}`);
-			return fileName;
+			return localPath;
 		} else {
 			console.warn(
 				`Failed to download audio for word ${wordId}: ${downloadResult.status}`,
@@ -99,6 +99,7 @@ export const useVocabularySync = () => {
 		setTopics,
 		setLanguageLearn,
 		setSyncing,
+		setSyncProgress,
 		setLastSyncTime,
 		setError,
 		clearError,
@@ -106,6 +107,8 @@ export const useVocabularySync = () => {
 
 	const syncVocabulary = useCallback(
 		async (languageLearn?: Language) => {
+			let didSucceed = false;
+
 			if (!user) {
 				setError("User not authenticated");
 				return;
@@ -127,6 +130,7 @@ export const useVocabularySync = () => {
 			}
 
 			setSyncing(true);
+			setSyncProgress(0);
 			clearError();
 			setLanguageLearn(targetLanguage);
 
@@ -145,9 +149,9 @@ export const useVocabularySync = () => {
 					setError(
 						`Failed to fetch catalogs: ${catalogsResponse.error?.message}`,
 					);
-					setSyncing(false);
 					return;
 				}
+				setSyncProgress(0.1);
 
 				console.log("Catalogs fetched", catalogsResponse.data);
 				const catalogs: VocabCatalogDto[] = catalogsResponse.data?.items || [];
@@ -165,9 +169,9 @@ export const useVocabularySync = () => {
 
 				if (topicsResponse.status === "error") {
 					setError(`Failed to fetch topics: ${topicsResponse.error?.message}`);
-					setSyncing(false);
 					return;
 				}
+				setSyncProgress(0.2);
 
 				const topics: TopicDto[] = topicsResponse.data?.items || [];
 
@@ -182,9 +186,9 @@ export const useVocabularySync = () => {
 
 				if (wordsResponse.status === "error") {
 					setError(`Failed to fetch words: ${wordsResponse.error?.message}`);
-					setSyncing(false);
 					return;
 				}
+				setSyncProgress(0.35);
 
 				const words: WordDto[] = wordsResponse.data?.items || [];
 
@@ -200,7 +204,7 @@ export const useVocabularySync = () => {
 						"get",
 						{
 							query: {
-								words: words.join(","),
+								words: words.map((w) => w.id).join(","),
 								offset: 0,
 								limit: 100000,
 								language: user.language_speak,
@@ -217,6 +221,7 @@ export const useVocabularySync = () => {
 							translations.push(...translationResponse.data.items);
 						}
 					}
+					setSyncProgress(0.45);
 				} catch (error) {
 					console.warn(`Failed to fetch translation for words:`, error);
 					// Continue with other words even if one fails
@@ -225,21 +230,53 @@ export const useVocabularySync = () => {
 				console.log("Translations fetched", translations);
 
 				console.log("Downloading audio files");
-				// Download audio files for words that have audio URLs
+				setSyncProgress(0.5);
+
+				// Build a map of already-downloaded local audio paths from the DB
+				const existingWords = await database
+					.get<Word>("words")
+					.query(Q.where("language", targetLanguage))
+					.fetch();
+				const existingAudioMap = new Map<number, string>(
+					existingWords
+						.filter((w) => w.audio && !w.audio.startsWith("http"))
+						.map((w) => [w.remoteId, w.audio]),
+				);
+
+				// Download audio files only for words that don't have a local path yet
+				const audioCandidates = words.filter(
+					(word) => word.audio && !existingAudioMap.has(word.id),
+				);
+				const audioCount = audioCandidates.length;
+				let audioCompleted = 0;
+
 				const wordsWithLocalAudio = await Promise.all(
 					words.map(async (word) => {
 						if (word.audio) {
+							const existingLocal = existingAudioMap.get(word.id);
+							if (existingLocal) {
+								return { ...word, audio: existingLocal };
+							}
 							const localAudioPath = await downloadAudioFile(
 								word.audio,
-								word.remoteId,
+								word.id,
 							);
+							if (audioCount > 0) {
+								audioCompleted += 1;
+								const audioProgress = 0.5 + (audioCompleted / audioCount) * 0.3;
+								setSyncProgress(audioProgress);
+							}
 							return { ...word, audio: localAudioPath };
 						}
 						return word;
 					}),
 				);
+				if (audioCount === 0) {
+					setSyncProgress(0.8);
+				}
 
 				console.log("Storing in local database");
+				setSyncProgress(0.85);
 				// Store in local database
 				await database.write(async () => {
 					// Clear existing data for this language (optional - you might want to keep it)
@@ -288,6 +325,7 @@ export const useVocabularySync = () => {
 								t.remoteCreatedAt = topic.created_at;
 								t.title = topic.title;
 								t.description = topic.description ?? "";
+								t.language = topic.language;
 								t.image = topic.image ?? null;
 							});
 						} else {
@@ -296,6 +334,7 @@ export const useVocabularySync = () => {
 								t.remoteCreatedAt = topic.created_at;
 								t.title = topic.title;
 								t.description = topic.description ?? "";
+								t.language = topic.language;
 								t.image = topic.image ?? null;
 							});
 						}
@@ -305,12 +344,12 @@ export const useVocabularySync = () => {
 					for (const word of wordsWithLocalAudio) {
 						const existing = await database
 							.get<Word>("words")
-							.query(Q.where("remote_id", word.remoteId))
+							.query(Q.where("remote_id", word.id))
 							.fetch();
 
 						if (existing.length > 0) {
 							await existing[0].update((w) => {
-								w.remoteId = word.remoteId;
+								w.remoteId = word.id;
 								w.remoteCreatedAt = word.created_at;
 								w.topic = Number(word.topic);
 								w.word = word.word;
@@ -322,7 +361,7 @@ export const useVocabularySync = () => {
 							});
 						} else {
 							await database.get<Word>("words").create((w) => {
-								w.remoteId = word.remoteId;
+								w.remoteId = word.id;
 								w.remoteCreatedAt = word.created_at;
 								w.topic = Number(word.topic);
 								w.word = word.word;
@@ -371,11 +410,16 @@ export const useVocabularySync = () => {
 				setTranslations(translations);
 				setLastSyncTime(Date.now());
 
-				setSyncing(false);
+				setSyncProgress(1);
+				didSucceed = true;
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : "Unknown error occurred";
 				setError(`Sync failed: ${errorMessage}`);
+			} finally {
+				if (!didSucceed) {
+					setSyncProgress(0);
+				}
 				setSyncing(false);
 			}
 		},
@@ -388,6 +432,7 @@ export const useVocabularySync = () => {
 			setTopics,
 			setLanguageLearn,
 			setSyncing,
+			setSyncProgress,
 			setLastSyncTime,
 			setError,
 			clearError,
@@ -427,7 +472,7 @@ export const useVocabularySync = () => {
 				wordIds.length > 0
 					? await database
 							.get<WordTranslation>("word_translations")
-							.query(Q.where("word", Q.oneOf(wordIds.map(String))))
+							.query(Q.where("word", Q.oneOf(wordIds)))
 							.fetch()
 					: [];
 

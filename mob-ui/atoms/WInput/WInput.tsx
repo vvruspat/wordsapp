@@ -1,4 +1,6 @@
+import { Colors } from "@/mob-ui/brand/colors";
 import { typography } from "@/mob-ui/brand/typography";
+import { BlurView } from "expo-blur";
 import React, {
 	forwardRef,
 	useEffect,
@@ -169,6 +171,9 @@ export const WInput = forwardRef<TextInput, WInputProps>((props, ref) => {
 					inputRowStyle,
 				]}
 			>
+				{/* blurred background */}
+				<BlurView intensity={50} tint="dark" style={styles.blur} />
+
 				{before ? <View style={styles.left}>{before}</View> : null}
 
 				<TextInput
@@ -183,7 +188,7 @@ export const WInput = forwardRef<TextInput, WInputProps>((props, ref) => {
 						},
 						inputStyle,
 					]}
-					placeholderTextColor={styles.inputRowPlaceholder.color}
+					placeholderTextColor={Colors.greys.whiteAlpha60}
 					secureTextEntry={isSecure}
 					value={value}
 					defaultValue={defaultValue}
@@ -200,7 +205,7 @@ export const WInput = forwardRef<TextInput, WInputProps>((props, ref) => {
 						style={styles.actionButton}
 						accessibilityLabel="Clear input"
 					>
-						<ClearIcon fill={styles.inputRow.color} />
+						<ClearIcon color={Colors.greys.grey3} />
 					</TouchableOpacity>
 				)}
 
@@ -211,9 +216,9 @@ export const WInput = forwardRef<TextInput, WInputProps>((props, ref) => {
 						accessibilityLabel={isSecure ? "Show password" : "Hide password"}
 					>
 						{isSecure ? (
-							<EyeOpenIcon fill={styles.inputRow.color} />
+							<EyeOpenIcon color={Colors.greys.grey3} />
 						) : (
-							<EyeCloseIcon fill={styles.inputRow.color} />
+							<EyeCloseIcon color={Colors.greys.grey3} />
 						)}
 					</TouchableOpacity>
 				)}

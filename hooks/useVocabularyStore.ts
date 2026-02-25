@@ -1,4 +1,4 @@
-import { components } from "@repo/types";
+import { components } from "@vvruspat/words-types";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
@@ -15,6 +15,7 @@ type VocabularyState = {
 	languageLearn: string | null;
 	isLoading: boolean;
 	isSyncing: boolean;
+	syncProgress: number;
 	lastSyncTime: number | null;
 	error: string | null;
 };
@@ -27,6 +28,7 @@ type VocabularyActions = {
 	setLanguageLearn: (language: string) => void;
 	setLoading: (loading: boolean) => void;
 	setSyncing: (syncing: boolean) => void;
+	setSyncProgress: (progress: number) => void;
 	setLastSyncTime: (time: number) => void;
 	setError: (error: string | null) => void;
 	clearError: () => void;
@@ -41,6 +43,7 @@ const initialState: VocabularyState = {
 	languageLearn: null,
 	isLoading: false,
 	isSyncing: false,
+	syncProgress: 0,
 	lastSyncTime: null,
 	error: null,
 };
@@ -75,6 +78,10 @@ export const useVocabularyStore = create<VocabularyState & VocabularyActions>()(
 		setSyncing: (syncing) =>
 			set((state) => {
 				state.isSyncing = syncing;
+			}),
+		setSyncProgress: (progress) =>
+			set((state) => {
+				state.syncProgress = progress;
 			}),
 		setLastSyncTime: (time) =>
 			set((state) => {

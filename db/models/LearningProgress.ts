@@ -4,6 +4,9 @@ import { field } from "@nozbe/watermelondb/decorators";
 export default class LearningProgress extends Model {
 	static table = "learning_progress";
 
+	@field("remote_id")
+	remoteId!: number;
+
 	@field("user_id")
 	userId!: number;
 
@@ -13,6 +16,15 @@ export default class LearningProgress extends Model {
 	@field("score")
 	score!: number;
 
-	@field("last_reviewed")
-	lastReviewed!: number;
+	@field("last_review")
+	lastReview!: string;
+
+	@field("created_at_remote")
+	createdAtRemote!: string;
+
+	@field("training")
+	training!: number;
+
+	@field("translation")
+	translation!: number;
 }
