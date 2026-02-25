@@ -19,11 +19,13 @@ export type LanguageSelectorProps = {
 	onSelect: (isoCode: LanguageItem["isoCode"]) => void;
 	initialSelectedIso?: LanguageItem["isoCode"];
 	placeholder?: string;
+	languages?: LanguageItem[];
 };
 
 export const LanguageSelector = ({
 	onSelect,
 	initialSelectedIso,
+	languages = LANGUAGES,
 }: LanguageSelectorProps) => {
 	const [query, setQuery] = useState("");
 	const [selectedIso, setSelectedIso] = useState<string | undefined>(
@@ -34,14 +36,14 @@ export const LanguageSelector = ({
 
 	const filtered = useMemo(() => {
 		const q = query.trim().toLowerCase();
-		if (!q) return LANGUAGES;
-		return LANGUAGES.filter(
+		if (!q) return languages;
+		return languages.filter(
 			(l) =>
 				l.name.toLowerCase().includes(q) ||
 				l.isoCode.toLowerCase().includes(q) ||
 				l.countryCode.toLowerCase().includes(q),
 		);
-	}, [query]);
+	}, [query, languages]);
 
 	function handleSelect(item: LanguageItem) {
 		setSelectedIso(item.isoCode);
