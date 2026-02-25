@@ -1,15 +1,16 @@
+// Avoid importing BottomTabBar directly to prevent react-navigation context
+// mismatches with expo-router's bundled navigation packages.
 import { SyncProgressBar } from "@/components/SyncProgressBar";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { useVocabularySync } from "@/hooks/useVocabularySync";
+import i18n from "@/i18n";
 import { Colors } from "@/mob-ui/brand/colors";
-import { BottomTabBar } from "@react-navigation/bottom-tabs";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Language } from "@vvruspat/words-types";
 import Constants from "expo-constants";
-import i18n from "@/i18n";
 import { Tabs } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -55,7 +56,13 @@ export default function RootLayout() {
 
 			setHasHydrated(true);
 		})();
-	}, [user?.userId, _hasHydrated, setCurrentCatalogs, setCurrentTopics, setHasHydrated]);
+	}, [
+		user?.userId,
+		_hasHydrated,
+		setCurrentCatalogs,
+		setCurrentTopics,
+		setHasHydrated,
+	]);
 
 	useEffect(() => {
 		if (!user) {
@@ -106,13 +113,8 @@ export default function RootLayout() {
 
 	return (
 		<View style={styles.container}>
+			<SyncProgressBar />
 			<Tabs
-				tabBar={(props) => (
-					<>
-						<SyncProgressBar />
-						<BottomTabBar {...props} />
-					</>
-				)}
 				screenOptions={{
 					tabBarItemStyle: { paddingTop: 8 },
 					tabBarActiveTintColor: Colors.primary.base,

@@ -5,8 +5,6 @@ import { genericErrorMessage } from "./genericErrorMessage";
 
 const { API_SERVER: server } = Constants.expoConfig?.extra ?? {};
 
-console.log("API Server:", server);
-
 type ValidUrl = keyof Paths;
 type ValidMethod<U extends ValidUrl> = keyof Paths[U];
 

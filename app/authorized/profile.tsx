@@ -96,9 +96,7 @@ export default function Profile() {
 		setError(undefined);
 
 		try {
-			await $fetch("/auth/verify-email/resend", "post", {
-				body: { email: user.email },
-			});
+			await $fetch("/auth/verify-email/resend", "post", {});
 
 			router.push({
 				pathname: "/verify",
