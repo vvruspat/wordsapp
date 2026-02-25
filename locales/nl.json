@@ -72,6 +72,8 @@
 	"cards_know": "Ik ken het",
 	"cards_dont_know": "Ik ken het niet",
 	"cards_right_answer": "Juiste antwoord",
+	"search_language_placeholder": "Zoek taal",
+	"search_language_not_found": "Geen talen gevonden",
 
 	"profile_save_button": "Opslaan",
 	"profile_save_success": "Profiel bijgewerkt",
@@ -89,5 +91,7 @@
 	"Japanese": "Japans",
 	"Portuguese": "Portugees",
 	"Arabic": "Arabisch",
-	"Hindi": "Hindi"
+	"Hindi": "Hindi",
+	"Italian": "Italiaans",
+	"Greek": "Grieks"
 }

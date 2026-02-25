@@ -72,6 +72,8 @@
 	"cards_know": "I know",
 	"cards_dont_know": "I don't know",
 	"cards_right_answer": "Right answer",
+	"search_language_placeholder": "Search language",
+	"search_language_not_found": "No languages found",
 
 	"profile_save_button": "Save",
 	"profile_save_success": "Profile updated",
@@ -89,5 +91,7 @@
 	"Japanese": "Japanese",
 	"Portuguese": "Portuguese",
 	"Arabic": "Arabic",
-	"Hindi": "Hindi"
+	"Hindi": "Hindi",
+	"Italian": "Italian",
+	"Greek": "Greek"
 }

@@ -72,6 +72,8 @@
 	"cards_know": "Знаю",
 	"cards_dont_know": "Не знаю",
 	"cards_right_answer": "Правильный ответ",
+	"search_language_placeholder": "Поиск языка",
+	"search_language_not_found": "Языки не найдены",
 
 	"profile_save_button": "Сохранить",
 	"profile_save_success": "Профиль обновлён",
@@ -89,5 +91,7 @@
 	"Japanese": "Японский",
 	"Portuguese": "Португальский",
 	"Arabic": "Арабский",
-	"Hindi": "Хинди"
+	"Hindi": "Хинди",
+	"Italian": "Итальянский",
+	"Greek": "Греческий"
 }
