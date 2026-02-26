@@ -80,7 +80,11 @@ export function TrueOrFalseExercise() {
 
 	return (
 		<>
-			<TrainingPromptCard word={word.word} transcribtion={word.transcribtion}>
+			<TrainingPromptCard
+				word={word.word}
+				transcribtion={word.transcribtion}
+				wordId={word.remoteId}
+			>
 				<View style={{ gap: 24, alignItems: "center" }}>
 					<WText mode="primary" size="xl">
 						{statement}

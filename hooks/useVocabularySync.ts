@@ -1,13 +1,18 @@
-import Topic from "@/db/models/Topic";
-import VocabCatalog from "@/db/models/VocabCatalog";
-import Word from "@/db/models/Word";
-import WordTranslation from "@/db/models/WordTranslation";
-import { $fetch } from "@/utils/fetch";
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
 import { components, Language } from "@vvruspat/words-types";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback } from "react";
+import {
+	getCatalogs,
+	getTopics,
+	getWords,
+	getWordTranslations,
+} from "@/api/vocabulary";
+import Topic from "@/db/models/Topic";
+import VocabCatalog from "@/db/models/VocabCatalog";
+import Word from "@/db/models/Word";
+import WordTranslation from "@/db/models/WordTranslation";
 import { useSessionUser } from "./useSession";
 import { useVocabularyStore } from "./useVocabularyStore";
 
@@ -137,12 +142,10 @@ export const useVocabularySync = () => {
 			try {
 				console.log("Fetching catalogs");
 				// Fetch catalogs filtered by language
-				const catalogsResponse = await $fetch("/vocabcatalog", "get", {
-					query: {
-						offset: 0,
-						limit: 1000,
-						language: targetLanguage,
-					},
+				const catalogsResponse = await getCatalogs({
+					offset: 0,
+					limit: 1000,
+					language: targetLanguage,
 				});
 
 				if (catalogsResponse.status === "error") {
@@ -157,12 +160,10 @@ export const useVocabularySync = () => {
 				const catalogs: VocabCatalogDto[] = catalogsResponse.data?.items || [];
 
 				console.log("Fetching topics");
-				const topicsResponse = await $fetch("/topic", "get", {
-					query: {
-						offset: 0,
-						limit: 10000,
-						language: targetLanguage,
-					},
+				const topicsResponse = await getTopics({
+					offset: 0,
+					limit: 10000,
+					language: targetLanguage,
 				});
 
 				console.log("Topics fetched", topicsResponse.data);
@@ -176,12 +177,10 @@ export const useVocabularySync = () => {
 				const topics: TopicDto[] = topicsResponse.data?.items || [];
 
 				// Fetch words filtered by language
-				const wordsResponse = await $fetch("/word", "get", {
-					query: {
-						offset: 0,
-						limit: 10000,
-						language: targetLanguage,
-					},
+				const wordsResponse = await getWords({
+					offset: 0,
+					limit: 10000,
+					language: targetLanguage,
 				});
 
 				if (wordsResponse.status === "error") {
@@ -199,18 +198,12 @@ export const useVocabularySync = () => {
 
 				try {
 					// Fetch translations for each word (API limitation - no bulk endpoint)
-					const translationResponse = await $fetch(
-						"/words-translation",
-						"get",
-						{
-							query: {
-								words: words.map((w) => w.id).join(","),
-								offset: 0,
-								limit: 100000,
-								language: user.language_speak,
-							},
-						},
-					);
+					const translationResponse = await getWordTranslations({
+						words: words.map((w) => w.id).join(","),
+						offset: 0,
+						limit: 100000,
+						language: user.language_speak,
+					});
 
 					if (
 						translationResponse.status === "success" &&

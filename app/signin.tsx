@@ -1,10 +1,10 @@
-import { useSessionUser } from "@/hooks/useSession";
-import { WButton, WInput, WText } from "@/mob-ui";
-import { $fetch } from "@/utils/fetch";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, TextInputChangeEvent, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { signIn as apiSignIn, requestTmpPassword } from "@/api/auth";
+import { useSessionUser } from "@/hooks/useSession";
+import { WButton, WInput, WText } from "@/mob-ui";
 import { styles } from "../general.styles";
 
 export default function SignIn() {
@@ -19,11 +19,7 @@ export default function SignIn() {
 
 	const handleContinueClick = async () => {
 		try {
-			await $fetch("/auth/tmp-password", "post", {
-				body: {
-					email,
-				},
-			});
+			await requestTmpPassword(email);
 
 			setStage("password");
 		} catch (e) {
@@ -33,12 +29,7 @@ export default function SignIn() {
 
 	const handleSignInClick = async () => {
 		try {
-			const response = await $fetch("/auth/signin", "post", {
-				body: {
-					email,
-					password,
-				},
-			});
+			const response = await apiSignIn({ email, password });
 
 			if (!response?.data) {
 				setError(t("sign_in_error_generic"));

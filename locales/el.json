@@ -93,5 +93,13 @@
 	"Arabic": "Αραβικά",
 	"Hindi": "Χίντι",
 	"Italian": "Ιταλικά",
-	"Greek": "Ελληνικά"
+	"Greek": "Ελληνικά",
+
+	"report_button_title": "Αναφορά",
+	"report_word": "Η λέξη είναι λανθασμένη",
+	"report_translation": "Η μετάφραση είναι λανθασμένη",
+	"report_audio": "Ο ήχος είναι λανθασμένος",
+	"report_cancel": "Ακύρωση",
+	"report_success": "Ευχαριστούμε για την αναφορά!",
+	"report_error": "Αποτυχία αποστολής αναφοράς"
 }

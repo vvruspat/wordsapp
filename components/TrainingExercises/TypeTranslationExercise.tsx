@@ -92,7 +92,7 @@ export function TypeTranslationExercise() {
 
 	return (
 		<>
-			<TrainingPromptCard word={word.word} transcribtion={word.transcribtion}>
+			<TrainingPromptCard word={word.word} transcribtion={word.transcribtion} wordId={word.remoteId}>
 				<View style={{ gap: 24, alignItems: "center" }}>
 					<PlayWordButton audio={word.audio} />
 				</View>

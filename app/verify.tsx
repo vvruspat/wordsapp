@@ -1,11 +1,11 @@
-import { WButton, WCharInput, WText, WTimer } from "@/mob-ui";
-import { $fetch } from "@/utils/fetch";
 import { authenticateAsync } from "expo-local-authentication";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { resendVerificationEmail, verifyEmail } from "@/api/auth";
+import { WButton, WCharInput, WText, WTimer } from "@/mob-ui";
 import { styles } from "../general.styles";
 
 const PIN_LENGTH = 4;
@@ -22,9 +22,7 @@ export default function Verify() {
 	const onCodeChangeHandler = async (text: string) => {
 		if (text.length === PIN_LENGTH) {
 			try {
-				await $fetch("/auth/verify-email", "post", {
-					body: { code: text, email },
-				});
+				await verifyEmail({ code: text, email });
 
 				const result = await authenticateAsync({
 					promptMessage: "Authenticate to access the app",
@@ -43,9 +41,7 @@ export default function Verify() {
 
 	const onCodeResendHandler = async () => {
 		try {
-			await $fetch("/auth/verify-email/resend", "post", {
-				body: { email },
-			});
+			await resendVerificationEmail();
 
 			setIsReadyToResend(false);
 		} catch (e) {

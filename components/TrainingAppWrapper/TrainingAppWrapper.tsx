@@ -1,10 +1,3 @@
-import { BackgroundContext } from "@/context/BackgroundContext";
-import { ExerciseContext } from "@/context/ExerciseContext";
-import { styles } from "@/general.styles";
-import { WText } from "@/mob-ui";
-import { Colors } from "@/mob-ui/brand/colors";
-import { shuffleArray } from "@/utils";
-import { $fetch } from "@/utils/fetch";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link } from "expo-router";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
@@ -14,6 +7,13 @@ import {
 	SafeAreaView,
 	SafeAreaViewProps,
 } from "react-native-safe-area-context";
+import { getTrainings } from "@/api/training";
+import { BackgroundContext } from "@/context/BackgroundContext";
+import { ExerciseContext } from "@/context/ExerciseContext";
+import { styles } from "@/general.styles";
+import { WText } from "@/mob-ui";
+import { Colors } from "@/mob-ui/brand/colors";
+import { shuffleArray } from "@/utils";
 import { LearningTrainingName } from "../LearningCatalog";
 import EXERCISES_APPS from "../LearningCatalog/types";
 import {
@@ -60,7 +60,7 @@ export const TrainingAppWrapper = ({
 			return;
 		}
 
-		$fetch("/training", "get", { query: { offset: 0, limit: 100 } })
+		getTrainings({ offset: 0, limit: 100 })
 			.then((result) => {
 				if (result.status !== "success" || !result.data?.items) return;
 				for (const item of result.data.items) {

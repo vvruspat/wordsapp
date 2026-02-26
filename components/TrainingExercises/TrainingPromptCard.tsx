@@ -1,4 +1,5 @@
 import { GlowingEllipse } from "@/components/GlowingEllipse";
+import { ReportButton } from "@/components/ReportButton";
 import { WCard, WText, WZStack } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 import { ReactNode } from "react";
@@ -7,12 +8,14 @@ import { StyleSheet, View } from "react-native";
 export type TrainingPromptCardProps = {
 	word?: string;
 	transcribtion?: string;
+	wordId?: number;
 	children?: ReactNode;
 };
 
 export function TrainingPromptCard({
 	word,
 	transcribtion,
+	wordId,
 	children,
 }: TrainingPromptCardProps) {
 	return (
@@ -37,6 +40,11 @@ export function TrainingPromptCard({
 
 					{children}
 				</View>
+				{wordId !== undefined && (
+					<View style={styles.reportButton}>
+						<ReportButton wordId={wordId} />
+					</View>
+				)}
 			</WZStack>
 		</WCard>
 	);
@@ -69,6 +77,11 @@ const styles = StyleSheet.create({
 		justifyContent: "center",
 		alignItems: "center",
 		gap: 64,
+	},
+	reportButton: {
+		position: "absolute",
+		top: 4,
+		right: 4,
 	},
 });
 

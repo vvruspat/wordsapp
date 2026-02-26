@@ -80,7 +80,7 @@ export function ChooseTranslationExercise() {
 
 	return (
 		<>
-			<TrainingPromptCard word={word.word} transcribtion={word.transcribtion}>
+			<TrainingPromptCard word={word.word} transcribtion={word.transcribtion} wordId={word.remoteId}>
 				<PlayWordButton audio={word.audio} />
 			</TrainingPromptCard>
 
