@@ -16,19 +16,12 @@ export const WTimer = ({
 	onComplete,
 	...textProps
 }: WTimerProps) => {
-	const timer = useRef<number | null>(null);
+	const timer = useRef<NodeJS.Timeout | null>(null);
 	const [currentTime, setCurrentTime] = useState(
 		isCountingUp ? startTime : duration,
 	);
 
 	const isFocused = useIsFocused();
-
-	console.log("WTimer rendered with:", {
-		startTime,
-		duration,
-		isCountingUp,
-		currentTime,
-	});
 
 	// Start/stop interval only when counting direction changes
 	useEffect(() => {

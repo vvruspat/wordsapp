@@ -93,5 +93,13 @@
 	"Arabic": "Arabisch",
 	"Hindi": "Hindi",
 	"Italian": "Italienisch",
-	"Greek": "Griechisch"
+	"Greek": "Griechisch",
+
+	"report_button_title": "Melden",
+	"report_word": "Wort ist falsch",
+	"report_translation": "Übersetzung ist falsch",
+	"report_audio": "Audio ist falsch",
+	"report_cancel": "Abbrechen",
+	"report_success": "Danke für Ihren Bericht!",
+	"report_error": "Bericht konnte nicht gesendet werden"
 }

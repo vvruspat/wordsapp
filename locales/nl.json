@@ -93,5 +93,13 @@
 	"Arabic": "Arabisch",
 	"Hindi": "Hindi",
 	"Italian": "Italiaans",
-	"Greek": "Grieks"
+	"Greek": "Grieks",
+
+	"report_button_title": "Melden",
+	"report_word": "Woord is onjuist",
+	"report_translation": "Vertaling is onjuist",
+	"report_audio": "Audio is onjuist",
+	"report_cancel": "Annuleren",
+	"report_success": "Bedankt voor uw melding!",
+	"report_error": "Melding kon niet worden verstuurd"
 }

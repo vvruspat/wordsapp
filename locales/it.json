@@ -93,5 +93,13 @@
 	"Arabic": "Arabo",
 	"Hindi": "Hindi",
 	"Italian": "Italiano",
-	"Greek": "Greco"
+	"Greek": "Greco",
+
+	"report_button_title": "Segnala",
+	"report_word": "La parola è errata",
+	"report_translation": "La traduzione è errata",
+	"report_audio": "L'audio è errato",
+	"report_cancel": "Annulla",
+	"report_success": "Grazie per la segnalazione!",
+	"report_error": "Impossibile inviare la segnalazione"
 }

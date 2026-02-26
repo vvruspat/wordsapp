@@ -1,15 +1,15 @@
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Text, TextInputChangeEvent, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { signUp as apiSignUp } from "@/api/auth";
 import SelectLanguageISpeakModal from "@/components/Modals/SelectLanguageISpeakModal";
 import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLearnModal";
 import { SelectLanguageButton } from "@/components/SelectLanguageButton";
 import { LanguageItem } from "@/constants/languages";
 import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WInput, WText } from "@/mob-ui";
-import { $fetch } from "@/utils/fetch";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Text, TextInputChangeEvent, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../general.styles";
 
 export default function SignUp() {
@@ -37,13 +37,11 @@ export default function SignUp() {
 
 	const handleContinueClick = async () => {
 		try {
-			const response = await $fetch("/auth/signup", "post", {
-				body: {
-					name,
-					email,
-					language_speak: languageISpeak,
-					language_learn: languageToLearn,
-				},
+			const response = await apiSignUp({
+				name,
+				email,
+				language_speak: languageISpeak,
+				language_learn: languageToLearn,
 			});
 
 			const accessToken = response?.data?.access_token;

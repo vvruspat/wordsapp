@@ -93,5 +93,13 @@
 	"Arabic": "Арабский",
 	"Hindi": "Хинди",
 	"Italian": "Итальянский",
-	"Greek": "Греческий"
+	"Greek": "Греческий",
+
+	"report_button_title": "Сообщить",
+	"report_word": "Слово некорректно",
+	"report_translation": "Перевод некорректен",
+	"report_audio": "Аудио некорректно",
+	"report_cancel": "Отмена",
+	"report_success": "Спасибо за сообщение!",
+	"report_error": "Не удалось отправить сообщение"
 }

@@ -1,5 +1,3 @@
-import User from "@/db/models/User";
-import { $fetch } from "@/utils/fetch";
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
 import { components } from "@vvruspat/words-types";
@@ -9,6 +7,8 @@ import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { refreshToken as apiRefreshToken } from "@/api/auth";
+import User from "@/db/models/User";
 
 export const useSessionUser = () => {
 	const database = useDatabase();
@@ -135,9 +135,7 @@ export const useSessionUser = () => {
 					await SecureStore.deleteItemAsync("access_token");
 					await SecureStore.deleteItemAsync("refresh_token");
 
-					const response = await $fetch("/auth/refresh-token", "post", {
-						body: { refresh_token: refresh },
-					});
+					const response = await apiRefreshToken(refresh);
 
 					const newAccessToken = response?.data?.access_token;
 					const newRefreshToken = response?.data?.refresh_token;

@@ -1,16 +1,17 @@
-import SelectLanguageISpeakModal from "@/components/Modals/SelectLanguageISpeakModal";
-import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLearnModal";
-import { SelectLanguageButton } from "@/components/SelectLanguageButton";
-import { LanguageItem } from "@/constants/languages";
-import { useSessionUser } from "@/hooks/useSession";
-import { WButton, WInput, WText } from "@/mob-ui";
-import { $fetch } from "@/utils/fetch";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { resendVerificationEmail } from "@/api/auth";
+import { updateUser } from "@/api/user";
+import SelectLanguageISpeakModal from "@/components/Modals/SelectLanguageISpeakModal";
+import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLearnModal";
+import { SelectLanguageButton } from "@/components/SelectLanguageButton";
+import { LanguageItem } from "@/constants/languages";
+import { useSessionUser } from "@/hooks/useSession";
+import { WButton, WInput, WText } from "@/mob-ui";
 import { styles } from "../../general.styles";
 
 export default function Profile() {
@@ -57,15 +58,13 @@ export default function Profile() {
 		setSuccess(false);
 
 		try {
-			const response = await $fetch("/user", "put", {
-				body: {
-					id: user.userId,
-					name,
-					email,
-					language_speak: languageISpeak,
-					language_learn: languageToLearn,
-					email_verified: user.email_verified ?? false,
-				},
+			const response = await updateUser({
+				id: user.userId,
+				name,
+				email,
+				language_speak: languageISpeak,
+				language_learn: languageToLearn,
+				email_verified: user.email_verified ?? false,
 			});
 
 			if (response.status === "error") {
@@ -96,7 +95,7 @@ export default function Profile() {
 		setError(undefined);
 
 		try {
-			await $fetch("/auth/verify-email/resend", "post", {});
+			await resendVerificationEmail();
 
 			router.push({
 				pathname: "/verify",
@@ -139,7 +138,7 @@ export default function Profile() {
 						placeholder={t("placeholder_name")}
 					/>
 
-					<View>
+					<View style={profileStyles.section}>
 						<WInput
 							label={t("label_email")}
 							value={email}
@@ -155,13 +154,9 @@ export default function Profile() {
 								<WText mode="secondary" size="sm">
 									{t("profile_email_not_verified")}
 								</WText>
-								<WButton
-									mode="secondary"
-									fullWidth={false}
-									onPress={handleVerifyEmail}
-								>
+								<WText onPress={handleVerifyEmail}>
 									<Text>{t("profile_verify_email_button")}</Text>
-								</WButton>
+								</WText>
 							</View>
 						)}
 					</View>

@@ -1,6 +1,6 @@
-import { learningRepository } from "@/db/repositories/learning.repository";
-import { $fetch } from "@/utils/fetch";
 import { useCallback } from "react";
+import { createLearning, getLearning } from "@/api/learning";
+import { learningRepository } from "@/db/repositories/learning.repository";
 import { useSessionUser } from "./useSession";
 
 export const useLearningSync = () => {
@@ -15,16 +15,14 @@ export const useLearningSync = () => {
 			// Backend requires training and translation — skip records missing them
 			if (!record.training || !record.translation) continue;
 
-			const result = await $fetch("/learning", "post", {
-				body: {
-					user: user.userId,
-					word: record.wordId,
-					score: record.score,
-					last_review: record.lastReview,
-					created_at: record.createdAtRemote,
-					training: record.training,
-					translation: record.translation,
-				},
+			const result = await createLearning({
+				user: user.userId,
+				word: record.wordId,
+				score: record.score,
+				last_review: record.lastReview,
+				created_at: record.createdAtRemote,
+				training: record.training,
+				translation: record.translation,
 			});
 
 			if (result.status === "success" && result.data?.id) {
@@ -36,12 +34,10 @@ export const useLearningSync = () => {
 	const syncFromBackend = useCallback(async () => {
 		if (!user) return;
 
-		const result = await $fetch("/learning", "get", {
-			query: {
-				user: user.userId,
-				offset: 0,
-				limit: 10000,
-			},
+		const result = await getLearning({
+			user: user.userId,
+			offset: 0,
+			limit: 10000,
 		});
 
 		if (result.status !== "success" || !result.data?.items) return;
