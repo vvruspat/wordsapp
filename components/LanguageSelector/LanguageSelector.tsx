@@ -70,32 +70,30 @@ export const LanguageSelector = ({
 	}
 
 	return (
-		<View style={styles.container}>
-			<SafeAreaView>
-				<TextInput
-					value={query}
-					onChangeText={setQuery}
-					placeholder={t("search_language_placeholder")}
-					style={styles.search}
-					clearButtonMode="while-editing"
-					accessibilityLabel={t("search_language_a11y_label")}
-				/>
+		<SafeAreaView style={styles.container}>
+			<TextInput
+				value={query}
+				onChangeText={setQuery}
+				placeholder={t("search_language_placeholder")}
+				style={styles.search}
+				clearButtonMode="while-editing"
+				accessibilityLabel={t("search_language_a11y_label")}
+			/>
 
-				<FlatList
-					data={filtered}
-					keyExtractor={(item) => item.isoCode}
-					renderItem={renderItem}
-					keyboardShouldPersistTaps="handled"
-					ListEmptyComponent={
-						<View style={styles.empty}>
-							<WText style={styles.emptyText}>
-								{t("search_language_not_found")}
-							</WText>
-						</View>
-					}
-				/>
-			</SafeAreaView>
-		</View>
+			<FlatList
+				data={filtered}
+				keyExtractor={(item) => item.isoCode}
+				renderItem={renderItem}
+				keyboardShouldPersistTaps="handled"
+				ListEmptyComponent={
+					<View style={styles.empty}>
+						<WText style={styles.emptyText}>
+							{t("search_language_not_found")}
+						</WText>
+					</View>
+				}
+			/>
+		</SafeAreaView>
 	);
 };
 

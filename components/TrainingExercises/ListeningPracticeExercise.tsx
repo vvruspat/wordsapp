@@ -1,16 +1,18 @@
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WText } from "@/mob-ui";
 import { shuffleArray } from "@/utils";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { StyleSheet, View } from "react-native";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const score = 0.2;
 
 export function ListeningPracticeExercise() {
 	console.log("ListeningPracticeExercise");
+	const [modalVisible, setModalVisible] = useState(false);
 
 	const {
 		addCompleteListener,
@@ -18,6 +20,7 @@ export function ListeningPracticeExercise() {
 		loadData,
 		onFailure,
 		onSuccess,
+		complete,
 	} = useContext(ExerciseContext);
 	const { currentPairs, currentRandomTranslations: randomTranslations } =
 		useExcerciseStore();
@@ -72,13 +75,24 @@ export function ListeningPracticeExercise() {
 		[translation, word, onFailure, onSuccess],
 	);
 
+	const handleSkip = useCallback(() => {
+		if (!word || !translation) return;
+		onFailure?.(word.remoteId, score, false);
+		setModalVisible(true);
+	}, [word, translation, onFailure]);
+
+	const handleModalClose = useCallback(() => {
+		setModalVisible(false);
+		complete();
+	}, [complete]);
+
 	if (!word || !translation || options.length === 0) {
 		return null; // or a loading spinner
 	}
 
 	return (
 		<>
-			<TrainingPromptCard>
+			<TrainingPromptCard wordId={word.remoteId} onSkip={handleSkip}>
 				<PlayWordButton autoplay audio={word.audio} />
 			</TrainingPromptCard>
 
@@ -94,6 +108,11 @@ export function ListeningPracticeExercise() {
 					</WButton>
 				))}
 			</View>
+
+			<WordExcerciseCardResultModal
+				visible={modalVisible}
+				onRequestClose={handleModalClose}
+			/>
 		</>
 	);
 }

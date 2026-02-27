@@ -1,5 +1,6 @@
 // Avoid importing BottomTabBar directly to prevent react-navigation context
 // mismatches with expo-router's bundled navigation packages.
+
 import { SyncProgressBar } from "@/components/SyncProgressBar";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
@@ -15,6 +16,7 @@ import { Tabs } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function RootLayout() {
 	const { t } = useTranslation();
@@ -111,9 +113,10 @@ export default function RootLayout() {
 		};
 	}, [syncVocabulary, user, isSyncing]);
 
+	const insets = useSafeAreaInsets();
+
 	return (
 		<View style={styles.container}>
-			<SyncProgressBar />
 			<Tabs
 				screenOptions={{
 					tabBarItemStyle: { paddingTop: 8 },
@@ -157,6 +160,17 @@ export default function RootLayout() {
 					}}
 				/>
 			</Tabs>
+			<View
+				pointerEvents="none"
+				style={{
+					position: "absolute",
+					bottom: 49 + insets.bottom,
+					left: 0,
+					right: 0,
+				}}
+			>
+				<SyncProgressBar />
+			</View>
 		</View>
 	);
 }

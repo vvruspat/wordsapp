@@ -1,8 +1,9 @@
+import { AntDesign } from "@expo/vector-icons";
 import { authenticateAsync } from "expo-local-authentication";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { resendVerificationEmail, verifyEmail } from "@/api/auth";
 import { WButton, WCharInput, WText, WTimer } from "@/mob-ui";
@@ -51,6 +52,9 @@ export default function Verify() {
 
 	return (
 		<SafeAreaView mode="padding" style={styles.page}>
+			<Pressable onPress={() => router.back()} style={{ padding: 8 }}>
+				<AntDesign name="arrow-left" size={24} color="white" />
+			</Pressable>
 			<View style={styles.formWrapper}>
 				{error && <WText mode="primary">{error}</WText>}
 
@@ -73,17 +77,19 @@ export default function Verify() {
 					/>
 				)}
 
-				<WButton
-					mode="tertiary"
-					onPress={onCodeResendHandler}
-					disabled={!isReadyToResend}
-				>
-					<Text>{t("resend_code")}</Text>
-				</WButton>
+				<View style={{ gap: 24, width: "100%" }}>
+					<WButton
+						mode="tertiary"
+						onPress={onCodeResendHandler}
+						disabled={!isReadyToResend}
+					>
+						<Text>{t("resend_code")}</Text>
+					</WButton>
 
-				<WButton mode="secondary" onPress={() => router.push("/")}>
-					<Text>{t("skip_verification")}</Text>
-				</WButton>
+					<WButton mode="secondary" onPress={() => router.push("/")}>
+						<Text>{t("skip_verification")}</Text>
+					</WButton>
+				</View>
 			</View>
 		</SafeAreaView>
 	);

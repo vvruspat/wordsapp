@@ -1,9 +1,10 @@
+import { useCallback, useContext, useEffect, useState } from "react";
+import { View } from "react-native";
+import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WCharInput, WCharInputProps } from "@/mob-ui";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { View } from "react-native";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 type CharInputStatus = WCharInputProps["status"];
@@ -13,6 +14,7 @@ const score = 0.2;
 export function TypeTranslationExercise() {
 	console.log("TypeTranslationExercise");
 	const [status, setStatus] = useState<CharInputStatus>("default");
+	const [modalVisible, setModalVisible] = useState(false);
 
 	const {
 		addCompleteListener,
@@ -20,6 +22,7 @@ export function TypeTranslationExercise() {
 		loadData,
 		onFailure,
 		onSuccess,
+		complete,
 	} = useContext(ExerciseContext);
 	const { currentPairs } = useExcerciseStore();
 
@@ -86,13 +89,29 @@ export function TypeTranslationExercise() {
 		[translation, word, evaluateStatus, onFailure, onSuccess],
 	);
 
+	const handleSkip = useCallback(() => {
+		if (!word || !translation) return;
+		onFailure?.(word.remoteId, score, false);
+		setModalVisible(true);
+	}, [word, translation, onFailure]);
+
+	const handleModalClose = useCallback(() => {
+		setModalVisible(false);
+		complete();
+	}, [complete]);
+
 	if (!word || !translation) {
 		return null; // or a loading spinner
 	}
 
 	return (
 		<>
-			<TrainingPromptCard word={word.word} transcribtion={word.transcribtion} wordId={word.remoteId}>
+			<TrainingPromptCard
+				word={word.word}
+				transcribtion={word.transcribtion}
+				wordId={word.remoteId}
+				onSkip={handleSkip}
+			>
 				<View style={{ gap: 24, alignItems: "center" }}>
 					<PlayWordButton audio={word.audio} />
 				</View>
@@ -102,6 +121,11 @@ export function TypeTranslationExercise() {
 				length={translation.translation.length}
 				onChangeText={handleChange}
 				status={status}
+			/>
+
+			<WordExcerciseCardResultModal
+				visible={modalVisible}
+				onRequestClose={handleModalClose}
 			/>
 		</>
 	);

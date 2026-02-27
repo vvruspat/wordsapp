@@ -1,10 +1,11 @@
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { View } from "react-native";
+import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WText } from "@/mob-ui";
-import { useCallback, useContext, useEffect, useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { View } from "react-native";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const score = 0.2;
@@ -12,6 +13,7 @@ const score = 0.2;
 export function TrueOrFalseExercise() {
 	console.log("TrueOrFalseExercise");
 	const { t } = useTranslation();
+	const [modalVisible, setModalVisible] = useState(false);
 
 	const {
 		addCompleteListener,
@@ -19,6 +21,7 @@ export function TrueOrFalseExercise() {
 		loadData,
 		onFailure,
 		onSuccess,
+		complete,
 	} = useContext(ExerciseContext);
 	const { currentPairs, currentRandomTranslations: randomTranslations } =
 		useExcerciseStore();
@@ -74,6 +77,17 @@ export function TrueOrFalseExercise() {
 		[isCorrect, word, translation, onFailure, onSuccess],
 	);
 
+	const handleSkip = useCallback(() => {
+		if (!word || !translation) return;
+		onFailure?.(word.remoteId, score, false);
+		setModalVisible(true);
+	}, [word, translation, onFailure]);
+
+	const handleModalClose = useCallback(() => {
+		setModalVisible(false);
+		complete();
+	}, [complete]);
+
 	if (!word || !translation || randomTranslations.length === 0) {
 		return null; // or a loading spinner
 	}
@@ -84,6 +98,7 @@ export function TrueOrFalseExercise() {
 				word={word.word}
 				transcribtion={word.transcribtion}
 				wordId={word.remoteId}
+				onSkip={handleSkip}
 			>
 				<View style={{ gap: 24, alignItems: "center" }}>
 					<WText mode="primary" size="xl">
@@ -110,6 +125,11 @@ export function TrueOrFalseExercise() {
 					<WText>{t("true_or_false_no")}</WText>
 				</WButton>
 			</View>
+
+			<WordExcerciseCardResultModal
+				visible={modalVisible}
+				onRequestClose={handleModalClose}
+			/>
 		</>
 	);
 }

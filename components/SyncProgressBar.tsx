@@ -11,7 +11,7 @@ export const SyncProgressBar = memo(() => {
 	}
 
 	const clamped = Math.min(1, Math.max(0, syncProgress || 0));
-	const widthPercent = `${Math.round(clamped * 100)}%`;
+	const widthPercent: `${number}%` = `${Math.round(clamped * 100)}%`;
 
 	return (
 		<View pointerEvents="none" style={styles.container}>
