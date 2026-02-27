@@ -101,5 +101,6 @@
 	"report_audio": "Audio is incorrect",
 	"report_cancel": "Cancel",
 	"report_success": "Thank you for your report!",
-	"report_error": "Failed to send report"
+	"report_error": "Failed to send report",
+	"exercise_skip": "Skip"
 }

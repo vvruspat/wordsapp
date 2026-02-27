@@ -188,7 +188,7 @@ export default function Catalog() {
 	};
 
 	return (
-		<SafeAreaView mode="padding" style={{ ...styles.page, paddingBottom: 0 }}>
+		<SafeAreaView mode="padding" edges={["top", "left", "right"]} style={styles.page}>
 			<View
 				style={{
 					gap: 16,
@@ -207,7 +207,7 @@ export default function Catalog() {
 					style={{
 						width: "100%",
 						flexGrow: 0,
-						flexShrink: 1,
+						flexShrink: 0,
 					}}
 					columnWrapperStyle={{
 						gap: 16,
@@ -224,16 +224,19 @@ export default function Catalog() {
 					{t("topics_title")}
 				</WText>
 
-				<FlatList
-					data={filteredTopics}
-					style={{ width: "100%", flexGrow: 0, flexShrink: 1 }}
-					contentContainerStyle={{
-						gap: 16,
-					}}
-					renderItem={renderTopicItem}
-					keyExtractor={(item) => item.remoteId.toString()}
-					numColumns={1}
-				/>
+				<View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
+					<FlatList
+						data={filteredTopics}
+						style={{ width: "100%" }}
+						contentContainerStyle={{
+							gap: 16,
+						}}
+						renderItem={renderTopicItem}
+						keyExtractor={(item) => item.remoteId.toString()}
+						numColumns={1}
+						ListFooterComponent={<View style={{ height: 16 }} />}
+					/>
+				</View>
 			</View>
 		</SafeAreaView>
 	);

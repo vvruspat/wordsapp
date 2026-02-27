@@ -1,7 +1,8 @@
+import { useCallback, useContext, useEffect, useState } from "react";
+import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WCharInput, WCharInputProps } from "@/mob-ui";
-import { useCallback, useContext, useEffect, useState } from "react";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 type CharInputStatus = WCharInputProps["status"];
@@ -10,6 +11,7 @@ const score = 0.2;
 
 export function TypeWordExercise() {
 	const [status, setStatus] = useState<CharInputStatus>("default");
+	const [modalVisible, setModalVisible] = useState(false);
 
 	const {
 		addCompleteListener,
@@ -17,6 +19,7 @@ export function TypeWordExercise() {
 		loadData,
 		onFailure,
 		onSuccess,
+		complete,
 	} = useContext(ExerciseContext);
 	const { currentPairs } = useExcerciseStore();
 
@@ -83,18 +86,38 @@ export function TypeWordExercise() {
 		[word, translation, evaluateStatus, onFailure, onSuccess],
 	);
 
+	const handleSkip = useCallback(() => {
+		if (!word || !translation) return;
+		onFailure?.(word.remoteId, score, false);
+		setModalVisible(true);
+	}, [word, translation, onFailure]);
+
+	const handleModalClose = useCallback(() => {
+		setModalVisible(false);
+		complete();
+	}, [complete]);
+
 	if (!word || !translation) {
 		return null;
 	}
 
 	return (
 		<>
-			<TrainingPromptCard word={translation.translation} />
+			<TrainingPromptCard
+				word={translation.translation}
+				wordId={word.remoteId}
+				onSkip={handleSkip}
+			/>
 
 			<WCharInput
 				length={word.word.length}
 				onChangeText={handleChange}
 				status={status}
+			/>
+
+			<WordExcerciseCardResultModal
+				visible={modalVisible}
+				onRequestClose={handleModalClose}
 			/>
 		</>
 	);

@@ -101,5 +101,6 @@
 	"report_audio": "L'audio è errato",
 	"report_cancel": "Annulla",
 	"report_success": "Grazie per la segnalazione!",
-	"report_error": "Impossibile inviare la segnalazione"
+	"report_error": "Impossibile inviare la segnalazione",
+	"exercise_skip": "Salta"
 }
