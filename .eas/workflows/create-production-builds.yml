@@ -5,15 +5,11 @@ jobs:
     type: build
     params:
       platform: android
-    env:
-      GITHUB_TOKEN: ${{ eas.env.GITHUB_TOKEN }}
 
   build_ios:
     type: build
     params:
       platform: ios
-    env:
-      GITHUB_TOKEN: ${{ eas.env.GITHUB_TOKEN }}
 
   submit_ios:
     type: submit
