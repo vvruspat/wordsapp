@@ -1,6 +1,14 @@
 import { Colors } from "@/mob-ui/brand/colors";
 
 export const EXERCISES_APPS = {
+	cards: {
+		id: "cards",
+		titleColor: Colors.dark.black,
+		titleId: "app_cards_title",
+		backgroundColor: Colors.backgrounds.green,
+		descriptionColor: Colors.dark.dark1,
+		descriptionId: "app_cards_description",
+	},
 	true_or_false: {
 		id: "true_or_false",
 		titleColor: Colors.dark.black,
@@ -48,14 +56,6 @@ export const EXERCISES_APPS = {
 		backgroundColor: Colors.backgrounds.blue,
 		descriptionColor: Colors.dark.dark1,
 		descriptionId: "app_type_word_description",
-	},
-	cards: {
-		id: "cards",
-		titleColor: Colors.dark.black,
-		titleId: "app_cards_title",
-		backgroundColor: Colors.backgrounds.green,
-		descriptionColor: Colors.dark.dark1,
-		descriptionId: "app_cards_description",
 	},
 } as const;
 
