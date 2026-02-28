@@ -1,7 +1,3 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { FlatList, ListRenderItemInfo, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { TopicItem } from "@/components/TopicItem";
 import { VocabCatalogItem } from "@/components/VocabCatalogItem";
 import Topic from "@/db/models/Topic";
@@ -14,6 +10,10 @@ import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { WText } from "@/mob-ui";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { FlatList, ListRenderItemInfo, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../general.styles";
 
 export default function Catalog() {
