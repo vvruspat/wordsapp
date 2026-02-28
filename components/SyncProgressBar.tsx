@@ -1,7 +1,7 @@
-import { useVocabularyStore } from "@/hooks/useVocabularyStore";
-import { Colors } from "@/mob-ui/brand/colors";
 import { memo } from "react";
 import { StyleSheet, View } from "react-native";
+import { useVocabularyStore } from "@/hooks/useVocabularyStore";
+import { Colors } from "@/mob-ui/brand/colors";
 
 export const SyncProgressBar = memo(() => {
 	const { isSyncing, syncProgress } = useVocabularyStore();

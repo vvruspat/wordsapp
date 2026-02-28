@@ -1,10 +1,10 @@
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Modal, type ModalProps, View } from "react-native";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WCard, WText } from "@/mob-ui/atoms";
 import { Colors } from "@/mob-ui/brand/colors";
 import { getBiggestWordLength } from "@/utils/getBiggestWordLength";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { Modal, type ModalProps, View } from "react-native";
 
 export type WordExcerciseCardResultModalProps = ModalProps;
 

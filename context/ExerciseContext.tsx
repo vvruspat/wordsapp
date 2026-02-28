@@ -48,7 +48,9 @@ export type Exercise = "success" | "failure";
 
 export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const [modalVisible, setModalVisible] = useState<Exercise | null>(null);
-	const [currentTrainingId, setCurrentTrainingId] = useState<number | null>(null);
+	const [currentTrainingId, setCurrentTrainingId] = useState<number | null>(
+		null,
+	);
 
 	const completeListeners = useRef(new Set<() => void>());
 

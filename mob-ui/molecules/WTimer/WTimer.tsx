@@ -1,6 +1,6 @@
-import { WText, WTextProps } from "@/mob-ui/atoms";
 import { useIsFocused } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
+import { WText, WTextProps } from "@/mob-ui/atoms";
 
 type WTimerProps = WTextProps & {
 	startTime?: number;

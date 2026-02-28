@@ -1,5 +1,3 @@
-import { Colors } from "@/mob-ui/brand/colors";
-import { typography } from "@/mob-ui/brand/typography";
 import { BlurView } from "expo-blur";
 import React, {
 	forwardRef,
@@ -19,6 +17,8 @@ import {
 	View,
 	ViewStyle,
 } from "react-native";
+import { Colors } from "@/mob-ui/brand/colors";
+import { typography } from "@/mob-ui/brand/typography";
 import { WText, WTextProps } from "../WText";
 import { ClearIcon } from "./icons/ClearIcon";
 import { EyeCloseIcon } from "./icons/EyeCloseIcon";

@@ -1,11 +1,11 @@
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { View } from "react-native";
 import { MatchWordCard } from "@/components/MatchWordCard/MatchWordCard";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import Word from "@/db/models/Word";
 import WordTranslation from "@/db/models/WordTranslation";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { shuffleArray } from "@/utils";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { View } from "react-native";
 
 export type MatchWordPair = {
 	word: Word;

@@ -85,7 +85,12 @@ export const schema = appSchema({
 		tableSchema({
 			name: "learning_progress",
 			columns: [
-				{ name: "remote_id", type: "number", isIndexed: true, isOptional: true },
+				{
+					name: "remote_id",
+					type: "number",
+					isIndexed: true,
+					isOptional: true,
+				},
 				{ name: "user_id", type: "number", isIndexed: true },
 				{ name: "word_id", type: "number", isIndexed: true },
 				{ name: "score", type: "number" },

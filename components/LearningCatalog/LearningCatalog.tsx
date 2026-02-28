@@ -1,5 +1,3 @@
-import { WCard, WText } from "@/mob-ui";
-import { Colors } from "@/mob-ui/brand/colors";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -9,6 +7,8 @@ import {
 	StyleProp,
 	ViewStyle,
 } from "react-native";
+import { WCard, WText } from "@/mob-ui";
+import { Colors } from "@/mob-ui/brand/colors";
 import { EXERCISES_APPS, LearningTrainingName } from "./types";
 
 export type LearningCatalogProps = {

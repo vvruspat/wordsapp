@@ -1,9 +1,9 @@
-import { Colors } from "@/mob-ui/brand/colors";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { AudioStatus, useAudioPlayer } from "expo-audio";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
+import { Colors } from "@/mob-ui/brand/colors";
 import { styles } from "./PlayWordButton.styles";
 
 export type PlayWordButtonProps = {

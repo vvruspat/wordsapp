@@ -1,6 +1,6 @@
+import { Modal } from "react-native";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { LanguageItem } from "@/constants/languages";
-import { Modal } from "react-native";
 
 export type SelectLanguageISpeakModalProps = {
 	visible: boolean;

@@ -140,9 +140,7 @@ export const wordsRepository = {
 			.query(Q.where("user_id", userId))
 			.fetch();
 
-		const progressByWordId = new Map(
-			progressRecords.map((r) => [r.wordId, r]),
-		);
+		const progressByWordId = new Map(progressRecords.map((r) => [r.wordId, r]));
 
 		const oneMonthAgo = new Date();
 		oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);

@@ -1,9 +1,9 @@
-import { LANGUAGES, LanguageItem } from "@/constants/languages";
-import { WText } from "@/mob-ui";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, View } from "react-native";
 import CountryFlag from "react-native-country-flag";
+import { LANGUAGES, LanguageItem } from "@/constants/languages";
+import { WText } from "@/mob-ui";
 import { styles } from "./SelectLanguageButton.styles";
 
 export type SelectLanguageButtonProps = {

@@ -1,11 +1,11 @@
+import { useCallback, useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WText } from "@/mob-ui";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { View } from "react-native";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const score = 0.2;
@@ -70,7 +70,11 @@ export function CardsExercise() {
 
 	return (
 		<>
-			<TrainingPromptCard word={word.word} transcribtion={word.transcribtion} wordId={word.remoteId}>
+			<TrainingPromptCard
+				word={word.word}
+				transcribtion={word.transcribtion}
+				wordId={word.remoteId}
+			>
 				<PlayWordButton audio={word.audio} />
 			</TrainingPromptCard>
 

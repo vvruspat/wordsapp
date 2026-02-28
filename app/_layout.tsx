@@ -1,9 +1,3 @@
-import { ScreenBackground } from "@/components/ScreenBackground";
-import { BackgroundProvider } from "@/context/BackgroundContext";
-import database from "@/db/database";
-import { styles } from "@/general.styles";
-import { WZStack } from "@/mob-ui";
-import { Colors } from "@/mob-ui/brand/colors";
 import { DatabaseProvider } from "@nozbe/watermelondb/DatabaseProvider";
 import { useIsFocused } from "@react-navigation/native";
 import { authenticateAsync } from "expo-local-authentication";
@@ -14,6 +8,12 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { ScreenBackground } from "@/components/ScreenBackground";
+import { BackgroundProvider } from "@/context/BackgroundContext";
+import database from "@/db/database";
+import { styles } from "@/general.styles";
+import { WZStack } from "@/mob-ui";
+import { Colors } from "@/mob-ui/brand/colors";
 import "../i18n";
 
 export default function RootLayout() {

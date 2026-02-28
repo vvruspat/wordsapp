@@ -1,7 +1,7 @@
+import { Pressable } from "react-native";
 import VocabCatalog from "@/db/models/VocabCatalog";
 import { WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
-import { Pressable } from "react-native";
 
 type VocabCatalogItemProps = Pick<VocabCatalog, "title"> & {
 	selected: boolean;

@@ -1,7 +1,7 @@
-import { ExerciseContext } from "@/context/ExerciseContext";
-import { WInputProps, WText } from "@/mob-ui/atoms";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Pressable, TextInput, TextInputProps, View } from "react-native";
+import { ExerciseContext } from "@/context/ExerciseContext";
+import { WInputProps, WText } from "@/mob-ui/atoms";
 import { styles as wInputStyles } from "../../atoms/WInput/WInput.styles";
 import { styles } from "./WCharInput.styles";
 

@@ -1,14 +1,6 @@
 // Avoid importing BottomTabBar directly to prevent react-navigation context
 // mismatches with expo-router's bundled navigation packages.
 
-import { SyncProgressBar } from "@/components/SyncProgressBar";
-import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSessionUser } from "@/hooks/useSession";
-import { useVocabularyStore } from "@/hooks/useVocabularyStore";
-import { useVocabularySync } from "@/hooks/useVocabularySync";
-import i18n from "@/i18n";
-import { Colors } from "@/mob-ui/brand/colors";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Language } from "@vvruspat/words-types";
 import Constants from "expo-constants";
@@ -17,6 +9,14 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SyncProgressBar } from "@/components/SyncProgressBar";
+import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { useSessionUser } from "@/hooks/useSession";
+import { useVocabularyStore } from "@/hooks/useVocabularyStore";
+import { useVocabularySync } from "@/hooks/useVocabularySync";
+import i18n from "@/i18n";
+import { Colors } from "@/mob-ui/brand/colors";
 
 export default function RootLayout() {
 	const { t } = useTranslation();

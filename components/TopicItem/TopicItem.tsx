@@ -1,7 +1,7 @@
+import { Pressable, View } from "react-native";
 import Topic from "@/db/models/Topic";
 import { WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
-import { Pressable, View } from "react-native";
 
 type TopicItemProps = Pick<Topic, "title"> & {
 	selected: boolean;
