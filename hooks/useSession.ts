@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { refreshToken as apiRefreshToken } from "@/api/auth";
 import User from "@/db/models/User";
+import { logger } from "@/utils/logger";
 
 export const useSessionUser = () => {
 	const database = useDatabase();
@@ -110,7 +111,7 @@ export const useSessionUser = () => {
 
 			return () => subscription.unsubscribe();
 		} catch (error) {
-			console.error("Failed to decode token or query user:", error);
+			logger.error("Failed to decode token or query user:", error, "auth");
 			setUser(null);
 		}
 	}, [database, accessToken]);

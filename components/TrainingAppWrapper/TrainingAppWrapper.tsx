@@ -8,6 +8,7 @@ import {
 	SafeAreaViewProps,
 } from "react-native-safe-area-context";
 import { getTrainings } from "@/api/training";
+import { logger } from "@/utils/logger";
 import { BackgroundContext } from "@/context/BackgroundContext";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { styles } from "@/general.styles";
@@ -69,7 +70,7 @@ export const TrainingAppWrapper = ({
 				const id = trainingCacheRef.current[currentExercise];
 				setCurrentTrainingId(id ?? null);
 			})
-			.catch(console.error);
+			.catch((err) => logger.error("Failed to fetch trainings", err, "network"));
 	}, [currentExercise, setCurrentTrainingId]);
 
 	const setRandomExercise = useCallback(() => {

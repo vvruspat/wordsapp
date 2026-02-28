@@ -1,5 +1,6 @@
 import type { paths as Paths } from "@vvruspat/words-types";
 import * as SecureStore from "expo-secure-store";
+import { logger } from "./logger";
 import { genericErrorMessage } from "./genericErrorMessage";
 
 const server = process.env.EXPO_PUBLIC_API_URL;
@@ -139,15 +140,17 @@ export const $fetch = async <U extends ValidUrl, M extends ValidMethod<U>>(
 		const bodyInfo = body ? `Body: ${JSON.stringify(body)}` : "";
 		const logMsg = `$fetch: ${method as string} ${urlWithParams}, Status: ${res.status} ${bodyInfo}`;
 
-		if (res.status >= 400) console.error(logMsg);
-		else if (res.status >= 300) console.warn(logMsg);
-		else console.info(logMsg);
+		if (res.status >= 400) logger.error(logMsg, undefined, "network");
+		else if (res.status >= 300) logger.warn(logMsg, undefined, "network");
+		else logger.info(logMsg, undefined, "network");
 
 		const textResponse = await res.text();
 
 		if (res.status >= 400) {
-			console.error(
-				`Error response from ${method as string} ${urlWithParams}: ${textResponse}`,
+			logger.error(
+				`Error response from ${method as string} ${urlWithParams}`,
+				textResponse,
+				"network",
 			);
 		}
 

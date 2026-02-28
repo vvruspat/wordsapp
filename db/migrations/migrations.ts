@@ -2,10 +2,23 @@ import {
 	addColumns,
 	createTable,
 	schemaMigrations,
+	unsafeExecuteSql,
 } from "@nozbe/watermelondb/Schema/migrations";
 
 export default schemaMigrations({
 	migrations: [
+		{
+			toVersion: 4,
+			steps: [
+				// Use IF NOT EXISTS to handle devices that already have this table
+				unsafeExecuteSql(
+					'CREATE TABLE IF NOT EXISTS "user_profile" ("id" TEXT PRIMARY KEY NOT NULL, "user_id" TEXT NOT NULL DEFAULT \'\', "setting_key" TEXT NOT NULL DEFAULT \'\', "setting_value" TEXT NOT NULL DEFAULT \'\', "_changed" TEXT NOT NULL DEFAULT \'\', "_status" TEXT NOT NULL DEFAULT \'\');',
+				),
+				unsafeExecuteSql(
+					'CREATE INDEX IF NOT EXISTS "user_profile_user_id" ON "user_profile" ("user_id");',
+				),
+			],
+		},
 		{
 			toVersion: 3,
 			steps: [

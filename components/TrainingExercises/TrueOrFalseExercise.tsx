@@ -6,12 +6,13 @@ import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WText } from "@/mob-ui";
+import { logger } from "@/utils/logger";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const score = 0.2;
 
 export function TrueOrFalseExercise() {
-	console.log("TrueOrFalseExercise");
+	logger.debug("TrueOrFalseExercise rendered", undefined, "ui");
 	const { t } = useTranslation();
 	const [modalVisible, setModalVisible] = useState(false);
 

@@ -9,6 +9,7 @@ import { vocabcatalogRepository } from "@/db/repositories/vocabcatalog.repositor
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
+import { logger } from "@/utils/logger";
 import { WText } from "@/mob-ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -95,7 +96,7 @@ export default function Catalog() {
 				"selected_catalogs",
 				JSON.stringify(currentCatalogs),
 			)
-			.catch(console.error);
+			.catch((err) => logger.error("Failed to persist catalog selection", err, "db"));
 	}, [currentCatalogs, _hasHydrated, user?.userId]);
 
 	// Persist topic selection to DB after hydration
@@ -107,7 +108,7 @@ export default function Catalog() {
 				"selected_topics",
 				JSON.stringify(currentTopics),
 			)
-			.catch(console.error);
+			.catch((err) => logger.error("Failed to persist topic selection", err, "db"));
 	}, [currentTopics, _hasHydrated, user?.userId]);
 
 	const fetchCatalogs = useCallback(async (language: string) => {

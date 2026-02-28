@@ -4,6 +4,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
 import { Colors } from "@/mob-ui/brand/colors";
+import { logger } from "@/utils/logger";
 import { styles } from "./PlayWordButton.styles";
 
 export type PlayWordButtonProps = {
@@ -53,7 +54,7 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 				try {
 					player.seekTo(0);
 				} catch (error) {
-					console.error("Error seeking audio:", error);
+					logger.error("Error seeking audio:", error, "audio");
 				}
 			}
 		};
@@ -64,7 +65,7 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 			try {
 				player.play();
 			} catch (error) {
-				console.error("Error playing audio:", error);
+				logger.error("Error playing audio:", error, "audio");
 				setHasError(true);
 			}
 		}
@@ -81,7 +82,7 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		try {
 			player.play();
 		} catch (error) {
-			console.error("Error playing audio:", error);
+			logger.error("Error playing audio:", error, "audio");
 			setHasError(true);
 		}
 	}, [player, audioPath, hasError]);
