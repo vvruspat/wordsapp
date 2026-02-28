@@ -1,8 +1,3 @@
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Text, TextInputChangeEvent, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { signUp as apiSignUp } from "@/api/auth";
 import SelectLanguageISpeakModal from "@/components/Modals/SelectLanguageISpeakModal";
 import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLearnModal";
@@ -10,6 +5,12 @@ import { SelectLanguageButton } from "@/components/SelectLanguageButton";
 import { LanguageItem } from "@/constants/languages";
 import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WInput, WText } from "@/mob-ui";
+import * as Sentry from "@sentry/react-native";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Text, TextInputChangeEvent, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../general.styles";
 
 export default function SignUp() {
@@ -86,6 +87,9 @@ export default function SignUp() {
 					</WText>
 				)}
 				<WText mode="primary" size="3xl" weight="bold" align="center">
+					{process.env.API_SERVER}
+				</WText>
+				<WText mode="primary" size="3xl" weight="bold" align="center">
 					{t("sign_up_message")}
 				</WText>
 				<View style={styles.fieldsGroup}>
@@ -148,10 +152,17 @@ export default function SignUp() {
 					>
 						<Text>{t("button_sign_in")}</Text>
 					</WButton>
+
+					<WButton
+						mode="secondary"
+						onPress={() => {
+							Sentry.captureException(new Error("First error"));
+						}}
+					>
+						<Text>Try Sentry</Text>
+					</WButton>
 				</View>
 			</View>
 		</SafeAreaView>
 	);
 }
-
-// const signUpStyles = StyleSheet.create({});
