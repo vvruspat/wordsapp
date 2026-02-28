@@ -16,5 +16,3 @@ jobs:
     needs: [build_ios]
     params:
       build_id: ${{ needs.build_ios.outputs.build_id }}
-    env:
-      EXPO_DEBUG: "1"

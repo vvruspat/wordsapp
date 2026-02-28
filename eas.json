@@ -16,11 +16,6 @@
 		}
 	},
 	"submit": {
-		"production": {
-			"ios": {
-				"ascApiKeyIssuerId": "d999920c-b5c6-4f85-a4f5-c5dac03925f4",
-				"ascApiKeyId": "8M9PNV8PBQ"
-			}
-		}
+		"production": {}
 	}
 }
