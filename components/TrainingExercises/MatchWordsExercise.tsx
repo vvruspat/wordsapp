@@ -6,6 +6,7 @@ import Word from "@/db/models/Word";
 import WordTranslation from "@/db/models/WordTranslation";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { shuffleArray } from "@/utils";
+import { logger } from "@/utils/logger";
 
 export type MatchWordPair = {
 	word: Word;
@@ -13,7 +14,7 @@ export type MatchWordPair = {
 };
 
 export function MatchWordsExercise() {
-	console.log("MatchWordsExercise");
+	logger.debug("MatchWordsExercise rendered", undefined, "ui");
 
 	const [burnedPairs, setBurnedPairs] = useState<MatchWordPair[]>([]);
 	const [failedWords, setFailedWords] = useState<Set<Word["remoteId"]>>(
@@ -65,10 +66,10 @@ export function MatchWordsExercise() {
 					onSuccess?.(pair.word.remoteId, 0.1, false);
 				}
 
-				console.log("onFinish", prev, prev.length + 1, pairs.length);
+				logger.debug("onMatch", { prevLength: prev.length + 1, pairsLength: pairs.length }, "ui");
 
 				if (prev.length + 1 === pairs.length) {
-					console.log("onFinish called");
+					logger.debug("onFinish called", undefined, "ui");
 					setFailedWords(new Set());
 					complete();
 

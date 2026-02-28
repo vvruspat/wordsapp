@@ -10,6 +10,7 @@ import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useLearningSync } from "@/hooks/useLearningSync";
 import { useSessionUser } from "@/hooks/useSession";
+import { logger } from "@/utils/logger";
 
 type ExerciseType = {
 	showSuccessModal: () => void;
@@ -78,7 +79,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			try {
 				listener?.();
 			} catch (error) {
-				console.error("Error notifying complete listener:", error);
+				logger.error("Error notifying complete listener:", error, "general");
 			}
 		});
 	}, []);
@@ -183,7 +184,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						trainingId: currentTrainingId ?? undefined,
 					})
 					.then(() => syncToBackend())
-					.catch(console.error);
+					.catch((err) => logger.error("Failed to record result", err, "db"));
 			}
 
 			showModal && showFailureModal();
@@ -209,7 +210,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						trainingId: currentTrainingId ?? undefined,
 					})
 					.then(() => syncToBackend())
-					.catch(console.error);
+					.catch((err) => logger.error("Failed to record result", err, "db"));
 			}
 
 			showModal && showSuccessModal();

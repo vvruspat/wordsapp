@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { DevPanel } from "@/components/DevPanel";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { BackgroundProvider } from "@/context/BackgroundContext";
 import database from "@/db/database";
@@ -111,6 +112,7 @@ export default Sentry.wrap(function RootLayout() {
 				<Stack.Screen name="verify" options={{ title: "" }} />
 				<Stack.Screen name="authorized" options={{ headerShown: false }} />
 			</Stack>
+			<DevPanel />
 		</DatabaseProvider>
 	);
 });

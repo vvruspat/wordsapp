@@ -15,6 +15,7 @@ import Word from "@/db/models/Word";
 import WordTranslation from "@/db/models/WordTranslation";
 import { useSessionUser } from "./useSession";
 import { useVocabularyStore } from "./useVocabularyStore";
+import { logger } from "@/utils/logger";
 
 type WordDto = components["schemas"]["WordDto"];
 type WordTranslationDto = components["schemas"]["WordTranslationDto"];
@@ -29,7 +30,7 @@ const downloadAudioFile = async (
 	audioUrl: string,
 	wordId: number,
 ): Promise<string> => {
-	console.log("downloadAudioFile audioUrl", audioUrl);
+	logger.debug("downloadAudioFile audioUrl", audioUrl, "audio");
 	if (!audioUrl) {
 		return audioUrl;
 	}
@@ -41,13 +42,13 @@ const downloadAudioFile = async (
 
 	// Get the audio directory path
 	if (!FileSystem.documentDirectory) {
-		console.warn("Document directory is not available");
+		logger.warn("Document directory is not available", undefined, "audio");
 		return audioUrl;
 	}
 
 	const audioDir = `${FileSystem.documentDirectory}assets/audio/`;
 
-	console.log("audioDir", audioDir);
+	logger.debug("audioDir", audioDir, "audio");
 
 	// Ensure the directory exists
 	const dirInfo = await FileSystem.getInfoAsync(audioDir);
@@ -72,7 +73,7 @@ const downloadAudioFile = async (
 	// Check if file already exists
 	const fileInfo = await FileSystem.getInfoAsync(localPath);
 	if (fileInfo.exists) {
-		console.log("File already exists", localPath);
+		logger.debug("File already exists", localPath, "audio");
 		return localPath;
 	}
 
@@ -80,16 +81,14 @@ const downloadAudioFile = async (
 	try {
 		const downloadResult = await FileSystem.downloadAsync(audioUrl, localPath);
 		if (downloadResult.status === 200) {
-			console.log(`Downloaded audio for word ${wordId} to ${localPath}`);
+			logger.debug(`Downloaded audio for word ${wordId}`, localPath, "audio");
 			return localPath;
 		} else {
-			console.warn(
-				`Failed to download audio for word ${wordId}: ${downloadResult.status}`,
-			);
+			logger.warn(`Failed to download audio for word ${wordId}`, downloadResult.status, "audio");
 			return audioUrl; // Return original URL if download fails
 		}
 	} catch (error) {
-		console.warn(`Error downloading audio for word ${wordId}:`, error);
+		logger.warn(`Error downloading audio for word ${wordId}:`, error, "audio");
 		return audioUrl; // Return original URL if download fails
 	}
 };
@@ -122,12 +121,7 @@ export const useVocabularySync = () => {
 			// Get language_learn from parameter, user model, or API
 			const targetLanguage = languageLearn;
 
-			console.log(
-				"targetLanguage",
-				user,
-				user.language_learn,
-				user.language_speak,
-			);
+			logger.debug("targetLanguage", { language_learn: user.language_learn, language_speak: user.language_speak }, "sync");
 
 			if (!targetLanguage) {
 				setError("Language to learn is required");
@@ -140,7 +134,7 @@ export const useVocabularySync = () => {
 			setLanguageLearn(targetLanguage);
 
 			try {
-				console.log("Fetching catalogs");
+				logger.debug("Fetching catalogs", undefined, "sync");
 				// Fetch catalogs filtered by language
 				const catalogsResponse = await getCatalogs({
 					offset: 0,
@@ -156,17 +150,17 @@ export const useVocabularySync = () => {
 				}
 				setSyncProgress(0.1);
 
-				console.log("Catalogs fetched", catalogsResponse.data);
+				logger.debug("Catalogs fetched", catalogsResponse.data, "sync");
 				const catalogs: VocabCatalogDto[] = catalogsResponse.data?.items || [];
 
-				console.log("Fetching topics");
+				logger.debug("Fetching topics", undefined, "sync");
 				const topicsResponse = await getTopics({
 					offset: 0,
 					limit: 10000,
 					language: targetLanguage,
 				});
 
-				console.log("Topics fetched", topicsResponse.data);
+				logger.debug("Topics fetched", topicsResponse.data, "sync");
 
 				if (topicsResponse.status === "error") {
 					setError(`Failed to fetch topics: ${topicsResponse.error?.message}`);
@@ -216,13 +210,13 @@ export const useVocabularySync = () => {
 					}
 					setSyncProgress(0.45);
 				} catch (error) {
-					console.warn(`Failed to fetch translation for words:`, error);
+					logger.warn("Failed to fetch translation for words:", error, "sync");
 					// Continue with other words even if one fails
 				}
 
-				console.log("Translations fetched", translations);
+				logger.debug("Translations fetched", translations, "sync");
 
-				console.log("Downloading audio files");
+				logger.debug("Downloading audio files", undefined, "sync");
 				setSyncProgress(0.5);
 
 				// Build a map of already-downloaded local audio paths from the DB
@@ -268,7 +262,7 @@ export const useVocabularySync = () => {
 					setSyncProgress(0.8);
 				}
 
-				console.log("Storing in local database");
+				logger.debug("Storing in local database", undefined, "db");
 				setSyncProgress(0.85);
 				// Store in local database
 				await database.write(async () => {

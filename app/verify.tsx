@@ -3,7 +3,7 @@ import { authenticateAsync } from "expo-local-authentication";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pressable, Text, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { resendVerificationEmail, verifyEmail } from "@/api/auth";
 import { WButton, WCharInput, WText, WTimer } from "@/mob-ui";
@@ -55,42 +55,47 @@ export default function Verify() {
 			<Pressable onPress={() => router.back()} style={{ padding: 8 }}>
 				<AntDesign name="arrow-left" size={24} color="white" />
 			</Pressable>
-			<View style={styles.formWrapper}>
-				{error && <WText mode="primary">{error}</WText>}
+			<KeyboardAvoidingView
+				behavior={Platform.OS === "ios" ? "padding" : "height"}
+				style={{ flex: 1, width: "100%" }}
+			>
+				<View style={styles.formWrapper}>
+					{error && <WText mode="primary">{error}</WText>}
 
-				<WText mode="primary" size="2xl" align="center">
-					{t("verify_enter_code")}
-				</WText>
+					<WText mode="primary" size="2xl" align="center">
+						{t("verify_enter_code")}
+					</WText>
 
-				<WCharInput
-					length={PIN_LENGTH}
-					secureTextEntry={false}
-					keyboardType="visible-password"
-					onChangeText={onCodeChangeHandler}
-				/>
-
-				{!isReadyToResend && (
-					<WTimer
-						mode="primary"
-						duration={180}
-						onComplete={() => setIsReadyToResend(true)}
+					<WCharInput
+						length={PIN_LENGTH}
+						secureTextEntry={false}
+						keyboardType="visible-password"
+						onChangeText={onCodeChangeHandler}
 					/>
-				)}
 
-				<View style={{ gap: 24, width: "100%" }}>
-					<WButton
-						mode="tertiary"
-						onPress={onCodeResendHandler}
-						disabled={!isReadyToResend}
-					>
-						<Text>{t("resend_code")}</Text>
-					</WButton>
+					{!isReadyToResend && (
+						<WTimer
+							mode="primary"
+							duration={180}
+							onComplete={() => setIsReadyToResend(true)}
+						/>
+					)}
 
-					<WButton mode="secondary" onPress={() => router.push("/")}>
-						<Text>{t("skip_verification")}</Text>
-					</WButton>
+					<View style={{ gap: 24, width: "100%" }}>
+						<WButton
+							mode="tertiary"
+							onPress={onCodeResendHandler}
+							disabled={!isReadyToResend}
+						>
+							<Text>{t("resend_code")}</Text>
+						</WButton>
+
+						<WButton mode="secondary" onPress={() => router.push("/")}>
+							<Text>{t("skip_verification")}</Text>
+						</WButton>
+					</View>
 				</View>
-			</View>
+			</KeyboardAvoidingView>
 		</SafeAreaView>
 	);
 }
