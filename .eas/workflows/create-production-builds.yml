@@ -5,16 +5,12 @@ jobs:
     type: build
     params:
       platform: android
-    env:
-      API_SERVER: https://words-api.whitesquirrel.digital
 
   build_ios:
     type: build
     params:
       platform: ios
-    env:
-      API_SERVER: https://words-api.whitesquirrel.digital
-
+   
   submit_ios:
     type: submit
     needs: [build_ios]

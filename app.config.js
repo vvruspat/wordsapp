@@ -66,11 +66,6 @@ export default ({ config }) => {
 				eas: {
 					projectId: "085b8901-c946-419d-9ff6-d370219dd5dd",
 				},
-				API_SERVER:
-					process.env.API_SERVER ??
-					(process.env.NODE_ENV === "production"
-						? "https://api.yourdomain.com"
-						: "http://192.168.1.42:3001"),
 			},
 			owner: "vvruspat",
 		},

@@ -1,9 +1,8 @@
 import type { paths as Paths } from "@vvruspat/words-types";
-import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { genericErrorMessage } from "./genericErrorMessage";
 
-const { API_SERVER: server } = Constants.expoConfig?.extra ?? {};
+const server = process.env.EXPO_PUBLIC_API_URL;
 
 type ValidUrl = keyof Paths;
 type ValidMethod<U extends ValidUrl> = keyof Paths[U];
