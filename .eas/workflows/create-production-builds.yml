@@ -1,0 +1,22 @@
+name: Create Production Builds
+
+jobs:
+  build_android:
+    type: build
+    params:
+      platform: android
+    env:
+      GITHUB_TOKEN: ${{ eas.env.GITHUB_TOKEN }}
+
+  build_ios:
+    type: build
+    params:
+      platform: ios
+    env:
+      GITHUB_TOKEN: ${{ eas.env.GITHUB_TOKEN }}
+
+  submit_ios:
+    type: submit
+    needs: [build_ios]
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}

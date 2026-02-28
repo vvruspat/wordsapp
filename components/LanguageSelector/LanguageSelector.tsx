@@ -1,5 +1,3 @@
-import { LANGUAGES } from "@/constants/languages";
-import { WText } from "@/mob-ui";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -12,6 +10,8 @@ import {
 } from "react-native";
 import CountryFlag from "react-native-country-flag";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LANGUAGES } from "@/constants/languages";
+import { WText } from "@/mob-ui";
 
 type LanguageItem = (typeof LANGUAGES)[number];
 

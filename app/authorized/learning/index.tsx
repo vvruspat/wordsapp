@@ -1,12 +1,12 @@
-import { LearningCatalog } from "@/components/LearningCatalog";
-import { BackgroundContext } from "@/context/BackgroundContext";
-import { WButton, WText } from "@/mob-ui";
-import { Colors } from "@/mob-ui/brand/colors";
 import { router } from "expo-router";
 import { useContext, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LearningCatalog } from "@/components/LearningCatalog";
+import { BackgroundContext } from "@/context/BackgroundContext";
+import { WButton, WText } from "@/mob-ui";
+import { Colors } from "@/mob-ui/brand/colors";
 import { styles } from "../../../general.styles";
 
 export default function Learning() {

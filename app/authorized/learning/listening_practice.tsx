@@ -1,5 +1,5 @@
-import { TrainingAppWrapper } from "@/components/TrainingAppWrapper";
 import { useTranslation } from "react-i18next";
+import { TrainingAppWrapper } from "@/components/TrainingAppWrapper";
 
 export default function ListeningPractice() {
 	const { t } = useTranslation();

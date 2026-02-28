@@ -1,6 +1,6 @@
+import { Modal } from "react-native";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { LANGUAGES_TO_LEARN, LanguageItem } from "@/constants/languages";
-import { Modal } from "react-native";
 
 export type SelectLanguageToLearnModalProps = {
 	visible: boolean;

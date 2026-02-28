@@ -23,15 +23,13 @@ type UpsertFromRemoteParams = {
 
 export const learningRepository = {
 	async recordResult(params: RecordResultParams): Promise<LearningProgress> {
-		const { userId, wordId, scoreDelta, result, translationId, trainingId } = params;
+		const { userId, wordId, scoreDelta, result, translationId, trainingId } =
+			params;
 		const now = new Date().toISOString();
 
 		const existing = await database
 			.get<LearningProgress>("learning_progress")
-			.query(
-				Q.where("user_id", userId),
-				Q.where("word_id", wordId),
-			)
+			.query(Q.where("user_id", userId), Q.where("word_id", wordId))
 			.fetch();
 
 		if (existing.length > 0) {
@@ -69,16 +67,23 @@ export const learningRepository = {
 		return created;
 	},
 
-	async upsertFromRemote(params: UpsertFromRemoteParams): Promise<LearningProgress> {
-		const { userId, wordId, score, translationId, trainingId, remoteId, createdAt } = params;
+	async upsertFromRemote(
+		params: UpsertFromRemoteParams,
+	): Promise<LearningProgress> {
+		const {
+			userId,
+			wordId,
+			score,
+			translationId,
+			trainingId,
+			remoteId,
+			createdAt,
+		} = params;
 		const now = new Date().toISOString();
 
 		const existing = await database
 			.get<LearningProgress>("learning_progress")
-			.query(
-				Q.where("user_id", userId),
-				Q.where("word_id", wordId),
-			)
+			.query(Q.where("user_id", userId), Q.where("word_id", wordId))
 			.fetch();
 
 		if (existing.length > 0) {

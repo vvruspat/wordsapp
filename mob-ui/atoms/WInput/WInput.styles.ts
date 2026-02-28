@@ -1,6 +1,6 @@
+import { StyleSheet } from "react-native";
 import { Colors } from "@/mob-ui/brand/colors";
 import { typography } from "@/mob-ui/brand/typography";
-import { StyleSheet } from "react-native";
 import { styles as wTextStyles } from "../WText/WText.styles";
 
 export const styles = StyleSheet.create({

@@ -12,7 +12,12 @@ export default schemaMigrations({
 				addColumns({
 					table: "learning_progress",
 					columns: [
-						{ name: "remote_id", type: "number", isIndexed: true, isOptional: true },
+						{
+							name: "remote_id",
+							type: "number",
+							isIndexed: true,
+							isOptional: true,
+						},
 						{ name: "last_review", type: "string" },
 						{ name: "created_at_remote", type: "string" },
 						{ name: "training", type: "number", isOptional: true },

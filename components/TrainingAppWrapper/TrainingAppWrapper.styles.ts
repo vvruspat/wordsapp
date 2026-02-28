@@ -1,5 +1,5 @@
-import { Colors } from "@/mob-ui/brand/colors";
 import { StyleSheet } from "react-native";
+import { Colors } from "@/mob-ui/brand/colors";
 
 export const trainingAppWrapperStyles = StyleSheet.create({
 	headerRow: {
