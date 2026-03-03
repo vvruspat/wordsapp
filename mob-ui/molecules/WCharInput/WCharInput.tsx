@@ -98,6 +98,9 @@ export const WCharInput = ({
 				onChangeText={handleTextChange}
 				autoFocus
 				maxLength={length}
+				autoCorrect={false}
+				autoComplete="off"
+				spellCheck={false}
 				style={styles.input}
 				ref={inputRef}
 				{...inputProps}

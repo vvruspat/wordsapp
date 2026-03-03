@@ -1,7 +1,7 @@
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
 import { components } from "@vvruspat/words-types";
-import { authenticateAsync } from "expo-local-authentication";
+import { authenticateAsync, hasHardwareAsync, isEnrolledAsync } from "expo-local-authentication";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
@@ -80,15 +80,21 @@ export const useSessionUser = () => {
 		setAccessToken(accessToken);
 		setRefreshToken(refreshToken);
 
-		const result = await authenticateAsync({
-			promptMessage: "Authenticate to access the app",
-		});
+		const hasHardware = await hasHardwareAsync();
+		const isEnrolled = await isEnrolledAsync();
 
-		if (!result.success) {
-			router.push("/");
-		} else {
-			router.push("/authorized/learning");
+		if (hasHardware && isEnrolled) {
+			const result = await authenticateAsync({
+				promptMessage: "Authenticate to access the app",
+			});
+
+			if (!result.success) {
+				router.push("/");
+				return;
+			}
 		}
+
+		router.push("/authorized/learning");
 	};
 
 	useEffect(() => {

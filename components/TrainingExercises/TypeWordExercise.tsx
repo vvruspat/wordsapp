@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform } from "react-native";
+import { View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
@@ -103,10 +103,7 @@ export function TypeWordExercise() {
 	}
 
 	return (
-		<KeyboardAvoidingView
-			behavior={Platform.OS === "ios" ? "padding" : "height"}
-			style={{ flex: 1, width: "100%" }}
-		>
+		<View style={{ flex: 1, width: "100%" }}>
 			<TrainingPromptCard
 				word={translation.translation}
 				wordId={word.remoteId}
@@ -123,6 +120,6 @@ export function TypeWordExercise() {
 				visible={modalVisible}
 				onRequestClose={handleModalClose}
 			/>
-		</KeyboardAvoidingView>
+		</View>
 	);
 }
