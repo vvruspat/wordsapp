@@ -2,7 +2,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link } from "expo-router";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { View } from "react-native";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
 import {
 	SafeAreaView,
 	SafeAreaViewProps,
@@ -120,6 +120,10 @@ export const TrainingAppWrapper = ({
 	}, [currentExercise, setColor, setOpacity, t]);
 
 	return (
+		<KeyboardAvoidingView
+			behavior={Platform.OS === "ios" ? "padding" : "height"}
+			style={{ flex: 1 }}
+		>
 		<SafeAreaView
 			mode="padding"
 			style={[styles.page, style]}
@@ -149,6 +153,7 @@ export const TrainingAppWrapper = ({
 			{currentExercise === "type_word" && <TypeWordExercise />}
 			{currentExercise === "cards" && <CardsExercise />}
 		</SafeAreaView>
+		</KeyboardAvoidingView>
 	);
 };
 

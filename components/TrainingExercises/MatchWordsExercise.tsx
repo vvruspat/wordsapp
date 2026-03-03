@@ -14,9 +14,8 @@ export type MatchWordPair = {
 };
 
 export function MatchWordsExercise() {
-	logger.debug("MatchWordsExercise rendered", undefined, "ui");
-
 	const [burnedPairs, setBurnedPairs] = useState<MatchWordPair[]>([]);
+
 	const [failedWords, setFailedWords] = useState<Set<Word["remoteId"]>>(
 		new Set(),
 	);

@@ -1,11 +1,10 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, View } from "react-native";
+import { View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WCharInput, WCharInputProps } from "@/mob-ui";
-import { logger } from "@/utils/logger";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 type CharInputStatus = WCharInputProps["status"];
@@ -13,7 +12,6 @@ type CharInputStatus = WCharInputProps["status"];
 const score = 0.2;
 
 export function TypeTranslationExercise() {
-	logger.debug("TypeTranslationExercise rendered", undefined, "ui");
 	const [status, setStatus] = useState<CharInputStatus>("default");
 	const [modalVisible, setModalVisible] = useState(false);
 
@@ -106,10 +104,7 @@ export function TypeTranslationExercise() {
 	}
 
 	return (
-		<KeyboardAvoidingView
-			behavior={Platform.OS === "ios" ? "padding" : "height"}
-			style={{ flex: 1, width: "100%" }}
-		>
+		<View style={{ flex: 1, width: "100%" }}>
 			<TrainingPromptCard
 				word={word.word}
 				transcribtion={word.transcribtion}
@@ -131,6 +126,6 @@ export function TypeTranslationExercise() {
 				visible={modalVisible}
 				onRequestClose={handleModalClose}
 			/>
-		</KeyboardAvoidingView>
+		</View>
 	);
 }

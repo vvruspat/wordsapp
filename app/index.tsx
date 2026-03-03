@@ -5,11 +5,16 @@ import { SelectLanguageButton } from "@/components/SelectLanguageButton";
 import { LanguageItem } from "@/constants/languages";
 import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WInput, WText } from "@/mob-ui";
-import * as Sentry from "@sentry/react-native";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, Text, TextInputChangeEvent, View } from "react-native";
+import {
+	KeyboardAvoidingView,
+	Platform,
+	Text,
+	TextInputChangeEvent,
+	View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../general.styles";
 
@@ -155,15 +160,6 @@ export default function SignUp() {
 							onPress={() => router.push({ pathname: "/signin" })}
 						>
 							<Text>{t("button_sign_in")}</Text>
-						</WButton>
-
-						<WButton
-							mode="secondary"
-							onPress={() => {
-								Sentry.captureException(new Error("First error"));
-							}}
-						>
-							<Text>Try Sentry</Text>
 						</WButton>
 					</View>
 				</View>

@@ -1,25 +1,27 @@
-import { useContext, useId } from "react";
-import Svg, { Defs, G, RadialGradient, Rect, Stop } from "react-native-svg";
 import { BackgroundContext } from "@/context/BackgroundContext";
 import { Colors } from "@/mob-ui/brand/colors";
+import { useContext, useId } from "react";
+import { useWindowDimensions } from "react-native";
+import Svg, { Defs, G, RadialGradient, Rect, Stop } from "react-native-svg";
 
 export const ScreenBackground = () => {
 	const { color, opacity } = useContext(BackgroundContext);
+	const { width, height } = useWindowDimensions();
 
 	const id = useId();
 	const gradientId = `gradient-${id}`;
 
 	return (
-		<Svg width="100%" height="100%" viewBox="0 0 393 852" fill="none">
+		<Svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} fill="none">
 			<G opacity={opacity}>
 				<Rect
-					width="393"
-					height="852"
+					width={width}
+					height={height}
 					fill={Colors.backgrounds.primaryBackground}
 				/>
 				<Rect
-					width="393"
-					height="852"
+					width={width}
+					height={height}
 					fill={`url(#${gradientId})`}
 					fillOpacity="0.5"
 				/>
