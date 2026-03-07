@@ -44,17 +44,16 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 			return;
 		}
 
+		player.loop = false;
+
 		const listener = (status: AudioStatus) => {
 			setIsPlaying(status.playing);
-			if (
-				status.duration &&
-				status.duration > 0 &&
-				status.currentTime >= status.duration
-			) {
+			if (status.didJustFinish) {
 				try {
+					player.pause();
 					player.seekTo(0);
 				} catch (error) {
-					logger.error("Error seeking audio:", error, "audio");
+					logger.error("Error stopping audio:", error, "audio");
 				}
 			}
 		};
