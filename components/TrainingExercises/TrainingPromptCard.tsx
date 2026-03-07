@@ -1,11 +1,10 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { ReactNode, useCallback, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { GlowingEllipse } from "@/components/GlowingEllipse";
 import { ReportButton } from "@/components/ReportButton";
 import { SkipButton } from "@/components/SkipButton";
-import { WButton, WCard, WText, WZStack } from "@/mob-ui";
+import { WCard, WText, WZStack } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 
 export type TrainingPromptCardProps = {
@@ -25,7 +24,6 @@ export function TrainingPromptCard({
 	onSkip,
 	children,
 }: TrainingPromptCardProps) {
-	const { t } = useTranslation();
 	const [modalVisible, setModalVisible] = useState(false);
 
 	const openModal = useCallback(() => setModalVisible(true), []);
@@ -87,20 +85,17 @@ export function TrainingPromptCard({
 				<Modal
 					visible={modalVisible}
 					transparent
-					animationType="slide"
+					animationType="fade"
+					statusBarTranslucent
 					onRequestClose={closeModal}
 				>
-					<View style={styles.modalOverlay}>
-						<Pressable style={styles.modalBackdrop} onPress={closeModal} />
-						<WCard style={styles.modalCard}>
-							<WText mode="primary" size="lg" weight="semibold" wrap>
+					<Pressable style={styles.modalOverlay} onPress={closeModal}>
+						<View style={styles.modalCard}>
+							<WText mode="primary" size="md" weight="semibold" wrap>
 								{meaning}
 							</WText>
-							<WButton mode="primary" fullWidth onPress={closeModal}>
-								<WText mode="inverted">{t("button_continue")}</WText>
-							</WButton>
-						</WCard>
-					</View>
+						</View>
+					</Pressable>
 				</Modal>
 			)}
 		</>
@@ -162,20 +157,17 @@ const styles = StyleSheet.create({
 	},
 	modalOverlay: {
 		flex: 1,
-		flexDirection: "column",
-		justifyContent: "flex-end",
-		backgroundColor: Colors.dark.black60,
-	},
-	modalBackdrop: {
-		flex: 1,
+		backgroundColor: "rgba(0, 0, 0, 0.5)",
+		justifyContent: "center",
+		alignItems: "center",
 	},
 	modalCard: {
-		flex: 0,
-		gap: 24,
-		borderColor: Colors.greys.grey9,
-		borderWidth: 1,
-		borderBottomWidth: 0,
-		paddingBottom: 48,
+		width: "75%",
+		backgroundColor: Colors.greys.grey10,
+		borderRadius: 16,
+		paddingVertical: 32,
+		paddingHorizontal: 24,
+		alignItems: "center",
 	},
 });
 
