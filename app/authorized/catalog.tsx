@@ -31,6 +31,7 @@ export default function Catalog() {
 
 	const [catalogs, setCatalogs] = useState<VocabCatalog[]>([]);
 	const [topics, setTopics] = useState<Topic[]>([]);
+	const [topicTranslations, setTopicTranslations] = useState<Map<number, string>>(new Map());
 
 	const filterTopics = useCallback(async (): Promise<Topic[]> => {
 		if (currentCatalogs.length === 0) {
@@ -132,6 +133,20 @@ export default function Catalog() {
 		})();
 	}, [user?.language_learn, fetchCatalogs, fetchTopics]);
 
+	useEffect(() => {
+		if (!user?.language_speak || user.language_speak === user?.language_learn) {
+			setTopicTranslations(new Map());
+			return;
+		}
+		topicsRepository.getByLanguage(user.language_speak).then((translated) => {
+			const map = new Map<number, string>();
+			for (const t of translated) {
+				map.set(t.remoteId, t.title);
+			}
+			setTopicTranslations(map);
+		});
+	}, [user?.language_speak, user?.language_learn]);
+
 	// Auto-select A1 + A2 by default only on first launch (nothing persisted)
 	useEffect(() => {
 		if (_hasHydrated && catalogs.length > 0 && currentCatalogs.length === 0) {
@@ -170,6 +185,7 @@ export default function Catalog() {
 		return (
 			<TopicItem
 				title={item.item.title}
+				translatedTitle={topicTranslations.get(item.item.remoteId)}
 				selected={currentTopics.includes(item.item.remoteId)}
 				onPress={() => toggleTopic(item.item.remoteId)}
 				learnedCount={stats?.learned}
