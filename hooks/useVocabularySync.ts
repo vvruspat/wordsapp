@@ -1,5 +1,6 @@
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
+import NetInfo from "@react-native-community/netinfo";
 import { components, Language } from "@vvruspat/words-types";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback } from "react";
@@ -13,9 +14,9 @@ import Topic from "@/db/models/Topic";
 import VocabCatalog from "@/db/models/VocabCatalog";
 import Word from "@/db/models/Word";
 import WordTranslation from "@/db/models/WordTranslation";
+import { logger } from "@/utils/logger";
 import { useSessionUser } from "./useSession";
 import { useVocabularyStore } from "./useVocabularyStore";
-import { logger } from "@/utils/logger";
 
 type WordDto = components["schemas"]["WordDto"];
 type WordTranslationDto = components["schemas"]["WordTranslationDto"];
@@ -84,7 +85,11 @@ const downloadAudioFile = async (
 			logger.debug(`Downloaded audio for word ${wordId}`, localPath, "audio");
 			return localPath;
 		} else {
-			logger.warn(`Failed to download audio for word ${wordId}`, downloadResult.status, "audio");
+			logger.warn(
+				`Failed to download audio for word ${wordId}`,
+				downloadResult.status,
+				"audio",
+			);
 			return audioUrl; // Return original URL if download fails
 		}
 	} catch (error) {
@@ -113,6 +118,9 @@ export const useVocabularySync = () => {
 		async (languageLearn?: Language) => {
 			let didSucceed = false;
 
+			const netState = await NetInfo.fetch();
+			if (!netState.isConnected) return;
+
 			if (!user) {
 				setError("User not authenticated");
 				return;
@@ -121,7 +129,14 @@ export const useVocabularySync = () => {
 			// Get language_learn from parameter, user model, or API
 			const targetLanguage = languageLearn;
 
-			logger.debug("targetLanguage", { language_learn: user.language_learn, language_speak: user.language_speak }, "sync");
+			logger.debug(
+				"targetLanguage",
+				{
+					language_learn: user.language_learn,
+					language_speak: user.language_speak,
+				},
+				"sync",
+			);
 
 			if (!targetLanguage) {
 				setError("Language to learn is required");
