@@ -148,8 +148,10 @@ export default function Catalog() {
 	}, [user?.language_speak, user?.language_learn]);
 
 	// Auto-select A1 + A2 by default only on first launch (nothing persisted)
+	// Also set the ref so that all topics for those catalogs are selected too (#31)
 	useEffect(() => {
 		if (_hasHydrated && catalogs.length > 0 && currentCatalogs.length === 0) {
+			catalogJustToggledRef.current = true;
 			const defaults = catalogs
 				.filter((c) => c.title === "A1" || c.title === "A2")
 				.map((c) => c.remoteId);
