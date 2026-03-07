@@ -1,27 +1,25 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, type ModalProps, View } from "react-native";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WCard, WText } from "@/mob-ui/atoms";
 import { Colors } from "@/mob-ui/brand/colors";
 import { getBiggestWordLength } from "@/utils/getBiggestWordLength";
 
-export type WordExcerciseCardResultModalProps = ModalProps;
+export type WordExcerciseCardResultModalProps = ModalProps & {
+	word?: string;
+	translation?: string;
+};
 
 export const WordExcerciseCardResultModal = ({
 	onRequestClose,
+	word,
+	translation,
 	...modalProps
 }: WordExcerciseCardResultModalProps) => {
 	const { t } = useTranslation();
-	const { currentPairs } = useExcerciseStore();
 
-	const currentPair = currentPairs[0];
-	const currentWord = currentPair?.word;
-	const currentTranslation = currentPair?.translation;
-	const wordLength = getBiggestWordLength(currentWord?.word || "");
-	const translationLength = getBiggestWordLength(
-		currentTranslation?.translation || "",
-	);
+	const wordLength = getBiggestWordLength(word || "");
+	const translationLength = getBiggestWordLength(translation || "");
 
 	const maxLength = Math.max(wordLength, translationLength);
 
@@ -90,7 +88,7 @@ export const WordExcerciseCardResultModal = ({
 								{t("word")}
 							</WText>
 							<WText mode="primary" size={fontSize} weight="bold">
-								{currentWord?.word}
+								{word}
 							</WText>
 						</View>
 						<View
@@ -105,7 +103,7 @@ export const WordExcerciseCardResultModal = ({
 								{t("translation")}
 							</WText>
 							<WText mode="primary" size={fontSize} weight="bold">
-								{currentTranslation?.translation}
+								{translation}
 							</WText>
 						</View>
 					</View>

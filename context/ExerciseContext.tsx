@@ -49,6 +49,10 @@ export type Exercise = "success" | "failure";
 
 export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const [modalVisible, setModalVisible] = useState<Exercise | null>(null);
+	const [modalPair, setModalPair] = useState<{
+		word: string;
+		translation: string;
+	} | null>(null);
 	const [currentTrainingId, setCurrentTrainingId] = useState<number | null>(
 		null,
 	);
@@ -187,7 +191,13 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					.catch((err) => logger.error("Failed to record result", err, "db"));
 			}
 
-			showModal && showFailureModal();
+			if (showModal) {
+				setModalPair({
+					word: pair?.word.word ?? "",
+					translation: pair?.translation?.translation ?? "",
+				});
+				showFailureModal();
+			}
 		},
 		[showFailureModal, user, currentTrainingId, syncToBackend],
 	);
@@ -213,7 +223,13 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					.catch((err) => logger.error("Failed to record result", err, "db"));
 			}
 
-			showModal && showSuccessModal();
+			if (showModal) {
+				setModalPair({
+					word: pair?.word.word ?? "",
+					translation: pair?.translation?.translation ?? "",
+				});
+				showSuccessModal();
+			}
 		},
 		[showSuccessModal, user, currentTrainingId, syncToBackend],
 	);
@@ -235,10 +251,18 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			{children}
 
 			{modalVisible === "success" && (
-				<WordExcerciseSuccessModal onRequestClose={onRequestClose} />
+				<WordExcerciseSuccessModal
+					word={modalPair?.word}
+					translation={modalPair?.translation}
+					onRequestClose={onRequestClose}
+				/>
 			)}
 			{modalVisible === "failure" && (
-				<WordExcerciseFailureModal onRequestClose={onRequestClose} />
+				<WordExcerciseFailureModal
+					word={modalPair?.word}
+					translation={modalPair?.translation}
+					onRequestClose={onRequestClose}
+				/>
 			)}
 		</ExerciseContext.Provider>
 	);

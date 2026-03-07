@@ -12,6 +12,10 @@ const score = 0.2;
 
 export function ListeningPracticeExercise() {
 	const [modalVisible, setModalVisible] = useState(false);
+	const [modalPair, setModalPair] = useState<{
+		word: string;
+		translation: string;
+	} | null>(null);
 
 	const {
 		addCompleteListener,
@@ -77,6 +81,7 @@ export function ListeningPracticeExercise() {
 	const handleSkip = useCallback(() => {
 		if (!word || !translation) return;
 		onFailure?.(word.remoteId, score, false);
+		setModalPair({ word: word.word, translation: translation.translation });
 		setModalVisible(true);
 	}, [word, translation, onFailure]);
 
@@ -110,6 +115,8 @@ export function ListeningPracticeExercise() {
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
+				word={modalPair?.word}
+				translation={modalPair?.translation}
 				onRequestClose={handleModalClose}
 			/>
 		</>

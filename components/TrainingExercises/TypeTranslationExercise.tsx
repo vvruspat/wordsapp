@@ -14,6 +14,10 @@ const score = 0.2;
 export function TypeTranslationExercise() {
 	const [status, setStatus] = useState<CharInputStatus>("default");
 	const [modalVisible, setModalVisible] = useState(false);
+	const [modalPair, setModalPair] = useState<{
+		word: string;
+		translation: string;
+	} | null>(null);
 
 	const {
 		addCompleteListener,
@@ -91,6 +95,7 @@ export function TypeTranslationExercise() {
 	const handleSkip = useCallback(() => {
 		if (!word || !translation) return;
 		onFailure?.(word.remoteId, score, false);
+		setModalPair({ word: word.word, translation: translation.translation });
 		setModalVisible(true);
 	}, [word, translation, onFailure]);
 
@@ -124,6 +129,8 @@ export function TypeTranslationExercise() {
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
+				word={modalPair?.word}
+				translation={modalPair?.translation}
 				onRequestClose={handleModalClose}
 			/>
 		</View>
