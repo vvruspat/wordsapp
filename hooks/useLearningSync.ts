@@ -1,3 +1,4 @@
+import NetInfo from "@react-native-community/netinfo";
 import { useCallback } from "react";
 import { createLearning, getLearning } from "@/api/learning";
 import { learningRepository } from "@/db/repositories/learning.repository";
@@ -8,6 +9,9 @@ export const useLearningSync = () => {
 
 	const syncToBackend = useCallback(async () => {
 		if (!user) return;
+
+		const netState = await NetInfo.fetch();
+		if (!netState.isConnected) return;
 
 		const unsynced = await learningRepository.getUnsynced();
 
@@ -33,6 +37,9 @@ export const useLearningSync = () => {
 
 	const syncFromBackend = useCallback(async () => {
 		if (!user) return;
+
+		const netState = await NetInfo.fetch();
+		if (!netState.isConnected) return;
 
 		const result = await getLearning({
 			user: user.userId,

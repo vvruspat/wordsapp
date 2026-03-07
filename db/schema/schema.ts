@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from "@nozbe/watermelondb";
 
 export const schema = appSchema({
-	version: 4,
+	version: 5,
 	tables: [
 		tableSchema({
 			name: "categories",
@@ -17,7 +17,7 @@ export const schema = appSchema({
 				{ name: "catalog", type: "number", isIndexed: true },
 				{ name: "language", type: "string", isIndexed: true },
 				{ name: "audio", type: "string" },
-				{ name: "transcribtion", type: "string" },
+				{ name: "transcription", type: "string" },
 				{ name: "meaning", type: "string", isOptional: true },
 			],
 		}),

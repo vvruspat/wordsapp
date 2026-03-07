@@ -51,12 +51,11 @@ export function ChooseTranslationExercise() {
 			return [];
 		}
 
-		const options = [
-			translation.translation,
-			...randomTranslations.map((t) => t.translation),
-		];
+		const distractors = randomTranslations
+			.map((t) => t.translation)
+			.slice(0, 3);
 
-		return shuffleArray(Array.from(options)).slice(0, 4);
+		return shuffleArray([translation.translation, ...distractors]);
 	}, [randomTranslations, translation]);
 
 	const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -100,7 +99,7 @@ export function ChooseTranslationExercise() {
 		<>
 			<TrainingPromptCard
 				word={word.word}
-				transcribtion={word.transcribtion}
+				transcription={word.transcription}
 				wordId={word.remoteId}
 				onSkip={handleSkip}
 			>

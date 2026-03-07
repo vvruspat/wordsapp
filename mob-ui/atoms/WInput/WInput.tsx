@@ -172,7 +172,7 @@ export const WInput = forwardRef<TextInput, WInputProps>((props, ref) => {
 				]}
 			>
 				{/* blurred background */}
-				<BlurView intensity={50} tint="dark" style={styles.blur} />
+				<BlurView intensity={50} tint="dark" style={styles.blur} blurMethod="dimezisBlurView" />
 
 				{before ? <View style={styles.left}>{before}</View> : null}
 
