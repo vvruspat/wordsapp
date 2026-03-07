@@ -9,8 +9,9 @@ import { vocabcatalogRepository } from "@/db/repositories/vocabcatalog.repositor
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
-import { logger } from "@/utils/logger";
+import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { WText } from "@/mob-ui";
+import { logger } from "@/utils/logger";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, ListRenderItemInfo, View } from "react-native";
@@ -26,12 +27,16 @@ export default function Catalog() {
 		setCurrentCatalogs,
 		setCurrentTopics,
 		_hasHydrated,
+		topicsInitialized,
+		setTopicsInitialized,
 	} = useExcerciseStore();
 	const { user } = useSessionUser();
 
 	const [catalogs, setCatalogs] = useState<VocabCatalog[]>([]);
 	const [topics, setTopics] = useState<Topic[]>([]);
-	const [topicTranslations, setTopicTranslations] = useState<Map<number, string>>(new Map());
+	const [topicTranslations, setTopicTranslations] = useState<
+		Map<number, string>
+	>(new Map());
 
 	const filterTopics = useCallback(async (): Promise<Topic[]> => {
 		if (currentCatalogs.length === 0) {
@@ -88,6 +93,20 @@ export default function Catalog() {
 		setCurrentTopics(filteredTopics.map((t) => t.remoteId));
 	}, [filteredTopics, setCurrentTopics]);
 
+	// On first launch (topics never saved to DB), auto-select all filtered topics (#31)
+	useEffect(() => {
+		if (!_hasHydrated || topicsInitialized || filteredTopics.length === 0)
+			return;
+		setCurrentTopics(filteredTopics.map((t) => t.remoteId));
+		setTopicsInitialized(true);
+	}, [
+		_hasHydrated,
+		topicsInitialized,
+		filteredTopics,
+		setCurrentTopics,
+		setTopicsInitialized,
+	]);
+
 	// Persist catalog selection to DB after hydration
 	useEffect(() => {
 		if (!_hasHydrated || !user?.userId) return;
@@ -97,7 +116,9 @@ export default function Catalog() {
 				"selected_catalogs",
 				JSON.stringify(currentCatalogs),
 			)
-			.catch((err) => logger.error("Failed to persist catalog selection", err, "db"));
+			.catch((err) =>
+				logger.error("Failed to persist catalog selection", err, "db"),
+			);
 	}, [currentCatalogs, _hasHydrated, user?.userId]);
 
 	// Persist topic selection to DB after hydration
@@ -109,7 +130,9 @@ export default function Catalog() {
 				"selected_topics",
 				JSON.stringify(currentTopics),
 			)
-			.catch((err) => logger.error("Failed to persist topic selection", err, "db"));
+			.catch((err) =>
+				logger.error("Failed to persist topic selection", err, "db"),
+			);
 	}, [currentTopics, _hasHydrated, user?.userId]);
 
 	const fetchCatalogs = useCallback(async (language: string) => {
@@ -133,23 +156,25 @@ export default function Catalog() {
 		})();
 	}, [user?.language_learn, fetchCatalogs, fetchTopics]);
 
+	const { topicTranslations: topicTranslationsData } = useVocabularyStore();
+
 	useEffect(() => {
 		if (!user?.language_speak || user.language_speak === user?.language_learn) {
 			setTopicTranslations(new Map());
 			return;
 		}
-		topicsRepository.getByLanguage(user.language_speak).then((translated) => {
-			const map = new Map<number, string>();
-			for (const t of translated) {
-				map.set(t.remoteId, t.title);
-			}
-			setTopicTranslations(map);
-		});
-	}, [user?.language_speak, user?.language_learn]);
+		const map = new Map<number, string>();
+		for (const t of topicTranslationsData) {
+			map.set(t.topic, t.translation);
+		}
+		setTopicTranslations(map);
+	}, [user?.language_speak, user?.language_learn, topicTranslationsData]);
 
 	// Auto-select A1 + A2 by default only on first launch (nothing persisted)
+	// Also set the ref so that all topics for those catalogs are selected too (#31)
 	useEffect(() => {
 		if (_hasHydrated && catalogs.length > 0 && currentCatalogs.length === 0) {
+			catalogJustToggledRef.current = true;
 			const defaults = catalogs
 				.filter((c) => c.title === "A1" || c.title === "A2")
 				.map((c) => c.remoteId);

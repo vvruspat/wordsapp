@@ -6,12 +6,14 @@ type WordDto = components["schemas"]["WordDto"];
 type WordTranslationDto = components["schemas"]["WordTranslationDto"];
 type VocabCatalogDto = components["schemas"]["VocabCatalogDto"];
 type TopicDto = components["schemas"]["TopicDto"];
+type TopicTranslationDto = components["schemas"]["TopicTranslationDto"];
 
 type VocabularyState = {
 	words: WordDto[];
 	translations: WordTranslationDto[];
 	catalogs: VocabCatalogDto[];
 	topics: TopicDto[];
+	topicTranslations: TopicTranslationDto[];
 	languageLearn: string | null;
 	isLoading: boolean;
 	isSyncing: boolean;
@@ -26,6 +28,7 @@ type VocabularyActions = {
 	setTranslations: (translations: WordTranslationDto[]) => void;
 	setCatalogs: (catalogs: VocabCatalogDto[]) => void;
 	setTopics: (topics: TopicDto[]) => void;
+	setTopicTranslations: (topicTranslations: TopicTranslationDto[]) => void;
 	setLanguageLearn: (language: string) => void;
 	setLoading: (loading: boolean) => void;
 	setSyncing: (syncing: boolean) => void;
@@ -42,6 +45,7 @@ const initialState: VocabularyState = {
 	translations: [],
 	catalogs: [],
 	topics: [],
+	topicTranslations: [],
 	languageLearn: null,
 	isLoading: false,
 	isSyncing: false,
@@ -69,6 +73,10 @@ export const useVocabularyStore = create<VocabularyState & VocabularyActions>()(
 		setTopics: (topics) =>
 			set((state) => {
 				state.topics = topics;
+			}),
+		setTopicTranslations: (topicTranslations) =>
+			set((state) => {
+				state.topicTranslations = topicTranslations;
 			}),
 		setLanguageLearn: (language) =>
 			set((state) => {

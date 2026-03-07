@@ -13,6 +13,7 @@ type ExcerciseState = {
 	currentRandomWords: Word[];
 	currentRandomTranslations: WordTranslation[];
 	_hasHydrated: boolean;
+	topicsInitialized: boolean;
 };
 
 type ExcerciseActions = {
@@ -24,6 +25,7 @@ type ExcerciseActions = {
 	setCurrentRandomWords: (words: Word[]) => void;
 	setCurrentRandomTranslations: (translations: WordTranslation[]) => void;
 	setHasHydrated: (value: boolean) => void;
+	setTopicsInitialized: (value: boolean) => void;
 };
 
 export const useExcerciseStore = create<ExcerciseState & ExcerciseActions>()(
@@ -34,6 +36,7 @@ export const useExcerciseStore = create<ExcerciseState & ExcerciseActions>()(
 		currentRandomWords: [],
 		currentRandomTranslations: [],
 		_hasHydrated: false,
+		topicsInitialized: false,
 
 		setCurrentCatalogs: (catalogs: number[]) =>
 			set((state) => {
@@ -58,6 +61,10 @@ export const useExcerciseStore = create<ExcerciseState & ExcerciseActions>()(
 		setHasHydrated: (value: boolean) =>
 			set((state) => {
 				state._hasHydrated = value;
+			}),
+		setTopicsInitialized: (value: boolean) =>
+			set((state) => {
+				state.topicsInitialized = value;
 			}),
 	})),
 );
