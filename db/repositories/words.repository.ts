@@ -31,8 +31,8 @@ export const wordsRepository = {
 				if (wordData.audio) {
 					word.audio = wordData.audio;
 				}
-				if (wordData.transcribtion) {
-					word.transcription = wordData.transcribtion;
+				if (wordData.transcription) {
+					word.transcription = wordData.transcription;
 				}
 				if (wordData.meaning) {
 					word.meaning = wordData.meaning;
