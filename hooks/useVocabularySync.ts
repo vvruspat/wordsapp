@@ -190,7 +190,7 @@ export const useVocabularySync = () => {
 
 				// Also fetch topics in the native language so catalog translations can be shown
 				let nativeTopics: TopicDto[] = [];
-				if (user.language_speak && user.language_speak \!== targetLanguage) {
+				if (user.language_speak && user.language_speak !== targetLanguage) {
 					try {
 						const nativeTopicsResponse = await getTopics({
 							offset: 0,
