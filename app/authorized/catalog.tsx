@@ -43,7 +43,7 @@ export default function Catalog() {
 
 	const [filteredTopics, setFilteredTopics] = useState<Topic[]>([]);
 	const [topicStats, setTopicStats] = useState<
-		Map<number, { total: number; learned: number }>
+		Map<number, { total: number; green: number; yellow: number }>
 	>(new Map());
 
 	useEffect(() => {
@@ -64,13 +64,28 @@ export default function Catalog() {
 				progressRecords.map((p) => [p.wordId, p]),
 			);
 
-			const stats = new Map<number, { total: number; learned: number }>();
+			const threeMonthsAgo = new Date();
+			threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+			const stats = new Map<
+				number,
+				{ total: number; green: number; yellow: number }
+			>();
 			for (const word of words) {
-				const entry = stats.get(word.topic) ?? { total: 0, learned: 0 };
+				const entry = stats.get(word.topic) ?? {
+					total: 0,
+					green: 0,
+					yellow: 0,
+				};
 				entry.total += 1;
 				const progress = progressByWordId.get(word.remoteId);
 				if (progress && progress.score >= 1) {
-					entry.learned += 1;
+					const lastReview = new Date(progress.lastReview);
+					if (lastReview >= threeMonthsAgo) {
+						entry.green += 1;
+					} else {
+						entry.yellow += 1;
+					}
 				}
 				stats.set(word.topic, entry);
 			}
@@ -172,8 +187,9 @@ export default function Catalog() {
 				title={item.item.title}
 				selected={currentTopics.includes(item.item.remoteId)}
 				onPress={() => toggleTopic(item.item.remoteId)}
-				learnedCount={stats?.learned}
 				totalCount={stats?.total}
+				greenCount={stats?.green}
+				yellowCount={stats?.yellow}
 			/>
 		);
 	};
