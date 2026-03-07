@@ -49,7 +49,10 @@ export default function Catalog() {
 
 	const [filteredTopics, setFilteredTopics] = useState<Topic[]>([]);
 	const [topicStats, setTopicStats] = useState<
-		Map<number, { total: number; learned: number }>
+		Map<
+			number,
+			{ total: number; learned: number; greenScore: number; yellowScore: number }
+		>
 	>(new Map());
 
 	useEffect(() => {
@@ -61,22 +64,37 @@ export default function Catalog() {
 
 		(async () => {
 			const topicIds = filteredTopics.map((t) => t.remoteId);
-			const [words, progressRecords] = await Promise.all([
-				wordsRepository.getByTopicIds(topicIds),
-				learningRepository.getByUser(user.userId),
-			]);
+			const words = await wordsRepository.getByTopicIds(topicIds);
 
+			const progressRecords = await learningRepository.getByUser(user.userId);
 			const progressByWordId = new Map(
 				progressRecords.map((p) => [p.wordId, p]),
 			);
 
-			const stats = new Map<number, { total: number; learned: number }>();
+			const threeMonthsAgo = new Date();
+			threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+			const stats = new Map<
+				number,
+				{ total: number; learned: number; greenScore: number; yellowScore: number }
+			>();
 			for (const word of words) {
-				const entry = stats.get(word.topic) ?? { total: 0, learned: 0 };
+				const entry = stats.get(word.topic) ?? {
+					total: 0,
+					learned: 0,
+					greenScore: 0,
+					yellowScore: 0,
+				};
 				entry.total += 1;
 				const progress = progressByWordId.get(word.remoteId);
 				if (progress && progress.score >= 1) {
 					entry.learned += 1;
+					const lastReview = new Date(progress.lastReview);
+					if (lastReview >= threeMonthsAgo) {
+						entry.greenScore += 1;
+					} else {
+						entry.yellowScore += 1;
+					}
 				}
 				stats.set(word.topic, entry);
 			}
@@ -215,6 +233,8 @@ export default function Catalog() {
 				onPress={() => toggleTopic(item.item.remoteId)}
 				learnedCount={stats?.learned}
 				totalCount={stats?.total}
+				greenScore={stats?.greenScore}
+				yellowScore={stats?.yellowScore}
 			/>
 		);
 	};
