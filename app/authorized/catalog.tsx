@@ -10,8 +10,8 @@ import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
-import { logger } from "@/utils/logger";
 import { WText } from "@/mob-ui";
+import { logger } from "@/utils/logger";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, ListRenderItemInfo, View } from "react-native";
@@ -34,7 +34,9 @@ export default function Catalog() {
 
 	const [catalogs, setCatalogs] = useState<VocabCatalog[]>([]);
 	const [topics, setTopics] = useState<Topic[]>([]);
-	const [topicTranslations, setTopicTranslations] = useState<Map<number, string>>(new Map());
+	const [topicTranslations, setTopicTranslations] = useState<
+		Map<number, string>
+	>(new Map());
 
 	const filterTopics = useCallback(async (): Promise<Topic[]> => {
 		if (currentCatalogs.length === 0) {
@@ -93,10 +95,17 @@ export default function Catalog() {
 
 	// On first launch (topics never saved to DB), auto-select all filtered topics (#31)
 	useEffect(() => {
-		if (!_hasHydrated || topicsInitialized || filteredTopics.length === 0) return;
+		if (!_hasHydrated || topicsInitialized || filteredTopics.length === 0)
+			return;
 		setCurrentTopics(filteredTopics.map((t) => t.remoteId));
 		setTopicsInitialized(true);
-	}, [_hasHydrated, topicsInitialized, filteredTopics, setCurrentTopics, setTopicsInitialized]);
+	}, [
+		_hasHydrated,
+		topicsInitialized,
+		filteredTopics,
+		setCurrentTopics,
+		setTopicsInitialized,
+	]);
 
 	// Persist catalog selection to DB after hydration
 	useEffect(() => {
@@ -107,7 +116,9 @@ export default function Catalog() {
 				"selected_catalogs",
 				JSON.stringify(currentCatalogs),
 			)
-			.catch((err) => logger.error("Failed to persist catalog selection", err, "db"));
+			.catch((err) =>
+				logger.error("Failed to persist catalog selection", err, "db"),
+			);
 	}, [currentCatalogs, _hasHydrated, user?.userId]);
 
 	// Persist topic selection to DB after hydration
@@ -119,7 +130,9 @@ export default function Catalog() {
 				"selected_topics",
 				JSON.stringify(currentTopics),
 			)
-			.catch((err) => logger.error("Failed to persist topic selection", err, "db"));
+			.catch((err) =>
+				logger.error("Failed to persist topic selection", err, "db"),
+			);
 	}, [currentTopics, _hasHydrated, user?.userId]);
 
 	const fetchCatalogs = useCallback(async (language: string) => {
