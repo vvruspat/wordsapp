@@ -102,5 +102,8 @@
 	"report_cancel": "Cancel",
 	"report_success": "Thank you for your report!",
 	"report_error": "Failed to send report",
-	"exercise_skip": "Skip"
+	"exercise_skip": "Skip",
+
+	"sync_overlay_syncing": "Syncing…",
+	"sync_overlay_error": "Sync failed"
 }

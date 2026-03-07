@@ -102,5 +102,8 @@
 	"report_cancel": "Cancelar",
 	"report_success": "¡Gracias por tu informe!",
 	"report_error": "Error al enviar informe",
-	"exercise_skip": "Saltar"
+	"exercise_skip": "Saltar",
+
+	"sync_overlay_syncing": "Sincronizando…",
+	"sync_overlay_error": "Error de sincronización"
 }

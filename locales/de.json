@@ -102,5 +102,8 @@
 	"report_cancel": "Abbrechen",
 	"report_success": "Danke für Ihren Bericht!",
 	"report_error": "Bericht konnte nicht gesendet werden",
-	"exercise_skip": "Überspringen"
+	"exercise_skip": "Überspringen",
+
+	"sync_overlay_syncing": "Synchronisierung…",
+	"sync_overlay_error": "Synchronisierung fehlgeschlagen"
 }

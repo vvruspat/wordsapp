@@ -102,5 +102,8 @@
 	"report_cancel": "Annulla",
 	"report_success": "Grazie per la segnalazione!",
 	"report_error": "Impossibile inviare la segnalazione",
-	"exercise_skip": "Salta"
+	"exercise_skip": "Salta",
+
+	"sync_overlay_syncing": "Sincronizzazione…",
+	"sync_overlay_error": "Sincronizzazione fallita"
 }

@@ -102,5 +102,8 @@
 	"report_cancel": "Annuler",
 	"report_success": "Merci pour votre signalement !",
 	"report_error": "Échec de l'envoi du signalement",
-	"exercise_skip": "Passer"
+	"exercise_skip": "Passer",
+
+	"sync_overlay_syncing": "Synchronisation…",
+	"sync_overlay_error": "Échec de la synchronisation"
 }

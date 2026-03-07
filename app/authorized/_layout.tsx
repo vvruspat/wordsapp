@@ -162,17 +162,7 @@ export default function RootLayout() {
 					}}
 				/>
 			</Tabs>
-			<View
-				pointerEvents="none"
-				style={{
-					position: "absolute",
-					bottom: 49 + insets.bottom,
-					left: 0,
-					right: 0,
-				}}
-			>
-				<SyncProgressBar />
-			</View>
+			<SyncProgressBar />
 		</View>
 	);
 }

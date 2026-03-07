@@ -102,5 +102,8 @@
 	"report_cancel": "Ακύρωση",
 	"report_success": "Ευχαριστούμε για την αναφορά!",
 	"report_error": "Αποτυχία αποστολής αναφοράς",
-	"exercise_skip": "Παράλειψη"
+	"exercise_skip": "Παράλειψη",
+
+	"sync_overlay_syncing": "Συγχρονισμός…",
+	"sync_overlay_error": "Αποτυχία συγχρονισμού"
 }
