@@ -8,6 +8,19 @@ import {
 export default schemaMigrations({
 	migrations: [
 		{
+			toVersion: 5,
+			steps: [
+				// Add correctly-spelled column and copy data from the old misspelled one.
+				// Using ADD + UPDATE instead of RENAME COLUMN for SQLite < 3.25 compatibility.
+				unsafeExecuteSql(
+					'ALTER TABLE "words" ADD COLUMN "transcription" TEXT NOT NULL DEFAULT \'\';',
+				),
+				unsafeExecuteSql(
+					'UPDATE "words" SET "transcription" = "transcribtion";',
+				),
+			],
+		},
+		{
 			toVersion: 4,
 			steps: [
 				// Use IF NOT EXISTS to handle devices that already have this table

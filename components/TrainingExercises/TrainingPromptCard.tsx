@@ -8,7 +8,7 @@ import { Colors } from "@/mob-ui/brand/colors";
 
 export type TrainingPromptCardProps = {
 	word?: string;
-	transcribtion?: string;
+	transcription?: string;
 	wordId?: number;
 	onSkip?: () => void;
 	children?: ReactNode;
@@ -16,7 +16,7 @@ export type TrainingPromptCardProps = {
 
 export function TrainingPromptCard({
 	word,
-	transcribtion,
+	transcription,
 	wordId,
 	onSkip,
 	children,
@@ -26,16 +26,16 @@ export function TrainingPromptCard({
 			<WZStack style={styles.stack}>
 				<GlowingEllipse />
 				<View style={styles.translationContainer}>
-					{(word || transcribtion) && (
+					{(word || transcription) && (
 						<View style={styles.wordContainer}>
 							{word && (
 								<WText mode="primary" weight="bold" size="3xl">
 									{word}
 								</WText>
 							)}
-							{transcribtion && (
+							{transcription && (
 								<WText mode="secondary" size="xl">
-									{transcribtion}
+									{transcription}
 								</WText>
 							)}
 						</View>

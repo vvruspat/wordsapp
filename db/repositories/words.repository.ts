@@ -31,8 +31,8 @@ export const wordsRepository = {
 				if (wordData.audio) {
 					word.audio = wordData.audio;
 				}
-				if (wordData.transcribtion) {
-					word.transcribtion = wordData.transcribtion;
+				if (wordData.transcription) {
+					word.transcription = wordData.transcription;
 				}
 				if (wordData.meaning) {
 					word.meaning = wordData.meaning;
@@ -57,8 +57,8 @@ export const wordsRepository = {
 				if (wordData.catalog !== undefined) w.catalog = wordData.catalog;
 				if (wordData.language !== undefined) w.language = wordData.language;
 				if (wordData.audio !== undefined) w.audio = wordData.audio;
-				if (wordData.transcribtion !== undefined)
-					w.transcribtion = wordData.transcribtion;
+				if (wordData.transcription !== undefined)
+					w.transcription = wordData.transcription;
 				if (wordData.meaning !== undefined) w.meaning = wordData.meaning;
 			});
 		});
