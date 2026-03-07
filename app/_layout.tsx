@@ -87,14 +87,19 @@ export default Sentry.wrap(function RootLayout() {
 				backgroundedAt.current = null;
 
 				if (elapsed >= BACKGROUND_TIMEOUT_MS && isAuthenticated) {
-					setIsReady(false);
-					triggerBiometricAuth();
+					const result = await authenticateAsync({
+						promptMessage: "Authenticate to access the app",
+					});
+
+					if (!result.success) {
+						setAuthenticated(false);
+					}
 				}
 			}
 		});
 
 		return () => subscription.remove();
-	}, [isAuthenticated, triggerBiometricAuth]);
+	}, [isAuthenticated]);
 
 	useEffect(() => {
 		if (isAuthenticated) {
