@@ -125,6 +125,8 @@ export default function RootLayout() {
 					tabBarStyle: {
 						backgroundColor: Colors.backgrounds.primaryBackground,
 						borderTopColor: Colors.greys.whiteAlpha60,
+						paddingBottom: insets.bottom,
+						height: 49 + insets.bottom,
 					},
 					sceneStyle: { backgroundColor: "transparent" },
 				}}
