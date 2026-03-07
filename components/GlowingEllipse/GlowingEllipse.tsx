@@ -1,4 +1,5 @@
 import { useContext, useId } from "react";
+import { Platform } from "react-native";
 import { Ellipse, FeGaussianBlur, Filter, Svg } from "react-native-svg";
 import { BackgroundContext } from "@/context/BackgroundContext";
 
@@ -7,6 +8,10 @@ export const GlowingEllipse = () => {
 
 	const id = useId();
 	const filterId = `filter-${id}`;
+
+	if (Platform.OS === "android") {
+		return null;
+	}
 
 	return (
 		<Svg width="353" height="129" viewBox="0 0 353 129" fill="none">
