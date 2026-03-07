@@ -13,6 +13,10 @@ const score = 0.2;
 export function CardsExercise() {
 	const { t } = useTranslation();
 	const [modalVisible, setModalVisible] = useState(false);
+	const [modalPair, setModalPair] = useState<{
+		word: string;
+		translation: string;
+	} | null>(null);
 
 	const {
 		addCompleteListener,
@@ -54,6 +58,7 @@ export function CardsExercise() {
 			} else {
 				onFailure(word.remoteId, score, false);
 			}
+			setModalPair({ word: word.word, translation: translation.translation });
 			setModalVisible(true);
 		},
 		[word, translation, onSuccess, onFailure],
@@ -98,6 +103,8 @@ export function CardsExercise() {
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
+				word={modalPair?.word}
+				translation={modalPair?.translation}
 				onRequestClose={handleModalClose}
 			/>
 		</>
