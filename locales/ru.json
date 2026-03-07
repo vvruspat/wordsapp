@@ -105,5 +105,12 @@
 	"exercise_skip": "Пропустить",
 
 	"sync_overlay_syncing": "Синхронизация…",
-	"sync_overlay_error": "Ошибка синхронизации"
+	"sync_overlay_error": "Ошибка синхронизации",
+
+	"sync_status_catalogs": "Загрузка категорий словаря…",
+	"sync_status_topics": "Загрузка тем…",
+	"sync_status_words": "Загрузка слов…",
+	"sync_status_translations": "Загрузка переводов…",
+	"sync_status_audio": "Загрузка аудиофайлов…",
+	"sync_status_saving": "Сохранение на устройство…"
 }

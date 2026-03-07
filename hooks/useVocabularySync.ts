@@ -109,6 +109,7 @@ export const useVocabularySync = () => {
 		setLanguageLearn,
 		setSyncing,
 		setSyncProgress,
+		setSyncStatus,
 		setLastSyncTime,
 		setError,
 		clearError,
@@ -145,6 +146,7 @@ export const useVocabularySync = () => {
 
 			setSyncing(true);
 			setSyncProgress(0);
+			setSyncStatus("sync_status_catalogs");
 			clearError();
 			setLanguageLearn(targetLanguage);
 
@@ -169,6 +171,7 @@ export const useVocabularySync = () => {
 				const catalogs: VocabCatalogDto[] = catalogsResponse.data?.items || [];
 
 				logger.debug("Fetching topics", undefined, "sync");
+				setSyncStatus("sync_status_topics");
 				const topicsResponse = await getTopics({
 					offset: 0,
 					limit: 10000,
@@ -186,6 +189,7 @@ export const useVocabularySync = () => {
 				const topics: TopicDto[] = topicsResponse.data?.items || [];
 
 				// Fetch words filtered by language
+				setSyncStatus("sync_status_words");
 				const wordsResponse = await getWords({
 					offset: 0,
 					limit: 10000,
@@ -205,6 +209,7 @@ export const useVocabularySync = () => {
 				// In a production app, you might want to batch these requests or cache them
 				const translations: WordTranslationDto[] = [];
 
+				setSyncStatus("sync_status_translations");
 				try {
 					// Fetch translations for each word (API limitation - no bulk endpoint)
 					const translationResponse = await getWordTranslations({
@@ -232,6 +237,7 @@ export const useVocabularySync = () => {
 				logger.debug("Translations fetched", translations, "sync");
 
 				logger.debug("Downloading audio files", undefined, "sync");
+				setSyncStatus("sync_status_audio");
 				setSyncProgress(0.5);
 
 				// Build a map of already-downloaded local audio paths from the DB
@@ -278,6 +284,7 @@ export const useVocabularySync = () => {
 				}
 
 				logger.debug("Storing in local database", undefined, "db");
+				setSyncStatus("sync_status_saving");
 				setSyncProgress(0.85);
 				// Store in local database
 				await database.write(async () => {
@@ -413,6 +420,7 @@ export const useVocabularySync = () => {
 				setLastSyncTime(Date.now());
 
 				setSyncProgress(1);
+				setSyncStatus(null);
 				didSucceed = true;
 			} catch (error) {
 				const errorMessage =
@@ -435,6 +443,7 @@ export const useVocabularySync = () => {
 			setLanguageLearn,
 			setSyncing,
 			setSyncProgress,
+			setSyncStatus,
 			setLastSyncTime,
 			setError,
 			clearError,

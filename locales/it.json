@@ -105,5 +105,12 @@
 	"exercise_skip": "Salta",
 
 	"sync_overlay_syncing": "Sincronizzazione…",
-	"sync_overlay_error": "Sincronizzazione fallita"
+	"sync_overlay_error": "Sincronizzazione fallita",
+
+	"sync_status_catalogs": "Caricamento categorie vocabolario…",
+	"sync_status_topics": "Caricamento argomenti…",
+	"sync_status_words": "Caricamento parole…",
+	"sync_status_translations": "Caricamento traduzioni…",
+	"sync_status_audio": "Download file audio…",
+	"sync_status_saving": "Salvataggio sul dispositivo…"
 }

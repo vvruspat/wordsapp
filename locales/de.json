@@ -105,5 +105,12 @@
 	"exercise_skip": "Überspringen",
 
 	"sync_overlay_syncing": "Synchronisierung…",
-	"sync_overlay_error": "Synchronisierung fehlgeschlagen"
+	"sync_overlay_error": "Synchronisierung fehlgeschlagen",
+
+	"sync_status_catalogs": "Vokabelkategorien werden geladen…",
+	"sync_status_topics": "Themen werden geladen…",
+	"sync_status_words": "Wörter werden geladen…",
+	"sync_status_translations": "Übersetzungen werden geladen…",
+	"sync_status_audio": "Audiodateien werden heruntergeladen…",
+	"sync_status_saving": "Auf Gerät speichern…"
 }

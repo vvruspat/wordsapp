@@ -105,5 +105,12 @@
 	"exercise_skip": "Passer",
 
 	"sync_overlay_syncing": "Synchronisation…",
-	"sync_overlay_error": "Échec de la synchronisation"
+	"sync_overlay_error": "Échec de la synchronisation",
+
+	"sync_status_catalogs": "Chargement des catégories de vocabulaire…",
+	"sync_status_topics": "Chargement des thèmes…",
+	"sync_status_words": "Chargement des mots…",
+	"sync_status_translations": "Chargement des traductions…",
+	"sync_status_audio": "Téléchargement des fichiers audio…",
+	"sync_status_saving": "Enregistrement sur l'appareil…"
 }

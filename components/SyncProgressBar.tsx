@@ -6,7 +6,8 @@ import { Colors } from "@/mob-ui/brand/colors";
 
 export const SyncProgressBar = memo(() => {
 	const { t } = useTranslation();
-	const { isSyncing, syncProgress, error, clearError } = useVocabularyStore();
+	const { isSyncing, syncProgress, syncStatus, error, clearError } =
+		useVocabularyStore();
 
 	useEffect(() => {
 		if (error && !isSyncing) {
@@ -39,7 +40,9 @@ export const SyncProgressBar = memo(() => {
 						<Text style={styles.errorLabel}>{t("sync_overlay_error")}</Text>
 					) : (
 						<>
-							<Text style={styles.label}>{t("sync_overlay_syncing")}</Text>
+							<Text style={styles.label}>
+							{syncStatus ? t(syncStatus) : t("sync_overlay_syncing")}
+						</Text>
 							<View style={styles.track}>
 								<View style={[styles.bar, { width: widthPercent }]} />
 							</View>
