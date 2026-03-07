@@ -113,6 +113,7 @@ export function TypeTranslationExercise() {
 			<TrainingPromptCard
 				word={word.word}
 				transcription={word.transcription}
+				meaning={word.meaning}
 				wordId={word.remoteId}
 				onSkip={handleSkip}
 			>
