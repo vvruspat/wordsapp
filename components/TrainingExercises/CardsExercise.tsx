@@ -78,6 +78,7 @@ export function CardsExercise() {
 			<TrainingPromptCard
 				word={word.word}
 				transcription={word.transcription}
+				meaning={word.meaning}
 				wordId={word.remoteId}
 			>
 				<PlayWordButton audio={word.audio} />

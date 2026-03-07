@@ -102,5 +102,15 @@
 	"report_cancel": "Ακύρωση",
 	"report_success": "Ευχαριστούμε για την αναφορά!",
 	"report_error": "Αποτυχία αποστολής αναφοράς",
-	"exercise_skip": "Παράλειψη"
+	"exercise_skip": "Παράλειψη",
+
+	"sync_overlay_syncing": "Συγχρονισμός…",
+	"sync_overlay_error": "Αποτυχία συγχρονισμού",
+
+	"sync_status_catalogs": "Φόρτωση κατηγοριών λεξιλογίου…",
+	"sync_status_topics": "Φόρτωση θεμάτων…",
+	"sync_status_words": "Φόρτωση λέξεων…",
+	"sync_status_translations": "Φόρτωση μεταφράσεων…",
+	"sync_status_audio": "Λήψη αρχείων ήχου…",
+	"sync_status_saving": "Αποθήκευση στη συσκευή…"
 }

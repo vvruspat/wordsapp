@@ -4,9 +4,9 @@ import { authenticateAsync } from "expo-local-authentication";
 import { Stack, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, AppState } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { DevPanel } from "@/components/DevPanel";
 import { ScreenBackground } from "@/components/ScreenBackground";
@@ -37,43 +37,69 @@ Sentry.init({
   // spotlight: __DEV__,
 });
 
+const BACKGROUND_TIMEOUT_MS = 60 * 1000; // 60 seconds
+
 export default Sentry.wrap(function RootLayout() {
 	const [isAuthenticated, setAuthenticated] = useState(false);
 	const [isReady, setIsReady] = useState(false);
 	const { t } = useTranslation();
 	const router = useRouter();
+	const backgroundedAt = useRef<number | null>(null);
 
 	const isFocused = useIsFocused();
+
+	const triggerBiometricAuth = useCallback(async () => {
+		const access_token = await SecureStore.getItemAsync("access_token");
+
+		if (!access_token) {
+			setIsReady(true);
+			return;
+		}
+
+		const result = await authenticateAsync({
+			promptMessage: "Authenticate to access the app",
+		});
+
+		if (!result.success) {
+			setAuthenticated(false);
+			setIsReady(true);
+			return;
+		}
+
+		setAuthenticated(true);
+		setIsReady(true);
+	}, []);
 
 	useEffect(() => {
 		if (!isFocused) {
 			return;
 		}
 
-		(async () => {
-			const access_token = await SecureStore.getItemAsync("access_token");
+		triggerBiometricAuth();
+	}, [isFocused, triggerBiometricAuth]);
 
-			if (!access_token) {
-				setIsReady(true);
-				return;
-			}
+	useEffect(() => {
+		const subscription = AppState.addEventListener("change", async (nextState) => {
+			if (nextState === "background" || nextState === "inactive") {
+				backgroundedAt.current = Date.now();
+			} else if (nextState === "active" && backgroundedAt.current !== null) {
+				const elapsed = Date.now() - backgroundedAt.current;
+				backgroundedAt.current = null;
 
-			if (access_token) {
-				await authenticateAsync({
-					promptMessage: "Authenticate to access the app",
-				}).then((result) => {
+				if (elapsed >= BACKGROUND_TIMEOUT_MS && isAuthenticated) {
+					const result = await authenticateAsync({
+						promptMessage: "Authenticate to access the app",
+					});
+
 					if (!result.success) {
 						setAuthenticated(false);
-						setIsReady(true);
-						return;
 					}
-
-					setAuthenticated(true);
-					setIsReady(true);
-				});
+				}
 			}
-		})();
-	}, [isFocused]);
+		});
+
+		return () => subscription.remove();
+	}, [isAuthenticated]);
 
 	useEffect(() => {
 		if (isAuthenticated) {

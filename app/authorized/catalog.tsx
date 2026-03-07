@@ -9,8 +9,9 @@ import { vocabcatalogRepository } from "@/db/repositories/vocabcatalog.repositor
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
-import { logger } from "@/utils/logger";
+import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { WText } from "@/mob-ui";
+import { logger } from "@/utils/logger";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, ListRenderItemInfo, View } from "react-native";
@@ -26,11 +27,16 @@ export default function Catalog() {
 		setCurrentCatalogs,
 		setCurrentTopics,
 		_hasHydrated,
+		topicsInitialized,
+		setTopicsInitialized,
 	} = useExcerciseStore();
 	const { user } = useSessionUser();
 
 	const [catalogs, setCatalogs] = useState<VocabCatalog[]>([]);
 	const [topics, setTopics] = useState<Topic[]>([]);
+	const [topicTranslations, setTopicTranslations] = useState<
+		Map<number, string>
+	>(new Map());
 
 	const filterTopics = useCallback(async (): Promise<Topic[]> => {
 		if (currentCatalogs.length === 0) {
@@ -43,7 +49,10 @@ export default function Catalog() {
 
 	const [filteredTopics, setFilteredTopics] = useState<Topic[]>([]);
 	const [topicStats, setTopicStats] = useState<
-		Map<number, { total: number; learned: number }>
+		Map<
+			number,
+			{ total: number; learned: number; greenScore: number; yellowScore: number }
+		>
 	>(new Map());
 
 	useEffect(() => {
@@ -55,22 +64,37 @@ export default function Catalog() {
 
 		(async () => {
 			const topicIds = filteredTopics.map((t) => t.remoteId);
-			const [words, progressRecords] = await Promise.all([
-				wordsRepository.getByTopicIds(topicIds),
-				learningRepository.getByUser(user.userId),
-			]);
+			const words = await wordsRepository.getByTopicIds(topicIds);
 
+			const progressRecords = await learningRepository.getByUser(user.userId);
 			const progressByWordId = new Map(
 				progressRecords.map((p) => [p.wordId, p]),
 			);
 
-			const stats = new Map<number, { total: number; learned: number }>();
+			const threeMonthsAgo = new Date();
+			threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+			const stats = new Map<
+				number,
+				{ total: number; learned: number; greenScore: number; yellowScore: number }
+			>();
 			for (const word of words) {
-				const entry = stats.get(word.topic) ?? { total: 0, learned: 0 };
+				const entry = stats.get(word.topic) ?? {
+					total: 0,
+					learned: 0,
+					greenScore: 0,
+					yellowScore: 0,
+				};
 				entry.total += 1;
 				const progress = progressByWordId.get(word.remoteId);
-				if (progress && progress.score >= 1) {
-					entry.learned += 1;
+				if (progress && progress.score > 0) {
+					if (progress.score >= 1) entry.learned += 1;
+					const lastReview = new Date(progress.lastReview);
+					if (lastReview >= threeMonthsAgo) {
+						entry.greenScore += progress.score;
+					} else {
+						entry.yellowScore += progress.score;
+					}
 				}
 				stats.set(word.topic, entry);
 			}
@@ -87,6 +111,20 @@ export default function Catalog() {
 		setCurrentTopics(filteredTopics.map((t) => t.remoteId));
 	}, [filteredTopics, setCurrentTopics]);
 
+	// On first launch (topics never saved to DB), auto-select all filtered topics (#31)
+	useEffect(() => {
+		if (!_hasHydrated || topicsInitialized || filteredTopics.length === 0)
+			return;
+		setCurrentTopics(filteredTopics.map((t) => t.remoteId));
+		setTopicsInitialized(true);
+	}, [
+		_hasHydrated,
+		topicsInitialized,
+		filteredTopics,
+		setCurrentTopics,
+		setTopicsInitialized,
+	]);
+
 	// Persist catalog selection to DB after hydration
 	useEffect(() => {
 		if (!_hasHydrated || !user?.userId) return;
@@ -96,7 +134,9 @@ export default function Catalog() {
 				"selected_catalogs",
 				JSON.stringify(currentCatalogs),
 			)
-			.catch((err) => logger.error("Failed to persist catalog selection", err, "db"));
+			.catch((err) =>
+				logger.error("Failed to persist catalog selection", err, "db"),
+			);
 	}, [currentCatalogs, _hasHydrated, user?.userId]);
 
 	// Persist topic selection to DB after hydration
@@ -108,7 +148,9 @@ export default function Catalog() {
 				"selected_topics",
 				JSON.stringify(currentTopics),
 			)
-			.catch((err) => logger.error("Failed to persist topic selection", err, "db"));
+			.catch((err) =>
+				logger.error("Failed to persist topic selection", err, "db"),
+			);
 	}, [currentTopics, _hasHydrated, user?.userId]);
 
 	const fetchCatalogs = useCallback(async (language: string) => {
@@ -132,9 +174,25 @@ export default function Catalog() {
 		})();
 	}, [user?.language_learn, fetchCatalogs, fetchTopics]);
 
+	const { topicTranslations: topicTranslationsData } = useVocabularyStore();
+
+	useEffect(() => {
+		if (!user?.language_speak || user.language_speak === user?.language_learn) {
+			setTopicTranslations(new Map());
+			return;
+		}
+		const map = new Map<number, string>();
+		for (const t of topicTranslationsData) {
+			map.set(t.topic, t.translation);
+		}
+		setTopicTranslations(map);
+	}, [user?.language_speak, user?.language_learn, topicTranslationsData]);
+
 	// Auto-select A1 + A2 by default only on first launch (nothing persisted)
+	// Also set the ref so that all topics for those catalogs are selected too (#31)
 	useEffect(() => {
 		if (_hasHydrated && catalogs.length > 0 && currentCatalogs.length === 0) {
+			catalogJustToggledRef.current = true;
 			const defaults = catalogs
 				.filter((c) => c.title === "A1" || c.title === "A2")
 				.map((c) => c.remoteId);
@@ -170,10 +228,13 @@ export default function Catalog() {
 		return (
 			<TopicItem
 				title={item.item.title}
+				translatedTitle={topicTranslations.get(item.item.remoteId)}
 				selected={currentTopics.includes(item.item.remoteId)}
 				onPress={() => toggleTopic(item.item.remoteId)}
 				learnedCount={stats?.learned}
 				totalCount={stats?.total}
+				greenScore={stats?.greenScore}
+				yellowScore={stats?.yellowScore}
 			/>
 		);
 	};

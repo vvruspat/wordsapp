@@ -102,5 +102,15 @@
 	"report_cancel": "Annuleren",
 	"report_success": "Bedankt voor uw melding!",
 	"report_error": "Melding kon niet worden verstuurd",
-	"exercise_skip": "Overslaan"
+	"exercise_skip": "Overslaan",
+
+	"sync_overlay_syncing": "Synchroniseren…",
+	"sync_overlay_error": "Synchronisatie mislukt",
+
+	"sync_status_catalogs": "Vocabulairecategorieën laden…",
+	"sync_status_topics": "Onderwerpen laden…",
+	"sync_status_words": "Woorden laden…",
+	"sync_status_translations": "Vertalingen laden…",
+	"sync_status_audio": "Audiobestanden downloaden…",
+	"sync_status_saving": "Opslaan op apparaat…"
 }

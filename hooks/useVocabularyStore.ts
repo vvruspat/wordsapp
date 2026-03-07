@@ -6,16 +6,19 @@ type WordDto = components["schemas"]["WordDto"];
 type WordTranslationDto = components["schemas"]["WordTranslationDto"];
 type VocabCatalogDto = components["schemas"]["VocabCatalogDto"];
 type TopicDto = components["schemas"]["TopicDto"];
+type TopicTranslationDto = components["schemas"]["TopicTranslationDto"];
 
 type VocabularyState = {
 	words: WordDto[];
 	translations: WordTranslationDto[];
 	catalogs: VocabCatalogDto[];
 	topics: TopicDto[];
+	topicTranslations: TopicTranslationDto[];
 	languageLearn: string | null;
 	isLoading: boolean;
 	isSyncing: boolean;
 	syncProgress: number;
+	syncStatus: string | null;
 	lastSyncTime: number | null;
 	error: string | null;
 };
@@ -25,10 +28,12 @@ type VocabularyActions = {
 	setTranslations: (translations: WordTranslationDto[]) => void;
 	setCatalogs: (catalogs: VocabCatalogDto[]) => void;
 	setTopics: (topics: TopicDto[]) => void;
+	setTopicTranslations: (topicTranslations: TopicTranslationDto[]) => void;
 	setLanguageLearn: (language: string) => void;
 	setLoading: (loading: boolean) => void;
 	setSyncing: (syncing: boolean) => void;
 	setSyncProgress: (progress: number) => void;
+	setSyncStatus: (status: string | null) => void;
 	setLastSyncTime: (time: number) => void;
 	setError: (error: string | null) => void;
 	clearError: () => void;
@@ -40,10 +45,12 @@ const initialState: VocabularyState = {
 	translations: [],
 	catalogs: [],
 	topics: [],
+	topicTranslations: [],
 	languageLearn: null,
 	isLoading: false,
 	isSyncing: false,
 	syncProgress: 0,
+	syncStatus: null,
 	lastSyncTime: null,
 	error: null,
 };
@@ -67,6 +74,10 @@ export const useVocabularyStore = create<VocabularyState & VocabularyActions>()(
 			set((state) => {
 				state.topics = topics;
 			}),
+		setTopicTranslations: (topicTranslations) =>
+			set((state) => {
+				state.topicTranslations = topicTranslations;
+			}),
 		setLanguageLearn: (language) =>
 			set((state) => {
 				state.languageLearn = language;
@@ -82,6 +93,10 @@ export const useVocabularyStore = create<VocabularyState & VocabularyActions>()(
 		setSyncProgress: (progress) =>
 			set((state) => {
 				state.syncProgress = progress;
+			}),
+		setSyncStatus: (status) =>
+			set((state) => {
+				state.syncStatus = status;
 			}),
 		setLastSyncTime: (time) =>
 			set((state) => {

@@ -2,6 +2,14 @@ import { Q } from "@nozbe/watermelondb";
 import database from "../database";
 import LearningProgress from "../models/LearningProgress";
 
+export const REVISION_MONTHS = 3;
+
+function revisionThreshold(): Date {
+	const d = new Date();
+	d.setMonth(d.getMonth() - REVISION_MONTHS);
+	return d;
+}
+
 type RecordResultParams = {
 	userId: number;
 	wordId: number;
@@ -141,5 +149,36 @@ export const learningRepository = {
 			.get<LearningProgress>("learning_progress")
 			.query(Q.where("user_id", userId))
 			.fetch();
+	},
+
+	async getTopicScores(
+		userId: number,
+		wordIds: number[],
+	): Promise<{ greenScore: number; yellowScore: number; maxScore: number }> {
+		if (wordIds.length === 0) {
+			return { greenScore: 0, yellowScore: 0, maxScore: 0 };
+		}
+
+		const records = await database
+			.get<LearningProgress>("learning_progress")
+			.query(Q.where("user_id", userId), Q.where("word_id", Q.oneOf(wordIds)))
+			.fetch();
+
+		const threshold = revisionThreshold();
+		let greenScore = 0;
+		let yellowScore = 0;
+
+		for (const record of records) {
+			if (record.score > 0) {
+				const lastReview = new Date(record.lastReview);
+				if (lastReview >= threshold) {
+					greenScore += record.score;
+				} else {
+					yellowScore += record.score;
+				}
+			}
+		}
+
+		return { greenScore, yellowScore, maxScore: wordIds.length };
 	},
 };

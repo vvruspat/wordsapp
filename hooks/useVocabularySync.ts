@@ -6,6 +6,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { useCallback } from "react";
 import {
 	getCatalogs,
+	getTopicTranslations,
 	getTopics,
 	getWords,
 	getWordTranslations,
@@ -22,6 +23,7 @@ type WordDto = components["schemas"]["WordDto"];
 type WordTranslationDto = components["schemas"]["WordTranslationDto"];
 type VocabCatalogDto = components["schemas"]["VocabCatalogDto"];
 type TopicDto = components["schemas"]["TopicDto"];
+type TopicTranslationDto = components["schemas"]["TopicTranslationDto"];
 
 /**
  * Downloads an audio file from a URL to the local assets/audio directory if it doesn't exist.
@@ -106,9 +108,11 @@ export const useVocabularySync = () => {
 		setTranslations,
 		setCatalogs,
 		setTopics,
+		setTopicTranslations,
 		setLanguageLearn,
 		setSyncing,
 		setSyncProgress,
+		setSyncStatus,
 		setLastSyncTime,
 		setError,
 		clearError,
@@ -145,6 +149,7 @@ export const useVocabularySync = () => {
 
 			setSyncing(true);
 			setSyncProgress(0);
+			setSyncStatus("sync_status_catalogs");
 			clearError();
 			setLanguageLearn(targetLanguage);
 
@@ -169,6 +174,7 @@ export const useVocabularySync = () => {
 				const catalogs: VocabCatalogDto[] = catalogsResponse.data?.items || [];
 
 				logger.debug("Fetching topics", undefined, "sync");
+				setSyncStatus("sync_status_topics");
 				const topicsResponse = await getTopics({
 					offset: 0,
 					limit: 10000,
@@ -185,7 +191,29 @@ export const useVocabularySync = () => {
 
 				const topics: TopicDto[] = topicsResponse.data?.items || [];
 
+				// Fetch topic name translations for the native language
+				let topicTranslations: TopicTranslationDto[] = [];
+				if (user.language_speak && user.language_speak !== targetLanguage && topics.length > 0) {
+					try {
+						const topicTranslationsResponse = await getTopicTranslations({
+							offset: 0,
+							limit: 10000,
+							language: user.language_speak as Language,
+							topics: topics.map((t) => t.id).join(","),
+						});
+						if (
+							topicTranslationsResponse.status === "success" &&
+							topicTranslationsResponse.data?.items
+						) {
+							topicTranslations = topicTranslationsResponse.data.items;
+						}
+					} catch (error) {
+						logger.warn("Failed to fetch topic translations:", error, "sync");
+					}
+				}
+
 				// Fetch words filtered by language
+				setSyncStatus("sync_status_words");
 				const wordsResponse = await getWords({
 					offset: 0,
 					limit: 10000,
@@ -205,6 +233,7 @@ export const useVocabularySync = () => {
 				// In a production app, you might want to batch these requests or cache them
 				const translations: WordTranslationDto[] = [];
 
+				setSyncStatus("sync_status_translations");
 				try {
 					// Fetch translations for each word (API limitation - no bulk endpoint)
 					const translationResponse = await getWordTranslations({
@@ -232,6 +261,7 @@ export const useVocabularySync = () => {
 				logger.debug("Translations fetched", translations, "sync");
 
 				logger.debug("Downloading audio files", undefined, "sync");
+				setSyncStatus("sync_status_audio");
 				setSyncProgress(0.5);
 
 				// Build a map of already-downloaded local audio paths from the DB
@@ -278,6 +308,7 @@ export const useVocabularySync = () => {
 				}
 
 				logger.debug("Storing in local database", undefined, "db");
+				setSyncStatus("sync_status_saving");
 				setSyncProgress(0.85);
 				// Store in local database
 				await database.write(async () => {
@@ -314,11 +345,11 @@ export const useVocabularySync = () => {
 						}
 					}
 
-					// Sync topics
+					// Sync topics (use remote_id + language as key to support multiple languages)
 					for (const topic of topics) {
 						const existing = await database
 							.get<Topic>("topics")
-							.query(Q.where("remote_id", topic.id))
+							.query(Q.where("remote_id", topic.id), Q.where("language", topic.language))
 							.fetch();
 
 						if (existing.length > 0) {
@@ -408,11 +439,13 @@ export const useVocabularySync = () => {
 				// Update Zustand store
 				setCatalogs(catalogs);
 				setTopics(topics);
+				setTopicTranslations(topicTranslations);
 				setWords(wordsWithLocalAudio);
 				setTranslations(translations);
 				setLastSyncTime(Date.now());
 
 				setSyncProgress(1);
+				setSyncStatus(null);
 				didSucceed = true;
 			} catch (error) {
 				const errorMessage =
@@ -432,9 +465,11 @@ export const useVocabularySync = () => {
 			setTranslations,
 			setCatalogs,
 			setTopics,
+			setTopicTranslations,
 			setLanguageLearn,
 			setSyncing,
 			setSyncProgress,
+			setSyncStatus,
 			setLastSyncTime,
 			setError,
 			clearError,

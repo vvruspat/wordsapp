@@ -102,5 +102,15 @@
 	"report_cancel": "Cancel",
 	"report_success": "Thank you for your report!",
 	"report_error": "Failed to send report",
-	"exercise_skip": "Skip"
+	"exercise_skip": "Skip",
+
+	"sync_overlay_syncing": "Syncing…",
+	"sync_overlay_error": "Sync failed",
+
+	"sync_status_catalogs": "Loading vocabulary categories…",
+	"sync_status_topics": "Loading topics…",
+	"sync_status_words": "Loading words…",
+	"sync_status_translations": "Loading translations…",
+	"sync_status_audio": "Downloading audio files…",
+	"sync_status_saving": "Saving to device…"
 }

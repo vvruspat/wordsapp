@@ -102,5 +102,15 @@
 	"report_cancel": "Cancelar",
 	"report_success": "¡Gracias por tu informe!",
 	"report_error": "Error al enviar informe",
-	"exercise_skip": "Saltar"
+	"exercise_skip": "Saltar",
+
+	"sync_overlay_syncing": "Sincronizando…",
+	"sync_overlay_error": "Error de sincronización",
+
+	"sync_status_catalogs": "Cargando categorías de vocabulario…",
+	"sync_status_topics": "Cargando temas…",
+	"sync_status_words": "Cargando palabras…",
+	"sync_status_translations": "Cargando traducciones…",
+	"sync_status_audio": "Descargando archivos de audio…",
+	"sync_status_saving": "Guardando en el dispositivo…"
 }

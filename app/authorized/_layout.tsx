@@ -34,9 +34,9 @@ export default function RootLayout() {
 	const { syncVocabulary } = useVocabularySync();
 	const { user } = useSessionUser();
 	const { isSyncing } = useVocabularyStore();
-	const { setCurrentCatalogs, setCurrentTopics, setHasHydrated, _hasHydrated } =
+	const { setCurrentCatalogs, setCurrentTopics, setHasHydrated, setTopicsInitialized, _hasHydrated } =
 		useExcerciseStore();
-	const hasSyncedRef = useRef(false);
+	const lastSyncedLanguageRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (!user?.userId || _hasHydrated) return;
@@ -54,6 +54,7 @@ export default function RootLayout() {
 			}
 			if (savedTopics) {
 				setCurrentTopics(JSON.parse(savedTopics));
+				setTopicsInitialized(true);
 			}
 
 			setHasHydrated(true);
@@ -64,11 +65,12 @@ export default function RootLayout() {
 		setCurrentCatalogs,
 		setCurrentTopics,
 		setHasHydrated,
+		setTopicsInitialized,
 	]);
 
 	useEffect(() => {
 		if (!user) {
-			hasSyncedRef.current = false;
+			lastSyncedLanguageRef.current = null;
 			return;
 		}
 
@@ -79,12 +81,12 @@ export default function RootLayout() {
 		const timeoutId = setTimeout(() => controller.abort(), 2500);
 
 		const checkOnlineAndSync = async () => {
-			if (isSyncing || hasSyncedRef.current) {
+			if (isSyncing || lastSyncedLanguageRef.current === user.language_learn) {
 				return;
 			}
 
 			if (!server) {
-				hasSyncedRef.current = true;
+				lastSyncedLanguageRef.current = user.language_learn;
 				syncVocabulary(user.language_learn as Language);
 				return;
 			}
@@ -95,7 +97,7 @@ export default function RootLayout() {
 					signal: controller.signal,
 				});
 				if (res) {
-					hasSyncedRef.current = true;
+					lastSyncedLanguageRef.current = user.language_learn;
 					syncVocabulary(user.language_learn as Language);
 				}
 			} catch {
@@ -162,17 +164,7 @@ export default function RootLayout() {
 					}}
 				/>
 			</Tabs>
-			<View
-				pointerEvents="none"
-				style={{
-					position: "absolute",
-					bottom: 49 + insets.bottom,
-					left: 0,
-					right: 0,
-				}}
-			>
-				<SyncProgressBar />
-			</View>
+			<SyncProgressBar />
 		</View>
 	);
 }
