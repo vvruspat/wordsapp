@@ -25,8 +25,8 @@ export default class Word extends Model {
 	@field("audio")
 	audio!: string;
 
-	@field("transcribtion")
-	transcribtion!: string;
+	@field("transcription")
+	transcription!: string;
 
 	@field("meaning")
 	meaning?: string;

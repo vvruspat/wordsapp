@@ -107,7 +107,7 @@ export function TypeTranslationExercise() {
 		<View style={{ flex: 1, width: "100%" }}>
 			<TrainingPromptCard
 				word={word.word}
-				transcribtion={word.transcribtion}
+				transcription={word.transcription}
 				wordId={word.remoteId}
 				onSkip={handleSkip}
 			>

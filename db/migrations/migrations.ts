@@ -8,6 +8,14 @@ import {
 export default schemaMigrations({
 	migrations: [
 		{
+			toVersion: 5,
+			steps: [
+				unsafeExecuteSql(
+					'ALTER TABLE "words" RENAME COLUMN "transcribtion" TO "transcription";',
+				),
+			],
+		},
+		{
 			toVersion: 4,
 			steps: [
 				// Use IF NOT EXISTS to handle devices that already have this table

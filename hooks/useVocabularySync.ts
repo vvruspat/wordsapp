@@ -343,7 +343,7 @@ export const useVocabularySync = () => {
 								w.catalog = Number(word.catalog);
 								w.language = word.language;
 								w.audio = word.audio;
-								w.transcribtion = word.transcribtion;
+								w.transcription = word.transcribtion;
 								w.meaning = word.meaning ?? undefined;
 							});
 						} else {
@@ -355,7 +355,7 @@ export const useVocabularySync = () => {
 								w.catalog = Number(word.catalog);
 								w.language = word.language;
 								w.audio = word.audio;
-								w.transcribtion = word.transcribtion;
+								w.transcription = word.transcribtion;
 								w.meaning = word.meaning ?? undefined;
 							});
 						}
@@ -497,7 +497,7 @@ export const useVocabularySync = () => {
 					catalog: w.catalog,
 					language: w.language as Language,
 					audio: w.audio,
-					transcribtion: w.transcribtion,
+					transcribtion: w.transcription,
 					meaning: w.meaning,
 				})),
 			);
