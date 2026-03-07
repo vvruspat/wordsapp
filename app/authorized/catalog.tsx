@@ -26,6 +26,8 @@ export default function Catalog() {
 		setCurrentCatalogs,
 		setCurrentTopics,
 		_hasHydrated,
+		topicsInitialized,
+		setTopicsInitialized,
 	} = useExcerciseStore();
 	const { user } = useSessionUser();
 
@@ -87,6 +89,13 @@ export default function Catalog() {
 		catalogJustToggledRef.current = false;
 		setCurrentTopics(filteredTopics.map((t) => t.remoteId));
 	}, [filteredTopics, setCurrentTopics]);
+
+	// On first launch (topics never saved to DB), auto-select all filtered topics (#31)
+	useEffect(() => {
+		if (!_hasHydrated || topicsInitialized || filteredTopics.length === 0) return;
+		setCurrentTopics(filteredTopics.map((t) => t.remoteId));
+		setTopicsInitialized(true);
+	}, [_hasHydrated, topicsInitialized, filteredTopics, setCurrentTopics, setTopicsInitialized]);
 
 	// Persist catalog selection to DB after hydration
 	useEffect(() => {

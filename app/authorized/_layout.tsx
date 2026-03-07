@@ -34,7 +34,7 @@ export default function RootLayout() {
 	const { syncVocabulary } = useVocabularySync();
 	const { user } = useSessionUser();
 	const { isSyncing } = useVocabularyStore();
-	const { setCurrentCatalogs, setCurrentTopics, setHasHydrated, _hasHydrated } =
+	const { setCurrentCatalogs, setCurrentTopics, setHasHydrated, setTopicsInitialized, _hasHydrated } =
 		useExcerciseStore();
 	const lastSyncedLanguageRef = useRef<string | null>(null);
 
@@ -54,6 +54,7 @@ export default function RootLayout() {
 			}
 			if (savedTopics) {
 				setCurrentTopics(JSON.parse(savedTopics));
+				setTopicsInitialized(true);
 			}
 
 			setHasHydrated(true);
@@ -64,6 +65,7 @@ export default function RootLayout() {
 		setCurrentCatalogs,
 		setCurrentTopics,
 		setHasHydrated,
+		setTopicsInitialized,
 	]);
 
 	useEffect(() => {
