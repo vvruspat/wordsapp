@@ -194,6 +194,7 @@ export const useVocabularySync = () => {
 				// Fetch topic name translations for the native language
 				let topicTranslations: TopicTranslationDto[] = [];
 				if (user.language_speak && user.language_speak !== targetLanguage && topics.length > 0) {
+					logger.debug("Fetching topic translations", { language: user.language_speak, topicCount: topics.length }, "sync");
 					try {
 						const topicTranslationsResponse = await getTopicTranslations({
 							offset: 0,
@@ -201,6 +202,7 @@ export const useVocabularySync = () => {
 							language: user.language_speak as Language,
 							topics: topics.map((t) => t.id).join(","),
 						});
+						logger.debug("Topic translations response", { status: topicTranslationsResponse.status, count: topicTranslationsResponse.data?.items?.length }, "sync");
 						if (
 							topicTranslationsResponse.status === "success" &&
 							topicTranslationsResponse.data?.items
@@ -210,6 +212,8 @@ export const useVocabularySync = () => {
 					} catch (error) {
 						logger.warn("Failed to fetch topic translations:", error, "sync");
 					}
+				} else {
+					logger.debug("Skipping topic translations fetch", { language_speak: user.language_speak, targetLanguage, topicsCount: topics.length }, "sync");
 				}
 
 				// Fetch words filtered by language
