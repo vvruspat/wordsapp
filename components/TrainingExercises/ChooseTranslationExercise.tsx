@@ -60,6 +60,10 @@ export function ChooseTranslationExercise() {
 	}, [randomTranslations, translation]);
 
 	const [selectedOption, setSelectedOption] = useState<string | null>(null);
+	const [modalPair, setModalPair] = useState<{
+		word: string;
+		translation: string;
+	} | null>(null);
 
 	const handlePress = useCallback(
 		(option: string) => {
@@ -79,6 +83,7 @@ export function ChooseTranslationExercise() {
 	const handleSkip = useCallback(() => {
 		if (!word || !translation) return;
 		onFailure?.(word.remoteId, score, false);
+		setModalPair({ word: word.word, translation: translation.translation });
 		setModalVisible(true);
 	}, [word, translation, onFailure]);
 
@@ -117,6 +122,8 @@ export function ChooseTranslationExercise() {
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
+				word={modalPair?.word}
+				translation={modalPair?.translation}
 				onRequestClose={handleModalClose}
 			/>
 		</>
