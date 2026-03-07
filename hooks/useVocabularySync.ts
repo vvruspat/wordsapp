@@ -188,6 +188,26 @@ export const useVocabularySync = () => {
 
 				const topics: TopicDto[] = topicsResponse.data?.items || [];
 
+				// Also fetch topics in the native language so catalog translations can be shown
+				let nativeTopics: TopicDto[] = [];
+				if (user.language_speak && user.language_speak \!== targetLanguage) {
+					try {
+						const nativeTopicsResponse = await getTopics({
+							offset: 0,
+							limit: 10000,
+							language: user.language_speak as Language,
+						});
+						if (
+							nativeTopicsResponse.status === "success" &&
+							nativeTopicsResponse.data?.items
+						) {
+							nativeTopics = nativeTopicsResponse.data.items;
+						}
+					} catch (error) {
+						logger.warn("Failed to fetch native language topics:", error, "sync");
+					}
+				}
+
 				// Fetch words filtered by language
 				setSyncStatus("sync_status_words");
 				const wordsResponse = await getWords({
@@ -321,11 +341,12 @@ export const useVocabularySync = () => {
 						}
 					}
 
-					// Sync topics
-					for (const topic of topics) {
+					// Sync topics (use remote_id + language as key to support multiple languages)
+					const allTopicsToSync = [...topics, ...nativeTopics];
+					for (const topic of allTopicsToSync) {
 						const existing = await database
 							.get<Topic>("topics")
-							.query(Q.where("remote_id", topic.id))
+							.query(Q.where("remote_id", topic.id), Q.where("language", topic.language))
 							.fetch();
 
 						if (existing.length > 0) {
