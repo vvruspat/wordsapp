@@ -16,6 +16,7 @@ type VocabularyState = {
 	isLoading: boolean;
 	isSyncing: boolean;
 	syncProgress: number;
+	syncStatus: string | null;
 	lastSyncTime: number | null;
 	error: string | null;
 };
@@ -29,6 +30,7 @@ type VocabularyActions = {
 	setLoading: (loading: boolean) => void;
 	setSyncing: (syncing: boolean) => void;
 	setSyncProgress: (progress: number) => void;
+	setSyncStatus: (status: string | null) => void;
 	setLastSyncTime: (time: number) => void;
 	setError: (error: string | null) => void;
 	clearError: () => void;
@@ -44,6 +46,7 @@ const initialState: VocabularyState = {
 	isLoading: false,
 	isSyncing: false,
 	syncProgress: 0,
+	syncStatus: null,
 	lastSyncTime: null,
 	error: null,
 };
@@ -82,6 +85,10 @@ export const useVocabularyStore = create<VocabularyState & VocabularyActions>()(
 		setSyncProgress: (progress) =>
 			set((state) => {
 				state.syncProgress = progress;
+			}),
+		setSyncStatus: (status) =>
+			set((state) => {
+				state.syncStatus = status;
 			}),
 		setLastSyncTime: (time) =>
 			set((state) => {
