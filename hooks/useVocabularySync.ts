@@ -6,6 +6,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { useCallback } from "react";
 import {
 	getCatalogs,
+	getTopicTranslations,
 	getTopics,
 	getWords,
 	getWordTranslations,
@@ -22,6 +23,7 @@ type WordDto = components["schemas"]["WordDto"];
 type WordTranslationDto = components["schemas"]["WordTranslationDto"];
 type VocabCatalogDto = components["schemas"]["VocabCatalogDto"];
 type TopicDto = components["schemas"]["TopicDto"];
+type TopicTranslationDto = components["schemas"]["TopicTranslationDto"];
 
 /**
  * Downloads an audio file from a URL to the local assets/audio directory if it doesn't exist.
@@ -106,6 +108,7 @@ export const useVocabularySync = () => {
 		setTranslations,
 		setCatalogs,
 		setTopics,
+		setTopicTranslations,
 		setLanguageLearn,
 		setSyncing,
 		setSyncProgress,
@@ -188,23 +191,24 @@ export const useVocabularySync = () => {
 
 				const topics: TopicDto[] = topicsResponse.data?.items || [];
 
-				// Also fetch topics in the native language so catalog translations can be shown
-				let nativeTopics: TopicDto[] = [];
-				if (user.language_speak && user.language_speak !== targetLanguage) {
+				// Fetch topic name translations for the native language
+				let topicTranslations: TopicTranslationDto[] = [];
+				if (user.language_speak && user.language_speak !== targetLanguage && topics.length > 0) {
 					try {
-						const nativeTopicsResponse = await getTopics({
+						const topicTranslationsResponse = await getTopicTranslations({
 							offset: 0,
 							limit: 10000,
 							language: user.language_speak as Language,
+							topics: topics.map((t) => t.id).join(","),
 						});
 						if (
-							nativeTopicsResponse.status === "success" &&
-							nativeTopicsResponse.data?.items
+							topicTranslationsResponse.status === "success" &&
+							topicTranslationsResponse.data?.items
 						) {
-							nativeTopics = nativeTopicsResponse.data.items;
+							topicTranslations = topicTranslationsResponse.data.items;
 						}
 					} catch (error) {
-						logger.warn("Failed to fetch native language topics:", error, "sync");
+						logger.warn("Failed to fetch topic translations:", error, "sync");
 					}
 				}
 
@@ -342,8 +346,7 @@ export const useVocabularySync = () => {
 					}
 
 					// Sync topics (use remote_id + language as key to support multiple languages)
-					const allTopicsToSync = [...topics, ...nativeTopics];
-					for (const topic of allTopicsToSync) {
+					for (const topic of topics) {
 						const existing = await database
 							.get<Topic>("topics")
 							.query(Q.where("remote_id", topic.id), Q.where("language", topic.language))
@@ -436,6 +439,7 @@ export const useVocabularySync = () => {
 				// Update Zustand store
 				setCatalogs(catalogs);
 				setTopics(topics);
+				setTopicTranslations(topicTranslations);
 				setWords(wordsWithLocalAudio);
 				setTranslations(translations);
 				setLastSyncTime(Date.now());
@@ -461,6 +465,7 @@ export const useVocabularySync = () => {
 			setTranslations,
 			setCatalogs,
 			setTopics,
+			setTopicTranslations,
 			setLanguageLearn,
 			setSyncing,
 			setSyncProgress,

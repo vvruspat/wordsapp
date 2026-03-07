@@ -9,6 +9,7 @@ import { vocabcatalogRepository } from "@/db/repositories/vocabcatalog.repositor
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
+import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { logger } from "@/utils/logger";
 import { WText } from "@/mob-ui";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -142,19 +143,19 @@ export default function Catalog() {
 		})();
 	}, [user?.language_learn, fetchCatalogs, fetchTopics]);
 
+	const { topicTranslations: topicTranslationsData } = useVocabularyStore();
+
 	useEffect(() => {
 		if (!user?.language_speak || user.language_speak === user?.language_learn) {
 			setTopicTranslations(new Map());
 			return;
 		}
-		topicsRepository.getByLanguage(user.language_speak).then((translated) => {
-			const map = new Map<number, string>();
-			for (const t of translated) {
-				map.set(t.remoteId, t.title);
-			}
-			setTopicTranslations(map);
-		});
-	}, [user?.language_speak, user?.language_learn]);
+		const map = new Map<number, string>();
+		for (const t of topicTranslationsData) {
+			map.set(t.topic, t.translation);
+		}
+		setTopicTranslations(map);
+	}, [user?.language_speak, user?.language_learn, topicTranslationsData]);
 
 	// Auto-select A1 + A2 by default only on first launch (nothing persisted)
 	// Also set the ref so that all topics for those catalogs are selected too (#31)
