@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo view --json nameWithOwner -q .nameWithOwner)",
+      "Bash(gh issue view 17 --repo vvruspat/wordsapp --json number,title,body,labels,assignees,comments)",
+      "Bash(git checkout -b fix/issue-17-transcription-typo)",
+      "Bash(xxd)",
+      "Bash(git push -u origin fix/issue-17-transcription-typo)",
+      "Bash(git push)"
+    ]
+  }
+}
