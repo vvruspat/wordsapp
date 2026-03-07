@@ -8,6 +8,7 @@ type TopicItemProps = Pick<Topic, "title"> & {
 	onPress: () => void;
 	learnedCount?: number;
 	totalCount?: number;
+	translatedTitle?: string;
 };
 
 export const TopicItem = (props: TopicItemProps) => {
@@ -27,9 +28,16 @@ export const TopicItem = (props: TopicItemProps) => {
 						justifyContent: "space-between",
 					}}
 				>
-					<WText mode="primary" size="xl" align="left" style={{ flex: 1 }}>
-						{props.title}
-					</WText>
+					<View style={{ flex: 1 }}>
+						<WText mode="primary" size="xl" align="left">
+							{props.title}
+						</WText>
+						{props.translatedTitle && (
+							<WText mode="secondary" size="sm" align="left">
+								{props.translatedTitle}
+							</WText>
+						)}
+					</View>
 					{props.totalCount !== undefined && (
 						<WText
 							mode="secondary"
