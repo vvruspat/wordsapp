@@ -87,13 +87,13 @@ export default function Catalog() {
 				};
 				entry.total += 1;
 				const progress = progressByWordId.get(word.remoteId);
-				if (progress && progress.score >= 1) {
-					entry.learned += 1;
+				if (progress && progress.score > 0) {
+					if (progress.score >= 1) entry.learned += 1;
 					const lastReview = new Date(progress.lastReview);
 					if (lastReview >= threeMonthsAgo) {
-						entry.greenScore += 1;
+						entry.greenScore += progress.score;
 					} else {
-						entry.yellowScore += 1;
+						entry.yellowScore += progress.score;
 					}
 				}
 				stats.set(word.topic, entry);

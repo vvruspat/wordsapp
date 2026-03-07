@@ -169,12 +169,12 @@ export const learningRepository = {
 		let yellowScore = 0;
 
 		for (const record of records) {
-			if (record.score >= 1) {
+			if (record.score > 0) {
 				const lastReview = new Date(record.lastReview);
 				if (lastReview >= threshold) {
-					greenScore += 1;
+					greenScore += record.score;
 				} else {
-					yellowScore += 1;
+					yellowScore += record.score;
 				}
 			}
 		}
