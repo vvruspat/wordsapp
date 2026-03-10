@@ -64,7 +64,7 @@ export default function Catalog() {
 
 		(async () => {
 			const topicIds = filteredTopics.map((t) => t.remoteId);
-			const words = await wordsRepository.getByTopicIds(topicIds);
+			const words = await wordsRepository.getByTopicIds(topicIds, currentCatalogs);
 
 			const progressRecords = await learningRepository.getByUser(user.userId);
 			const progressByWordId = new Map(
@@ -100,7 +100,7 @@ export default function Catalog() {
 			}
 			setTopicStats(stats);
 		})();
-	}, [filteredTopics, user?.userId]);
+	}, [filteredTopics, user?.userId, currentCatalogs]);
 
 	// Only auto-select topics when the user explicitly toggles a catalog, not on mount or hydration
 	const catalogJustToggledRef = useRef(false);
