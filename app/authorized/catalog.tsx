@@ -223,6 +223,13 @@ export default function Catalog() {
 		[currentTopics, setCurrentTopics],
 	);
 
+	const soloSelectTopic = useCallback(
+		(id: number) => {
+			setCurrentTopics([id]);
+		},
+		[setCurrentTopics],
+	);
+
 	const renderTopicItem = (item: ListRenderItemInfo<Topic>) => {
 		const stats = topicStats.get(item.item.remoteId);
 		return (
@@ -231,6 +238,7 @@ export default function Catalog() {
 				translatedTitle={topicTranslations.get(item.item.remoteId)}
 				selected={currentTopics.includes(item.item.remoteId)}
 				onPress={() => toggleTopic(item.item.remoteId)}
+				onLongPress={() => soloSelectTopic(item.item.remoteId)}
 				learnedCount={stats?.learned}
 				totalCount={stats?.total}
 				greenScore={stats?.greenScore}
