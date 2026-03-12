@@ -282,26 +282,41 @@ export const useVocabularySync = () => {
 				const audioCount = audioCandidates.length;
 				let audioCompleted = 0;
 
-				const wordsWithLocalAudio = await Promise.all(
-					words.map(async (word) => {
+				// Use concurrency-limited downloads so progress updates after each file
+				const AUDIO_CONCURRENCY = 5;
+				const wordsWithLocalAudio: typeof words = [...words];
+				let wordIndex = 0;
+
+				async function processNextAudio(): Promise<void> {
+					while (wordIndex < words.length) {
+						const i = wordIndex++;
+						const word = words[i];
 						if (word.audio) {
 							const existingLocal = existingAudioMap.get(word.id);
 							if (existingLocal) {
-								return { ...word, audio: existingLocal };
+								wordsWithLocalAudio[i] = { ...word, audio: existingLocal };
+							} else {
+								const localAudioPath = await downloadAudioFile(
+									word.audio,
+									word.id,
+								);
+								wordsWithLocalAudio[i] = { ...word, audio: localAudioPath };
+								if (audioCount > 0) {
+									audioCompleted += 1;
+									const audioProgress =
+										0.5 + (audioCompleted / audioCount) * 0.3;
+									setSyncProgress(audioProgress);
+								}
 							}
-							const localAudioPath = await downloadAudioFile(
-								word.audio,
-								word.id,
-							);
-							if (audioCount > 0) {
-								audioCompleted += 1;
-								const audioProgress = 0.5 + (audioCompleted / audioCount) * 0.3;
-								setSyncProgress(audioProgress);
-							}
-							return { ...word, audio: localAudioPath };
 						}
-						return word;
-					}),
+					}
+				}
+
+				await Promise.all(
+					Array.from(
+						{ length: Math.min(AUDIO_CONCURRENCY, words.length) },
+						processNextAudio,
+					),
 				);
 				if (audioCount === 0) {
 					setSyncProgress(0.8);
