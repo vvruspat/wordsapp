@@ -2,6 +2,7 @@ import { TopicItem } from "@/components/TopicItem";
 import { VocabCatalogItem } from "@/components/VocabCatalogItem";
 import Topic from "@/db/models/Topic";
 import VocabCatalog from "@/db/models/VocabCatalog";
+import Word from "@/db/models/Word";
 import { learningRepository } from "@/db/repositories/learning.repository";
 import { topicsRepository } from "@/db/repositories/topics.repository";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
@@ -48,6 +49,7 @@ export default function Catalog() {
 	}, [topics, currentCatalogs]);
 
 	const [filteredTopics, setFilteredTopics] = useState<Topic[]>([]);
+	const [topicWords, setTopicWords] = useState<Word[]>([]);
 	const [topicStats, setTopicStats] = useState<
 		Map<
 			number,
@@ -60,47 +62,56 @@ export default function Catalog() {
 	}, [filterTopics]);
 
 	useEffect(() => {
-		if (filteredTopics.length === 0 || !user?.userId) return;
+		if (filteredTopics.length === 0) {
+			setTopicWords([]);
+			return;
+		}
+		const topicIds = filteredTopics.map((t) => t.remoteId);
+		wordsRepository.getByTopicIds(topicIds, currentCatalogs).then(setTopicWords);
+	}, [filteredTopics, currentCatalogs]);
 
-		(async () => {
-			const topicIds = filteredTopics.map((t) => t.remoteId);
-			const words = await wordsRepository.getByTopicIds(topicIds);
+	useEffect(() => {
+		if (topicWords.length === 0 || !user?.userId) return;
 
-			const progressRecords = await learningRepository.getByUser(user.userId);
-			const progressByWordId = new Map(
-				progressRecords.map((p) => [p.wordId, p]),
-			);
+		const subscription = learningRepository
+			.observeByUser(user.userId)
+			.subscribe((progressRecords) => {
+				const progressByWordId = new Map(
+					progressRecords.map((p) => [p.wordId, p]),
+				);
 
-			const threeMonthsAgo = new Date();
-			threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+				const threeMonthsAgo = new Date();
+				threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
-			const stats = new Map<
-				number,
-				{ total: number; learned: number; greenScore: number; yellowScore: number }
-			>();
-			for (const word of words) {
-				const entry = stats.get(word.topic) ?? {
-					total: 0,
-					learned: 0,
-					greenScore: 0,
-					yellowScore: 0,
-				};
-				entry.total += 1;
-				const progress = progressByWordId.get(word.remoteId);
-				if (progress && progress.score > 0) {
-					if (progress.score >= 1) entry.learned += 1;
-					const lastReview = new Date(progress.lastReview);
-					if (lastReview >= threeMonthsAgo) {
-						entry.greenScore += progress.score;
-					} else {
-						entry.yellowScore += progress.score;
+				const stats = new Map<
+					number,
+					{ total: number; learned: number; greenScore: number; yellowScore: number }
+				>();
+				for (const word of topicWords) {
+					const entry = stats.get(word.topic) ?? {
+						total: 0,
+						learned: 0,
+						greenScore: 0,
+						yellowScore: 0,
+					};
+					entry.total += 1;
+					const progress = progressByWordId.get(word.remoteId);
+					if (progress && progress.score > 0) {
+						if (progress.score >= 1) entry.learned += 1;
+						const lastReview = new Date(progress.lastReview);
+						if (lastReview >= threeMonthsAgo) {
+							entry.greenScore += progress.score;
+						} else {
+							entry.yellowScore += progress.score;
+						}
 					}
+					stats.set(word.topic, entry);
 				}
-				stats.set(word.topic, entry);
-			}
-			setTopicStats(stats);
-		})();
-	}, [filteredTopics, user?.userId]);
+				setTopicStats(stats);
+			});
+
+		return () => subscription.unsubscribe();
+	}, [topicWords, user?.userId]);
 
 	// Only auto-select topics when the user explicitly toggles a catalog, not on mount or hydration
 	const catalogJustToggledRef = useRef(false);
@@ -223,6 +234,13 @@ export default function Catalog() {
 		[currentTopics, setCurrentTopics],
 	);
 
+	const soloSelectTopic = useCallback(
+		(id: number) => {
+			setCurrentTopics([id]);
+		},
+		[setCurrentTopics],
+	);
+
 	const renderTopicItem = (item: ListRenderItemInfo<Topic>) => {
 		const stats = topicStats.get(item.item.remoteId);
 		return (
@@ -231,6 +249,7 @@ export default function Catalog() {
 				translatedTitle={topicTranslations.get(item.item.remoteId)}
 				selected={currentTopics.includes(item.item.remoteId)}
 				onPress={() => toggleTopic(item.item.remoteId)}
+				onLongPress={() => soloSelectTopic(item.item.remoteId)}
 				learnedCount={stats?.learned}
 				totalCount={stats?.total}
 				greenScore={stats?.greenScore}

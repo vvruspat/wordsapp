@@ -151,6 +151,13 @@ export const learningRepository = {
 			.fetch();
 	},
 
+	observeByUser(userId: number) {
+		return database
+			.get<LearningProgress>("learning_progress")
+			.query(Q.where("user_id", userId))
+			.observe();
+	},
+
 	async getTopicScores(
 		userId: number,
 		wordIds: number[],

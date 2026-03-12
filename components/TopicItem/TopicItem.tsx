@@ -6,6 +6,7 @@ import { Colors } from "@/mob-ui/brand/colors";
 type TopicItemProps = Pick<Topic, "title"> & {
 	selected: boolean;
 	onPress: () => void;
+	onLongPress?: () => void;
 	learnedCount?: number;
 	totalCount?: number;
 	translatedTitle?: string;
@@ -20,7 +21,7 @@ export const TopicItem = (props: TopicItemProps) => {
 	const showChart = total > 0;
 
 	return (
-		<Pressable onPress={props.onPress}>
+		<Pressable onPress={props.onPress} onLongPress={props.onLongPress}>
 			<WCard
 				style={{
 					boxSizing: "border-box",
