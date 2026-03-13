@@ -1,5 +1,4 @@
 import { AntDesign } from "@expo/vector-icons";
-import { authenticateAsync } from "expo-local-authentication";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,15 +24,7 @@ export default function Verify() {
 			try {
 				await verifyEmail({ code: text, email });
 
-				const result = await authenticateAsync({
-					promptMessage: "Authenticate to access the app",
-				});
-
-				if (!result.success) {
-					router.push("/");
-				} else {
-					router.push("/authorized/learning");
-				}
+				router.push("/authorized/learning");
 			} catch (e) {
 				setError((e as Error).message);
 			}
