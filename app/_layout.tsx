@@ -1,5 +1,6 @@
 import { DatabaseProvider } from "@nozbe/watermelondb/DatabaseProvider";
 import { useIsFocused } from "@react-navigation/native";
+import * as FileSystem from "expo-file-system";
 import { authenticateAsync } from "expo-local-authentication";
 import { Stack, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -49,6 +50,19 @@ export default Sentry.wrap(function RootLayout() {
 	const isFocused = useIsFocused();
 
 	const triggerBiometricAuth = useCallback(async () => {
+		// On iOS, Keychain (SecureStore) persists across app uninstalls.
+		// Detect a fresh install by checking a flag in the documents directory
+		// (which is cleared on uninstall) and wipe any stale tokens.
+		const flagPath = `${FileSystem.documentDirectory}has_launched`;
+		const flag = await FileSystem.getInfoAsync(flagPath);
+		if (!flag.exists) {
+			await FileSystem.writeAsStringAsync(flagPath, "1");
+			await SecureStore.deleteItemAsync("access_token");
+			await SecureStore.deleteItemAsync("refresh_token");
+			setIsReady(true);
+			return;
+		}
+
 		const access_token = await SecureStore.getItemAsync("access_token");
 
 		if (!access_token) {
