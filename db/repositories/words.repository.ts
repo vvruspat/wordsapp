@@ -145,7 +145,10 @@ export const wordsRepository = {
 		const oneMonthAgo = new Date();
 		oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
+		const FAILURE_SCORE_THRESHOLD = 0.3;
+
 		const untrained: Word[] = [];
+		const failedRecent: Word[] = [];
 		const stale: Word[] = [];
 		const recent: Word[] = [];
 
@@ -153,6 +156,8 @@ export const wordsRepository = {
 			const progress = progressByWordId.get(word.remoteId);
 			if (!progress) {
 				untrained.push(word);
+			} else if (new Date(progress.lastReview) >= oneMonthAgo && progress.score < FAILURE_SCORE_THRESHOLD) {
+				failedRecent.push(word);
 			} else if (new Date(progress.lastReview) < oneMonthAgo) {
 				stale.push(word);
 			} else {
@@ -167,11 +172,12 @@ export const wordsRepository = {
 				new Date(progressByWordId.get(b.remoteId)?.lastReview ?? 0).getTime(),
 		);
 
-		// Shuffle untrained and recent
+		// Shuffle untrained, failedRecent, and recent
 		untrained.sort(() => Math.random() - 0.5);
+		failedRecent.sort(() => Math.random() - 0.5);
 		recent.sort(() => Math.random() - 0.5);
 
-		return [...untrained, ...stale, ...recent].slice(0, count);
+		return [...untrained, ...failedRecent, ...stale, ...recent].slice(0, count);
 	},
 
 	async getTopicsByCatalogs(
