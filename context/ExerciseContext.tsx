@@ -153,6 +153,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					user?.language_speak ?? "en",
 					numberOfRandomTranslations,
 					translations.map((translation) => translation.remoteId),
+					currentTopics.length > 0 ? currentTopics : undefined,
+					currentCatalogs.length > 0 ? currentCatalogs : undefined,
 				);
 
 			setCurrentRandomWords(randomWords);
