@@ -116,12 +116,33 @@ export const translationsRepository = {
 		language: string,
 		count: number = 1,
 		exclude: WordTranslation["remoteId"][] = [],
+		topicIds?: number[],
+		catalogIds?: number[],
 	): Promise<WordTranslation[]> {
 		const queryConditions = [Q.where("language", language)];
 
 		if (exclude.length > 0) {
 			queryConditions.push(Q.where("remote_id", Q.notIn(exclude)));
 		}
+
+		if ((topicIds && topicIds.length > 0) || (catalogIds && catalogIds.length > 0)) {
+			const wordConditions = [];
+			if (topicIds && topicIds.length > 0) {
+				wordConditions.push(Q.where("topic", Q.oneOf(topicIds)));
+			}
+			if (catalogIds && catalogIds.length > 0) {
+				wordConditions.push(Q.where("catalog", Q.oneOf(catalogIds)));
+			}
+			const matchingWords = await database
+				.get<import("../models/Word").default>("words")
+				.query(...wordConditions)
+				.fetch();
+			const matchingWordIds = matchingWords.map((w) => w.remoteId);
+			if (matchingWordIds.length > 0) {
+				queryConditions.push(Q.where("word", Q.oneOf(matchingWordIds)));
+			}
+		}
+
 		const translations = await database
 			.get<WordTranslation>("word_translations")
 			.query(...queryConditions)
