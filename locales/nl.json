@@ -74,14 +74,12 @@
 	"cards_right_answer": "Juiste antwoord",
 	"search_language_placeholder": "Zoek taal",
 	"search_language_not_found": "Geen talen gevonden",
-
 	"profile_save_button": "Opslaan",
 	"profile_save_success": "Profiel bijgewerkt",
 	"profile_save_error": "Profiel bijwerken mislukt",
 	"profile_verify_email_button": "E-mail verifiëren",
 	"profile_email_verified": "E-mail geverifieerd",
 	"profile_email_not_verified": "E-mail niet geverifieerd",
-
 	"English": "Engels",
 	"Spanish": "Spaans",
 	"Dutch": "Nederlands",
@@ -94,7 +92,6 @@
 	"Hindi": "Hindi",
 	"Italian": "Italiaans",
 	"Greek": "Grieks",
-
 	"report_button_title": "Melden",
 	"report_word": "Woord is onjuist",
 	"report_translation": "Vertaling is onjuist",
@@ -103,14 +100,17 @@
 	"report_success": "Bedankt voor uw melding!",
 	"report_error": "Melding kon niet worden verstuurd",
 	"exercise_skip": "Overslaan",
-
 	"sync_overlay_syncing": "Synchroniseren…",
 	"sync_overlay_error": "Synchronisatie mislukt",
-
 	"sync_status_catalogs": "Vocabulairecategorieën laden…",
 	"sync_status_topics": "Onderwerpen laden…",
 	"sync_status_words": "Woorden laden…",
 	"sync_status_translations": "Vertalingen laden…",
 	"sync_status_audio": "Audiobestanden downloaden…",
-	"sync_status_saving": "Opslaan op apparaat…"
+	"sync_status_saving": "Opslaan op apparaat…",
+	"error_user_already_exists": "Er bestaat al een account met dit e-mailadres.",
+	"error_user_not_found": "Geen account gevonden met dit e-mailadres.",
+	"error_invalid_credentials": "Onjuist wachtwoord. Probeer het opnieuw.",
+	"error_unauthorized": "Log in om door te gaan.",
+	"error_generic": "Er is iets misgegaan. Probeer het opnieuw."
 }

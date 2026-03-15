@@ -74,14 +74,12 @@
 	"cards_right_answer": "Правильный ответ",
 	"search_language_placeholder": "Поиск языка",
 	"search_language_not_found": "Языки не найдены",
-
 	"profile_save_button": "Сохранить",
 	"profile_save_success": "Профиль обновлён",
 	"profile_save_error": "Не удалось обновить профиль",
 	"profile_verify_email_button": "Подтвердить email",
 	"profile_email_verified": "Email подтверждён",
 	"profile_email_not_verified": "Email не подтверждён",
-
 	"English": "Английский",
 	"Spanish": "Испанский",
 	"Dutch": "Нидерландский",
@@ -94,7 +92,6 @@
 	"Hindi": "Хинди",
 	"Italian": "Итальянский",
 	"Greek": "Греческий",
-
 	"report_button_title": "Сообщить",
 	"report_word": "Слово некорректно",
 	"report_translation": "Перевод некорректен",
@@ -103,14 +100,17 @@
 	"report_success": "Спасибо за сообщение!",
 	"report_error": "Не удалось отправить сообщение",
 	"exercise_skip": "Пропустить",
-
 	"sync_overlay_syncing": "Синхронизация…",
 	"sync_overlay_error": "Ошибка синхронизации",
-
 	"sync_status_catalogs": "Загрузка категорий словаря…",
 	"sync_status_topics": "Загрузка тем…",
 	"sync_status_words": "Загрузка слов…",
 	"sync_status_translations": "Загрузка переводов…",
 	"sync_status_audio": "Загрузка аудиофайлов…",
-	"sync_status_saving": "Сохранение на устройство…"
+	"sync_status_saving": "Сохранение на устройство…",
+	"error_user_already_exists": "Аккаунт с таким email уже существует.",
+	"error_user_not_found": "Аккаунт с таким email не найден.",
+	"error_invalid_credentials": "Неверный пароль. Попробуйте ещё раз.",
+	"error_unauthorized": "Пожалуйста, войдите в систему.",
+	"error_generic": "Что-то пошло не так. Попробуйте ещё раз."
 }

@@ -155,23 +155,23 @@ export const $fetch = async <U extends ValidUrl, M extends ValidMethod<U>>(
 		}
 
 		if (!res.ok) {
-			// Fail response
+			// Fail response — try to extract message from JSON body
 			try {
+				const parsed = JSON.parse(textResponse);
+				const message =
+					parsed?.error?.message ??
+					parsed?.message ??
+					(res.statusText || genericErrorMessage(res.status));
+				return {
+					status: "error",
+					error: { status: res.status, message },
+				};
+			} catch {
 				return {
 					status: "error",
 					error: {
 						status: res.status,
 						message: res.statusText || genericErrorMessage(res.status),
-					},
-				};
-			} catch (error) {
-				return {
-					status: "error",
-					error: {
-						status: res.status,
-						message:
-							(error as Error).message ??
-							(res.statusText || genericErrorMessage(res.status)),
 					},
 				};
 			}

@@ -1,3 +1,11 @@
+import { getTrainings } from "@/api/training";
+import { BackgroundContext } from "@/context/BackgroundContext";
+import { ExerciseContext } from "@/context/ExerciseContext";
+import { styles } from "@/general.styles";
+import { WText } from "@/mob-ui";
+import { Colors } from "@/mob-ui/brand/colors";
+import { shuffleArray } from "@/utils";
+import { logger } from "@/utils/logger";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link } from "expo-router";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
@@ -7,14 +15,6 @@ import {
 	SafeAreaView,
 	SafeAreaViewProps,
 } from "react-native-safe-area-context";
-import { getTrainings } from "@/api/training";
-import { logger } from "@/utils/logger";
-import { BackgroundContext } from "@/context/BackgroundContext";
-import { ExerciseContext } from "@/context/ExerciseContext";
-import { styles } from "@/general.styles";
-import { WText } from "@/mob-ui";
-import { Colors } from "@/mob-ui/brand/colors";
-import { shuffleArray } from "@/utils";
 import { LearningTrainingName } from "../LearningCatalog";
 import EXERCISES_APPS from "../LearningCatalog/types";
 import {
@@ -23,7 +23,6 @@ import {
 	ListeningPracticeExercise,
 	MatchWordsExercise,
 	TrueOrFalseExercise,
-	TypeTranslationExercise,
 	TypeWordExercise,
 } from "../TrainingExercises";
 import { trainingAppWrapperStyles } from "./TrainingAppWrapper.styles";
@@ -70,7 +69,9 @@ export const TrainingAppWrapper = ({
 				const id = trainingCacheRef.current[currentExercise];
 				setCurrentTrainingId(id ?? null);
 			})
-			.catch((err) => logger.error("Failed to fetch trainings", err, "network"));
+			.catch((err) =>
+				logger.error("Failed to fetch trainings", err, "network"),
+			);
 	}, [currentExercise, setCurrentTrainingId]);
 
 	const setRandomExercise = useCallback(() => {
@@ -124,37 +125,38 @@ export const TrainingAppWrapper = ({
 			behavior={Platform.OS === "ios" ? "padding" : "height"}
 			style={{ flex: 1 }}
 		>
-		<SafeAreaView
-			mode="padding"
-			style={[styles.page, style]}
-			{...restViewProps}
-		>
-			<View style={trainingAppWrapperStyles.headerRow}>
-				<WText mode="primary" size="2xl" style={trainingAppWrapperStyles.title}>
-					{currentTitle}
-				</WText>
-				<Link
-					href="/authorized/learning"
-					style={trainingAppWrapperStyles.closeLink}
-				>
-					<AntDesign name="close" size={16} color={Colors.greys.white} />
-				</Link>
-			</View>
+			<SafeAreaView
+				mode="padding"
+				style={[styles.page, style]}
+				{...restViewProps}
+			>
+				<View style={trainingAppWrapperStyles.headerRow}>
+					<WText
+						mode="primary"
+						size="2xl"
+						style={trainingAppWrapperStyles.title}
+					>
+						{currentTitle}
+					</WText>
+					<Link
+						href="/authorized/learning"
+						style={trainingAppWrapperStyles.closeLink}
+					>
+						<AntDesign name="close" size={16} color={Colors.greys.white} />
+					</Link>
+				</View>
 
-			{currentExercise === "choose_translation" && (
-				<ChooseTranslationExercise />
-			)}
-			{currentExercise === "listening_practice" && (
-				<ListeningPracticeExercise />
-			)}
-			{currentExercise === "match_words" && <MatchWordsExercise />}
-			{currentExercise === "true_or_false" && <TrueOrFalseExercise />}
-			{currentExercise === "type_translation" && <TypeTranslationExercise />}
-			{currentExercise === "type_word" && <TypeWordExercise />}
-			{currentExercise === "cards" && <CardsExercise />}
-		</SafeAreaView>
+				{currentExercise === "choose_translation" && (
+					<ChooseTranslationExercise />
+				)}
+				{currentExercise === "listening_practice" && (
+					<ListeningPracticeExercise />
+				)}
+				{currentExercise === "match_words" && <MatchWordsExercise />}
+				{currentExercise === "true_or_false" && <TrueOrFalseExercise />}
+				{currentExercise === "type_word" && <TypeWordExercise />}
+				{currentExercise === "cards" && <CardsExercise />}
+			</SafeAreaView>
 		</KeyboardAvoidingView>
 	);
 };
-
-export default TrainingAppWrapper;

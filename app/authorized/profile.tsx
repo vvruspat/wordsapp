@@ -11,7 +11,7 @@ import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLear
 import { SelectLanguageButton } from "@/components/SelectLanguageButton";
 import { LanguageItem } from "@/constants/languages";
 import { useSessionUser } from "@/hooks/useSession";
-import { WButton, WInput, WText } from "@/mob-ui";
+import { WAlert, WButton, WInput, WText } from "@/mob-ui";
 import { styles } from "../../general.styles";
 
 export default function Profile() {
@@ -117,17 +117,9 @@ export default function Profile() {
 					{t("profile_title")}
 				</WText>
 
-				{error && (
-					<WText mode="primary" size="sm">
-						{error}
-					</WText>
-				)}
+				{error && <WAlert mode="error">{error}</WAlert>}
 
-				{success && (
-					<WText mode="primary" size="sm">
-						{t("profile_save_success")}
-					</WText>
-				)}
+				{success && <WAlert mode="success">{t("profile_save_success")}</WAlert>}
 
 				<View style={profileStyles.section}>
 					<WInput
