@@ -1,7 +1,6 @@
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
 import { components } from "@vvruspat/words-types";
-import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
@@ -12,7 +11,6 @@ import { logger } from "@/utils/logger";
 
 export const useSessionUser = () => {
 	const database = useDatabase();
-	const router = useRouter();
 
 	const { i18n } = useTranslation();
 
@@ -78,8 +76,6 @@ export const useSessionUser = () => {
 		// This will trigger the useEffect to observe the user
 		setAccessToken(accessToken);
 		setRefreshToken(refreshToken);
-
-		router.push("/authorized/learning");
 	};
 
 	useEffect(() => {

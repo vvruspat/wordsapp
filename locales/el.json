@@ -74,14 +74,12 @@
 	"cards_right_answer": "Σωστή απάντηση",
 	"search_language_placeholder": "Αναζήτηση γλώσσας",
 	"search_language_not_found": "Δεν βρέθηκαν γλώσσες",
-
 	"profile_save_button": "Αποθήκευση",
 	"profile_save_success": "Το προφίλ ενημερώθηκε",
 	"profile_save_error": "Αποτυχία ενημέρωσης προφίλ",
 	"profile_verify_email_button": "Επαλήθευση email",
 	"profile_email_verified": "Email επαληθεύτηκε",
 	"profile_email_not_verified": "Email δεν έχει επαληθευτεί",
-
 	"English": "Αγγλικά",
 	"Spanish": "Ισπανικά",
 	"Dutch": "Ολλανδικά",
@@ -94,7 +92,6 @@
 	"Hindi": "Χίντι",
 	"Italian": "Ιταλικά",
 	"Greek": "Ελληνικά",
-
 	"report_button_title": "Αναφορά",
 	"report_word": "Η λέξη είναι λανθασμένη",
 	"report_translation": "Η μετάφραση είναι λανθασμένη",
@@ -103,14 +100,17 @@
 	"report_success": "Ευχαριστούμε για την αναφορά!",
 	"report_error": "Αποτυχία αποστολής αναφοράς",
 	"exercise_skip": "Παράλειψη",
-
 	"sync_overlay_syncing": "Συγχρονισμός…",
 	"sync_overlay_error": "Αποτυχία συγχρονισμού",
-
 	"sync_status_catalogs": "Φόρτωση κατηγοριών λεξιλογίου…",
 	"sync_status_topics": "Φόρτωση θεμάτων…",
 	"sync_status_words": "Φόρτωση λέξεων…",
 	"sync_status_translations": "Φόρτωση μεταφράσεων…",
 	"sync_status_audio": "Λήψη αρχείων ήχου…",
-	"sync_status_saving": "Αποθήκευση στη συσκευή…"
+	"sync_status_saving": "Αποθήκευση στη συσκευή…",
+	"error_user_already_exists": "Υπάρχει ήδη λογαριασμός με αυτό το email.",
+	"error_user_not_found": "Δεν βρέθηκε λογαριασμός με αυτό το email.",
+	"error_invalid_credentials": "Λανθασμένος κωδικός. Παρακαλώ δοκιμάστε ξανά.",
+	"error_unauthorized": "Παρακαλώ συνδεθείτε για να συνεχίσετε.",
+	"error_generic": "Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά."
 }

@@ -1,3 +1,4 @@
+export * from "./WAlert";
 export * from "./WButton";
 export * from "./WCard";
 export * from "./WInput";

@@ -122,6 +122,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				currentCatalogs.length > 0 ? currentCatalogs : undefined,
 				currentTopics.length > 0 ? currentTopics : undefined,
 				user?.userId,
+				currentTrainingId ?? undefined,
 			);
 			const translations = await translationsRepository.getByWordIds(
 				user?.language_speak ?? "en",
@@ -153,6 +154,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					user?.language_speak ?? "en",
 					numberOfRandomTranslations,
 					translations.map((translation) => translation.remoteId),
+					currentTopics.length > 0 ? currentTopics : undefined,
+					currentCatalogs.length > 0 ? currentCatalogs : undefined,
 				);
 
 			setCurrentRandomWords(randomWords);
@@ -167,6 +170,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			user?.language_speak,
 			user?.language_learn,
 			user?.userId,
+			currentTrainingId,
 		],
 	);
 

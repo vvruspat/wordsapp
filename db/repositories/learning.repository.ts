@@ -30,7 +30,7 @@ type UpsertFromRemoteParams = {
 };
 
 export const learningRepository = {
-	async recordResult(params: RecordResultParams): Promise<LearningProgress> {
+	async recordResult(params: RecordResultParams): Promise<LearningProgress | null> {
 		const { userId, wordId, scoreDelta, result, translationId, trainingId } =
 			params;
 		const now = new Date().toISOString();
@@ -40,16 +40,22 @@ export const learningRepository = {
 			.query(Q.where("user_id", userId), Q.where("word_id", wordId))
 			.fetch();
 
+		if (result === "failure") {
+			// On failure, delete the record so the word returns to the untrained pool
+			if (existing.length > 0) {
+				await database.write(async () => {
+					await existing[0].destroyPermanently();
+				});
+			}
+			return null;
+		}
+
+		// On success: update lastReview and score if record exists, otherwise create
 		if (existing.length > 0) {
 			const record = existing[0];
 			await database.write(async () => {
 				await record.update((r) => {
-					const current = r.score ?? 0;
-					if (result === "success") {
-						r.score = Math.min(1, current + scoreDelta);
-					} else {
-						r.score = Math.max(0, current - scoreDelta);
-					}
+					r.score = Math.min(1, (r.score ?? 0) + scoreDelta);
 					r.lastReview = now;
 					if (translationId !== undefined) r.translation = translationId;
 					if (trainingId !== undefined) r.training = trainingId;
@@ -65,7 +71,7 @@ export const learningRepository = {
 				.create((r) => {
 					r.userId = userId;
 					r.wordId = wordId;
-					r.score = result === "success" ? scoreDelta : 0;
+					r.score = scoreDelta;
 					r.lastReview = now;
 					r.createdAtRemote = now;
 					if (translationId !== undefined) r.translation = translationId;

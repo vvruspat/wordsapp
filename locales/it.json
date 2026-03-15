@@ -74,14 +74,12 @@
 	"cards_right_answer": "Risposta corretta",
 	"search_language_placeholder": "Cerca lingua",
 	"search_language_not_found": "Nessuna lingua trovata",
-
 	"profile_save_button": "Salva",
 	"profile_save_success": "Profilo aggiornato",
 	"profile_save_error": "Aggiornamento profilo non riuscito",
 	"profile_verify_email_button": "Verifica email",
 	"profile_email_verified": "Email verificata",
 	"profile_email_not_verified": "Email non verificata",
-
 	"English": "Inglese",
 	"Spanish": "Spagnolo",
 	"Dutch": "Olandese",
@@ -94,7 +92,6 @@
 	"Hindi": "Hindi",
 	"Italian": "Italiano",
 	"Greek": "Greco",
-
 	"report_button_title": "Segnala",
 	"report_word": "La parola è errata",
 	"report_translation": "La traduzione è errata",
@@ -103,14 +100,17 @@
 	"report_success": "Grazie per la segnalazione!",
 	"report_error": "Impossibile inviare la segnalazione",
 	"exercise_skip": "Salta",
-
 	"sync_overlay_syncing": "Sincronizzazione…",
 	"sync_overlay_error": "Sincronizzazione fallita",
-
 	"sync_status_catalogs": "Caricamento categorie vocabolario…",
 	"sync_status_topics": "Caricamento argomenti…",
 	"sync_status_words": "Caricamento parole…",
 	"sync_status_translations": "Caricamento traduzioni…",
 	"sync_status_audio": "Download file audio…",
-	"sync_status_saving": "Salvataggio sul dispositivo…"
+	"sync_status_saving": "Salvataggio sul dispositivo…",
+	"error_user_already_exists": "Esiste già un account con questa email.",
+	"error_user_not_found": "Nessun account trovato con questa email.",
+	"error_invalid_credentials": "Password errata. Per favore riprova.",
+	"error_unauthorized": "Effettua l'accesso per continuare.",
+	"error_generic": "Qualcosa è andato storto. Per favore riprova."
 }

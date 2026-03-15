@@ -115,6 +115,7 @@ export const wordsRepository = {
 		catalogs?: number[],
 		topics?: number[],
 		userId?: number,
+		trainingId?: number,
 	): Promise<Word[]> {
 		const queryConditions = [Q.where("language", language)];
 		if (catalogs && catalogs.length > 0) {
@@ -142,36 +143,33 @@ export const wordsRepository = {
 
 		const progressByWordId = new Map(progressRecords.map((r) => [r.wordId, r]));
 
-		const oneMonthAgo = new Date();
-		oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
+		// Priority 1: no record at all (never trained, or previously failed and deleted)
+		// Priority 2: has a record but for a different exercise (not done in this training yet)
+		// Priority 3: has a record for the current training — fallback, oldest lastReview first
 		const untrained: Word[] = [];
-		const stale: Word[] = [];
-		const recent: Word[] = [];
+		const otherTraining: Word[] = [];
+		const thisTraining: Word[] = [];
 
 		for (const word of candidates) {
 			const progress = progressByWordId.get(word.remoteId);
 			if (!progress) {
 				untrained.push(word);
-			} else if (new Date(progress.lastReview) < oneMonthAgo) {
-				stale.push(word);
+			} else if (progress.training !== trainingId) {
+				otherTraining.push(word);
 			} else {
-				recent.push(word);
+				thisTraining.push(word);
 			}
 		}
 
-		// Sort stale by last_review ascending (oldest first)
-		stale.sort(
+		untrained.sort(() => Math.random() - 0.5);
+		otherTraining.sort(() => Math.random() - 0.5);
+		thisTraining.sort(
 			(a, b) =>
 				new Date(progressByWordId.get(a.remoteId)?.lastReview ?? 0).getTime() -
 				new Date(progressByWordId.get(b.remoteId)?.lastReview ?? 0).getTime(),
 		);
 
-		// Shuffle untrained and recent
-		untrained.sort(() => Math.random() - 0.5);
-		recent.sort(() => Math.random() - 0.5);
-
-		return [...untrained, ...stale, ...recent].slice(0, count);
+		return [...untrained, ...otherTraining, ...thisTraining].slice(0, count);
 	},
 
 	async getTopicsByCatalogs(
