@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { resendVerificationEmail, verifyEmail } from "@/api/auth";
-import { WButton, WCharInput, WText, WTimer } from "@/mob-ui";
+import { WAlert, WButton, WCharInput, WText, WTimer } from "@/mob-ui";
 import { styles } from "../general.styles";
 
 const PIN_LENGTH = 4;
@@ -51,7 +51,7 @@ export default function Verify() {
 				style={{ flex: 1, width: "100%" }}
 			>
 				<View style={styles.formWrapper}>
-					{error && <WText mode="primary">{error}</WText>}
+					{error && <WAlert mode="error">{error}</WAlert>}
 
 					<WText mode="primary" size="2xl" align="center">
 						{t("verify_enter_code")}

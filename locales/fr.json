@@ -74,14 +74,12 @@
 	"cards_right_answer": "Bonne réponse",
 	"search_language_placeholder": "Rechercher une langue",
 	"search_language_not_found": "Aucune langue trouvée",
-
 	"profile_save_button": "Enregistrer",
 	"profile_save_success": "Profil mis à jour",
 	"profile_save_error": "Échec de la mise à jour du profil",
 	"profile_verify_email_button": "Vérifier l'e-mail",
 	"profile_email_verified": "E-mail vérifié",
 	"profile_email_not_verified": "E-mail non vérifié",
-
 	"English": "Anglais",
 	"Spanish": "Espagnol",
 	"Dutch": "Néerlandais",
@@ -94,7 +92,6 @@
 	"Hindi": "Hindi",
 	"Italian": "Italien",
 	"Greek": "Grec",
-
 	"report_button_title": "Signaler",
 	"report_word": "Le mot est incorrect",
 	"report_translation": "La traduction est incorrecte",
@@ -103,14 +100,17 @@
 	"report_success": "Merci pour votre signalement !",
 	"report_error": "Échec de l'envoi du signalement",
 	"exercise_skip": "Passer",
-
 	"sync_overlay_syncing": "Synchronisation…",
 	"sync_overlay_error": "Échec de la synchronisation",
-
 	"sync_status_catalogs": "Chargement des catégories de vocabulaire…",
 	"sync_status_topics": "Chargement des thèmes…",
 	"sync_status_words": "Chargement des mots…",
 	"sync_status_translations": "Chargement des traductions…",
 	"sync_status_audio": "Téléchargement des fichiers audio…",
-	"sync_status_saving": "Enregistrement sur l'appareil…"
+	"sync_status_saving": "Enregistrement sur l'appareil…",
+	"error_user_already_exists": "Un compte avec cet e-mail existe déjà.",
+	"error_user_not_found": "Aucun compte trouvé avec cet e-mail.",
+	"error_invalid_credentials": "Mot de passe incorrect. Veuillez réessayer.",
+	"error_unauthorized": "Veuillez vous connecter pour continuer.",
+	"error_generic": "Une erreur s'est produite. Veuillez réessayer."
 }

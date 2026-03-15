@@ -3,14 +3,16 @@ import SelectLanguageISpeakModal from "@/components/Modals/SelectLanguageISpeakM
 import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLearnModal";
 import { SelectLanguageButton } from "@/components/SelectLanguageButton";
 import { LanguageItem } from "@/constants/languages";
+import { useApiError } from "@/hooks/useApiError";
 import { useSessionUser } from "@/hooks/useSession";
-import { WButton, WInput, WText } from "@/mob-ui";
+import { WAlert, WButton, WInput, WText } from "@/mob-ui";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	KeyboardAvoidingView,
 	Platform,
+	StyleSheet,
 	Text,
 	TextInputChangeEvent,
 	View,
@@ -40,6 +42,7 @@ export default function SignUp() {
 	const [error, setError] = useState<string>();
 
 	const { t, i18n } = useTranslation();
+	const { getErrorMessage } = useApiError();
 
 	const handleContinueClick = async () => {
 		try {
@@ -50,9 +53,17 @@ export default function SignUp() {
 				language_learn: languageToLearn,
 			});
 
-			const accessToken = response?.data?.access_token;
-			const refreshToken = response?.data?.refresh_token;
-			const userData = response?.data?.user;
+			if (response.status === "error") {
+				setError(
+					getErrorMessage(response.error?.message) ??
+						t("sign_up_error_generic"),
+				);
+				return;
+			}
+
+			const accessToken = response.data?.access_token;
+			const refreshToken = response.data?.refresh_token;
+			const userData = response.data?.user;
 
 			if (!accessToken || !refreshToken || !userData) {
 				setError(t("sign_up_error_generic"));
@@ -63,7 +74,7 @@ export default function SignUp() {
 
 			router.push({ pathname: "/verify", params: { email } });
 		} catch (e) {
-			setError((e as Error).message);
+			setError(getErrorMessage((e as Error).message));
 		}
 	};
 
@@ -89,18 +100,13 @@ export default function SignUp() {
 				behavior={Platform.OS === "ios" ? "padding" : "height"}
 				style={{ flex: 1, width: "100%" }}
 			>
-				<View style={styles.formWrapper}>
-					{error && (
-						<WText mode="primary" size="lg" weight="bold" align="center">
-							{error}
+				<View style={[styles.formWrapper, signUpStyles.wrapper]}>
+					<View style={signUpStyles.header}>
+						<WText mode="primary" size="3xl" weight="bold" align="center">
+							{t("sign_up_message")}
 						</WText>
-					)}
-					<WText mode="primary" size="3xl" weight="bold" align="center">
-						{process.env.API_SERVER}
-					</WText>
-					<WText mode="primary" size="3xl" weight="bold" align="center">
-						{t("sign_up_message")}
-					</WText>
+						{error && <WAlert mode="error">{error}</WAlert>}
+					</View>
 					<View style={styles.fieldsGroup}>
 						<WInput
 							autoCorrect={false}
@@ -155,7 +161,7 @@ export default function SignUp() {
 						</WButton>
 
 						<WButton
-							mode="tertiary"
+							mode="secondary"
 							fullWidth
 							onPress={() => router.push({ pathname: "/signin" })}
 						>
@@ -167,3 +173,13 @@ export default function SignUp() {
 		</SafeAreaView>
 	);
 }
+
+const signUpStyles = StyleSheet.create({
+	wrapper: {
+		gap: 24,
+	},
+	header: {
+		gap: 12,
+		width: "100%",
+	},
+});

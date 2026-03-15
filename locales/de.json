@@ -74,14 +74,12 @@
 	"cards_right_answer": "Richtige Antwort",
 	"search_language_placeholder": "Sprache suchen",
 	"search_language_not_found": "Keine Sprachen gefunden",
-
 	"profile_save_button": "Speichern",
 	"profile_save_success": "Profil aktualisiert",
 	"profile_save_error": "Profilaktualisierung fehlgeschlagen",
 	"profile_verify_email_button": "E-Mail bestätigen",
 	"profile_email_verified": "E-Mail bestätigt",
 	"profile_email_not_verified": "E-Mail nicht bestätigt",
-
 	"English": "Englisch",
 	"Spanish": "Spanisch",
 	"Dutch": "Niederländisch",
@@ -94,7 +92,6 @@
 	"Hindi": "Hindi",
 	"Italian": "Italienisch",
 	"Greek": "Griechisch",
-
 	"report_button_title": "Melden",
 	"report_word": "Wort ist falsch",
 	"report_translation": "Übersetzung ist falsch",
@@ -103,14 +100,17 @@
 	"report_success": "Danke für Ihren Bericht!",
 	"report_error": "Bericht konnte nicht gesendet werden",
 	"exercise_skip": "Überspringen",
-
 	"sync_overlay_syncing": "Synchronisierung…",
 	"sync_overlay_error": "Synchronisierung fehlgeschlagen",
-
 	"sync_status_catalogs": "Vokabelkategorien werden geladen…",
 	"sync_status_topics": "Themen werden geladen…",
 	"sync_status_words": "Wörter werden geladen…",
 	"sync_status_translations": "Übersetzungen werden geladen…",
 	"sync_status_audio": "Audiodateien werden heruntergeladen…",
-	"sync_status_saving": "Auf Gerät speichern…"
+	"sync_status_saving": "Auf Gerät speichern…",
+	"error_user_already_exists": "Ein Konto mit dieser E-Mail existiert bereits.",
+	"error_user_not_found": "Kein Konto mit dieser E-Mail gefunden.",
+	"error_invalid_credentials": "Falsches Passwort. Bitte versuche es erneut.",
+	"error_unauthorized": "Bitte melde dich an, um fortzufahren.",
+	"error_generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
 }

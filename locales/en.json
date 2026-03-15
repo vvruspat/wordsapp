@@ -74,14 +74,12 @@
 	"cards_right_answer": "Right answer",
 	"search_language_placeholder": "Search language",
 	"search_language_not_found": "No languages found",
-
 	"profile_save_button": "Save",
 	"profile_save_success": "Profile updated",
 	"profile_save_error": "Failed to update profile",
 	"profile_verify_email_button": "Verify Email",
 	"profile_email_verified": "Email verified",
 	"profile_email_not_verified": "Email not verified",
-
 	"English": "English",
 	"Spanish": "Spanish",
 	"Dutch": "Dutch",
@@ -94,7 +92,6 @@
 	"Hindi": "Hindi",
 	"Italian": "Italian",
 	"Greek": "Greek",
-
 	"report_button_title": "Report",
 	"report_word": "Word is incorrect",
 	"report_translation": "Translation is incorrect",
@@ -103,14 +100,17 @@
 	"report_success": "Thank you for your report!",
 	"report_error": "Failed to send report",
 	"exercise_skip": "Skip",
-
 	"sync_overlay_syncing": "Syncing…",
 	"sync_overlay_error": "Sync failed",
-
 	"sync_status_catalogs": "Loading vocabulary categories…",
 	"sync_status_topics": "Loading topics…",
 	"sync_status_words": "Loading words…",
 	"sync_status_translations": "Loading translations…",
 	"sync_status_audio": "Downloading audio files…",
-	"sync_status_saving": "Saving to device…"
+	"sync_status_saving": "Saving to device…",
+	"error_user_already_exists": "An account with this email already exists.",
+	"error_user_not_found": "No account found with this email.",
+	"error_invalid_credentials": "Incorrect password. Please try again.",
+	"error_unauthorized": "Please sign in to continue.",
+	"error_generic": "Something went wrong. Please try again."
 }

@@ -1,12 +1,20 @@
+import { signIn as apiSignIn, requestTmpPassword } from "@/api/auth";
+import { useApiError } from "@/hooks/useApiError";
+import { useSessionUser } from "@/hooks/useSession";
+import { WAlert, WButton, WInput, WText } from "@/mob-ui";
 import { AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInputChangeEvent, View } from "react-native";
+import {
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	Text,
+	TextInputChangeEvent,
+	View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { signIn as apiSignIn, requestTmpPassword } from "@/api/auth";
-import { useSessionUser } from "@/hooks/useSession";
-import { WButton, WInput, WText } from "@/mob-ui";
 import { styles } from "../general.styles";
 
 export default function SignIn() {
@@ -19,39 +27,46 @@ export default function SignIn() {
 	const [stage, setStage] = useState<"email" | "password">("email");
 
 	const { t } = useTranslation();
+	const { getErrorMessage } = useApiError();
 
 	const handleContinueClick = async () => {
-		try {
-			await requestTmpPassword(email);
+		const response = await requestTmpPassword(email);
 
-			setStage("password");
-		} catch (e) {
-			setError((e as Error).message);
+		if (response.status === "error") {
+			setError(
+				getErrorMessage(response.error?.message) ?? t("sign_in_error_generic"),
+			);
+			return;
 		}
+
+		setStage("password");
 	};
 
 	const handleSignInClick = async () => {
 		try {
 			const response = await apiSignIn({ email, password });
 
-			if (!response?.data) {
-				setError(t("sign_in_error_generic"));
+			if (response.status === "error") {
+				setError(
+					getErrorMessage(response.error?.message) ??
+						t("sign_in_error_generic"),
+				);
 				return;
 			}
 
-			const incomeUserData = response.data.user;
-
-			const accessToken = response?.data?.access_token;
-			const refreshToken = response?.data?.refresh_token;
+			const incomeUserData = response.data?.user;
+			const accessToken = response.data?.access_token;
+			const refreshToken = response.data?.refresh_token;
 
 			if (!accessToken || !refreshToken) {
 				setError(t("sign_in_error_generic"));
 				return;
 			}
 
-			await authUser(accessToken, refreshToken, incomeUserData);
+			incomeUserData &&
+				(await authUser(accessToken, refreshToken, incomeUserData));
 		} catch (e) {
-			setError((e as Error).message);
+			setError(getErrorMessage((e as Error).message));
 		}
 	};
 
@@ -85,11 +100,7 @@ export default function SignIn() {
 				style={{ flex: 1, width: "100%" }}
 			>
 				<View style={styles.formWrapper}>
-					{error && (
-						<WText mode="primary" size="lg" weight="bold" align="center">
-							{error}
-						</WText>
-					)}
+					{error && <WAlert mode="error">{error}</WAlert>}
 
 					{stage === "email" && (
 						<WText mode="primary" size="3xl" weight="bold" align="center">
