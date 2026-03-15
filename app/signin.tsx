@@ -1,4 +1,5 @@
 import { signIn as apiSignIn, requestTmpPassword } from "@/api/auth";
+import { useAuthContext } from "@/context/AuthContext";
 import { useApiError } from "@/hooks/useApiError";
 import { useSessionUser } from "@/hooks/useSession";
 import { WAlert, WButton, WInput, WText } from "@/mob-ui";
@@ -19,6 +20,7 @@ import { styles } from "../general.styles";
 
 export default function SignIn() {
 	const { authUser } = useSessionUser();
+	const { triggerBiometricAuth } = useAuthContext();
 	const router = useRouter();
 
 	const [password, setPassword] = useState("");
@@ -63,8 +65,10 @@ export default function SignIn() {
 				return;
 			}
 
-			incomeUserData &&
-				(await authUser(accessToken, refreshToken, incomeUserData));
+			if (incomeUserData) {
+				await authUser(accessToken, refreshToken, incomeUserData);
+				triggerBiometricAuth();
+			}
 		} catch (e) {
 			setError(getErrorMessage((e as Error).message));
 		}

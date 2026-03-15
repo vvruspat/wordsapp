@@ -11,6 +11,7 @@ import { ActivityIndicator, AppState } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { DevPanel } from "@/components/DevPanel";
 import { ScreenBackground } from "@/components/ScreenBackground";
+import { AuthContext } from "@/context/AuthContext";
 import { BackgroundProvider } from "@/context/BackgroundContext";
 import database from "@/db/database";
 import { styles } from "@/general.styles";
@@ -131,6 +132,7 @@ export default Sentry.wrap(function RootLayout() {
 	}
 
 	return (
+		<AuthContext.Provider value={{ triggerBiometricAuth }}>
 		<DatabaseProvider database={database}>
 			<Stack
 				screenLayout={({ children }) => (
@@ -153,5 +155,6 @@ export default Sentry.wrap(function RootLayout() {
 			</Stack>
 			<DevPanel />
 		</DatabaseProvider>
+		</AuthContext.Provider>
 	);
 });
