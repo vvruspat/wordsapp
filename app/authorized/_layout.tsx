@@ -69,7 +69,7 @@ export default function RootLayout() {
 	]);
 
 	useEffect(() => {
-		if (!user) {
+		if (!user || !user.email_verified) {
 			lastSyncedLanguageRef.current = null;
 			return;
 		}
