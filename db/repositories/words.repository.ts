@@ -183,6 +183,14 @@ export const wordsRepository = {
 		return new Set(words.map((word) => word.topic));
 	},
 
+	async getByRemoteIds(remoteIds: number[], language: string): Promise<Word[]> {
+		if (remoteIds.length === 0) return [];
+		return database
+			.get<Word>("words")
+			.query(Q.where("remote_id", Q.oneOf(remoteIds)), Q.where("language", language))
+			.fetch();
+	},
+
 	async getByTopicIds(topicIds: number[], catalogIds?: number[]): Promise<Word[]> {
 		if (topicIds.length === 0) return [];
 		const conditions = [Q.where("topic", Q.oneOf(topicIds))];

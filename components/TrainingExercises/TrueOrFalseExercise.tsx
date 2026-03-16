@@ -6,6 +6,8 @@ import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WText } from "@/mob-ui";
+import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
+import { translationsRepository } from "@/db/repositories/translations.repository";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const score = 0.2;
@@ -34,6 +36,27 @@ export function TrueOrFalseExercise() {
 		translation: null,
 	};
 
+	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>([]);
+
+	const wordRemoteId = word?.remoteId;
+	const wordLanguage = word?.language;
+	const translationLanguage = translation?.language;
+
+	useEffect(() => {
+		if (!wordRemoteId || !wordLanguage || !translationLanguage) return;
+		(async () => {
+			const synonymIds = await synonymGroupsRepository.getSynonymWordIds(
+				wordRemoteId,
+				wordLanguage,
+			);
+			const ts = await translationsRepository.getByWordIds(
+				translationLanguage,
+				synonymIds,
+			);
+			setAcceptedTranslations(ts.map((t) => t.translation));
+		})();
+	}, [wordRemoteId, wordLanguage, translationLanguage]);
+
 	const load = useCallback(async () => {
 		await loadData(1, 0, 4);
 	}, [loadData]);
@@ -51,25 +74,26 @@ export function TrueOrFalseExercise() {
 		return () => removeCompleteListener(onExerciseComplete);
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
-	const { statement, isCorrect } = useMemo(() => {
-		if (!translation || randomTranslations.length === 0) {
-			return { statement: "", isCorrect: false };
-		}
+	const translationText = translation?.translation;
+	const firstRandomText = randomTranslations[0]?.translation;
+	const randomTranslationsCount = randomTranslations.length;
 
-		const shouldUseCorrect = Math.random() >= 0.5;
-
-		return {
-			statement: shouldUseCorrect
-				? translation.translation
-				: randomTranslations[0].translation,
-			isCorrect: shouldUseCorrect,
-		};
-	}, [translation, randomTranslations]);
+	// statement is fixed when the pair loads; re-rolls only when translation or distractor changes
+	const statement = useMemo(() => {
+		if (!translationText || randomTranslationsCount === 0 || firstRandomText == null) return "";
+		return Math.random() >= 0.5 ? translationText : firstRandomText;
+	}, [translationText, firstRandomText, randomTranslationsCount]);
 
 	const handleAnswer = useCallback(
 		(choice: "yes" | "no") => {
 			if (!word || !translation) return;
 			const userThinksCorrect = choice === "yes";
+
+			// Check against all valid translations for this word (not just the stored one)
+			const isCorrect =
+				acceptedTranslations.length > 0
+					? acceptedTranslations.includes(statement)
+					: statement === translation.translation;
 
 			if (userThinksCorrect === isCorrect) {
 				onSuccess?.(word.remoteId, score);
@@ -77,7 +101,7 @@ export function TrueOrFalseExercise() {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[isCorrect, word, translation, onFailure, onSuccess],
+		[statement, acceptedTranslations, word, translation, onFailure, onSuccess],
 	);
 
 	const handleSkip = useCallback(() => {

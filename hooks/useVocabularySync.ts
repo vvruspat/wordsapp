@@ -6,6 +6,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { useCallback } from "react";
 import {
 	getCatalogs,
+	getSynonymGroups,
 	getTopicTranslations,
 	getTopics,
 	getWords,
@@ -14,6 +15,7 @@ import {
 import Topic from "@/db/models/Topic";
 import VocabCatalog from "@/db/models/VocabCatalog";
 import Word from "@/db/models/Word";
+import WordSynonymGroup from "@/db/models/WordSynonymGroup";
 import WordTranslation from "@/db/models/WordTranslation";
 import { logger } from "@/utils/logger";
 import { useSessionUser } from "./useSession";
@@ -322,6 +324,14 @@ export const useVocabularySync = () => {
 					setSyncProgress(0.8);
 				}
 
+				// Fetch synonym groups for validation (best-effort, non-blocking)
+				let synonymGroups: { id: number; language: string; word_ids: number[] }[] = [];
+				try {
+					synonymGroups = await getSynonymGroups(targetLanguage);
+				} catch (error) {
+					logger.warn("Failed to fetch synonym groups:", error, "sync");
+				}
+
 				logger.debug("Storing in local database", undefined, "db");
 				setSyncStatus("sync_status_saving");
 				setSyncProgress(0.85);
@@ -448,6 +458,24 @@ export const useVocabularySync = () => {
 									t.language = translation.language;
 								});
 						}
+					}
+
+					// Sync synonym groups: clear all groups for this language and replace
+					const existingSynonymGroups = await database
+						.get<WordSynonymGroup>("word_synonym_groups")
+						.query(Q.where("language", targetLanguage))
+						.fetch();
+					for (const existing of existingSynonymGroups) {
+						await existing.markAsDeleted();
+					}
+					for (const group of synonymGroups) {
+						await database
+							.get<WordSynonymGroup>("word_synonym_groups")
+							.create((sg) => {
+								sg.remoteId = group.id;
+								sg.language = group.language;
+								sg.wordIdsJson = JSON.stringify(group.word_ids);
+							});
 					}
 				});
 

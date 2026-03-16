@@ -96,6 +96,19 @@ export const translationsRepository = {
 		return results;
 	},
 
+	async getByTranslationText(
+		translationText: string,
+		language: string,
+	): Promise<WordTranslation[]> {
+		return database
+			.get<WordTranslation>("word_translations")
+			.query(
+				Q.where("translation", translationText),
+				Q.where("language", language),
+			)
+			.fetch();
+	},
+
 	async getRandomTranslation(
 		language: string,
 		exclude: WordTranslation["remoteId"][] = [],

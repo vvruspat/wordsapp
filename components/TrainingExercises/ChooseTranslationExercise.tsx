@@ -6,6 +6,8 @@ import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WText } from "@/mob-ui";
 import { shuffleArray } from "@/utils";
+import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
+import { translationsRepository } from "@/db/repositories/translations.repository";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const score = 0.2;
@@ -28,6 +30,27 @@ export function ChooseTranslationExercise() {
 		word: null,
 		translation: null,
 	};
+
+	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>([]);
+
+	const wordRemoteId = word?.remoteId;
+	const wordLanguage = word?.language;
+	const translationLanguage = translation?.language;
+
+	useEffect(() => {
+		if (!wordRemoteId || !wordLanguage || !translationLanguage) return;
+		(async () => {
+			const synonymIds = await synonymGroupsRepository.getSynonymWordIds(
+				wordRemoteId,
+				wordLanguage,
+			);
+			const ts = await translationsRepository.getByWordIds(
+				translationLanguage,
+				synonymIds,
+			);
+			setAcceptedTranslations(ts.map((t) => t.translation));
+		})();
+	}, [wordRemoteId, wordLanguage, translationLanguage]);
 
 	const load = useCallback(async () => {
 		await loadData(1, 0, 4);
@@ -70,13 +93,18 @@ export function ChooseTranslationExercise() {
 
 			setSelectedOption(option);
 
-			if (option === translation.translation) {
+			const isAccepted =
+				acceptedTranslations.length > 0
+					? acceptedTranslations.includes(option)
+					: option === translation.translation;
+
+			if (isAccepted) {
 				onSuccess?.(word.remoteId, score);
 			} else {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[translation, word, onFailure, onSuccess],
+		[translation, word, acceptedTranslations, onFailure, onSuccess],
 	);
 
 	const handleSkip = useCallback(() => {
