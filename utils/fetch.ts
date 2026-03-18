@@ -26,8 +26,8 @@ type RequestBody<
 type QueryParams<
 	U extends ValidUrl,
 	M extends ValidMethod<U>,
-> = Paths[U][M] extends { parameters: { query: infer Query } }
-	? Query
+> = Paths[U][M] extends { parameters: { query?: infer Query } }
+	? NonNullable<Query>
 	: undefined;
 
 type PathParams<

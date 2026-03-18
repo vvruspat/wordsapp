@@ -9,6 +9,7 @@ import User from "./models/User";
 import UserSetting from "./models/UserSetting";
 import VocabCatalog from "./models/VocabCatalog";
 import Word from "./models/Word";
+import WordSynonymGroup from "./models/WordSynonymGroup";
 import WordTranslation from "./models/WordTranslation";
 import { schema } from "./schema/schema";
 
@@ -31,6 +32,7 @@ const database = new Database({
 		User,
 		UserSetting,
 		Word,
+		WordSynonymGroup,
 		Translation,
 		WordTranslation,
 		VocabCatalog,

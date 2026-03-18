@@ -5,6 +5,8 @@ import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WCharInput, WCharInputProps } from "@/mob-ui";
+import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
+import { translationsRepository } from "@/db/repositories/translations.repository";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 type CharInputStatus = WCharInputProps["status"];
@@ -34,6 +36,27 @@ export function TypeTranslationExercise() {
 		translation: null,
 	};
 
+	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>([]);
+
+	const wordRemoteId = word?.remoteId;
+	const wordLanguage = word?.language;
+	const translationLanguage = translation?.language;
+
+	useEffect(() => {
+		if (!wordRemoteId || !wordLanguage || !translationLanguage) return;
+		(async () => {
+			const synonymIds = await synonymGroupsRepository.getSynonymWordIds(
+				wordRemoteId,
+				wordLanguage,
+			);
+			const ts = await translationsRepository.getByWordIds(
+				translationLanguage,
+				synonymIds,
+			);
+			setAcceptedTranslations(ts.map((t) => t.translation));
+		})();
+	}, [wordRemoteId, wordLanguage, translationLanguage]);
+
 	const load = useCallback(async () => {
 		setStatus("default");
 		await loadData(1, 0, 4);
@@ -55,23 +78,24 @@ export function TypeTranslationExercise() {
 	const evaluateStatus = useCallback(
 		(text: string): CharInputStatus => {
 			if (!translation) return "default";
-			const normalizedAnswer = translation.translation.trim().toLowerCase();
+			const primaryAnswer = translation.translation.trim().toLowerCase();
 			const normalizedInput = text.trim().toLowerCase();
 
-			if (
-				normalizedInput.length === normalizedAnswer.length &&
-				normalizedInput === normalizedAnswer
-			) {
-				return "success";
+			// All accepted answers of the same length as the primary (WCharInput has fixed length)
+			const answers =
+				acceptedTranslations.length > 0
+					? acceptedTranslations
+							.map((t) => t.trim().toLowerCase())
+							.filter((t) => t.length === primaryAnswer.length)
+					: [primaryAnswer];
+
+			if (normalizedInput.length === primaryAnswer.length) {
+				return answers.some((a) => a === normalizedInput) ? "success" : "error";
 			}
 
-			if (normalizedInput.length === normalizedAnswer.length) {
-				return "error";
-			}
-
-			return normalizedAnswer.startsWith(normalizedInput) ? "default" : "error";
+			return answers.some((a) => a.startsWith(normalizedInput)) ? "default" : "error";
 		},
-		[translation],
+		[translation, acceptedTranslations],
 	);
 
 	const handleChange = useCallback(
@@ -82,10 +106,7 @@ export function TypeTranslationExercise() {
 
 			if (nextStatus === "success") {
 				onSuccess?.(word.remoteId, score);
-			} else if (
-				nextStatus === "error" &&
-				text.trim().length === translation.translation.trim().length
-			) {
+			} else if (nextStatus === "error" && text.trim().length === translation.translation.trim().length) {
 				onFailure?.(word.remoteId, score);
 			}
 		},

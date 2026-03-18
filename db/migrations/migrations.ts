@@ -8,6 +8,28 @@ import {
 export default schemaMigrations({
 	migrations: [
 		{
+			toVersion: 7,
+			steps: [
+				addColumns({
+					table: "users",
+					columns: [{ name: "onboarded", type: "boolean", isOptional: true }],
+				}),
+			],
+		},
+		{
+			toVersion: 6,
+			steps: [
+				createTable({
+					name: "word_synonym_groups",
+					columns: [
+						{ name: "remote_id", type: "number", isIndexed: true },
+						{ name: "language", type: "string", isIndexed: true },
+						{ name: "word_ids", type: "string" },
+					],
+				}),
+			],
+		},
+		{
 			toVersion: 5,
 			steps: [
 				// Add correctly-spelled column and copy data from the old misspelled one.

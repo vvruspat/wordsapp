@@ -26,6 +26,9 @@ export default class User extends Model implements Omit<IUser, "id"> {
 	@field("email_verified")
 	email_verified?: boolean;
 
+	@field("onboarded")
+	onboarded?: boolean;
+
 	// Computed property to satisfy interface requirement
 	get created_at(): string {
 		return this.remoteCreatedAt;

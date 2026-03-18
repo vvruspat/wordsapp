@@ -4,6 +4,9 @@ import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseR
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WCharInput, WCharInputProps } from "@/mob-ui";
+import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
+import { translationsRepository } from "@/db/repositories/translations.repository";
+import { wordsRepository } from "@/db/repositories/words.repository";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 type CharInputStatus = WCharInputProps["status"];
@@ -33,6 +36,36 @@ export function TypeWordExercise() {
 		translation: null,
 	};
 
+	// All Dutch words that share the same translation text (e.g., "sorry" and "pardon" both → "извини")
+	const [acceptedWords, setAcceptedWords] = useState<string[]>([]);
+
+	const wordRemoteId = word?.remoteId;
+	const wordLanguage = word?.language;
+	const translationRemoteId = translation?.remoteId;
+	const translationText = translation?.translation;
+	const translationLanguage = translation?.language;
+
+	useEffect(() => {
+		if (!wordRemoteId || !wordLanguage || !translationRemoteId || !translationText || !translationLanguage) return;
+		(async () => {
+			// Words in the same synonym group
+			const synonymIds = await synonymGroupsRepository.getSynonymWordIds(
+				wordRemoteId,
+				wordLanguage,
+			);
+			// Also words that share the exact same translation text
+			const translationMatches = await translationsRepository.getByTranslationText(
+				translationText,
+				translationLanguage,
+			);
+			const allWordIds = [
+				...new Set([...synonymIds, ...translationMatches.map((t) => t.word)]),
+			];
+			const ws = await wordsRepository.getByRemoteIds(allWordIds, wordLanguage);
+			setAcceptedWords(ws.map((w) => w.word));
+		})();
+	}, [wordRemoteId, wordLanguage, translationRemoteId, translationText, translationLanguage]);
+
 	const load = useCallback(async () => {
 		setStatus("default");
 		await loadData(1, 0, 4);
@@ -54,23 +87,24 @@ export function TypeWordExercise() {
 	const evaluateStatus = useCallback(
 		(text: string): CharInputStatus => {
 			if (!word) return "default";
-			const normalizedAnswer = word.word.trim().toLowerCase();
+			const primaryAnswer = word.word.trim().toLowerCase();
 			const normalizedInput = text.trim().toLowerCase();
 
-			if (
-				normalizedInput.length === normalizedAnswer.length &&
-				normalizedInput === normalizedAnswer
-			) {
-				return "success";
+			// All accepted words of the same length as the primary (WCharInput has fixed length)
+			const answers =
+				acceptedWords.length > 0
+					? acceptedWords
+							.map((w) => w.trim().toLowerCase())
+							.filter((w) => w.length === primaryAnswer.length)
+					: [primaryAnswer];
+
+			if (normalizedInput.length === primaryAnswer.length) {
+				return answers.some((a) => a === normalizedInput) ? "success" : "error";
 			}
 
-			if (normalizedInput.length === normalizedAnswer.length) {
-				return "error";
-			}
-
-			return normalizedAnswer.startsWith(normalizedInput) ? "default" : "error";
+			return answers.some((a) => a.startsWith(normalizedInput)) ? "default" : "error";
 		},
-		[word],
+		[word, acceptedWords],
 	);
 
 	const handleChange = useCallback(
@@ -81,10 +115,7 @@ export function TypeWordExercise() {
 
 			if (nextStatus === "success") {
 				onSuccess?.(word.remoteId, score);
-			} else if (
-				nextStatus === "error" &&
-				text.trim().length === word.word.trim().length
-			) {
+			} else if (nextStatus === "error" && text.trim().length === word.word.trim().length) {
 				onFailure?.(word.remoteId, score);
 			}
 		},

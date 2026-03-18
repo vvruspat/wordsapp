@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from "@nozbe/watermelondb";
 
 export const schema = appSchema({
-	version: 5,
+	version: 7,
 	tables: [
 		tableSchema({
 			name: "categories",
@@ -72,6 +72,7 @@ export const schema = appSchema({
 				{ name: "language_speak", type: "string" },
 				{ name: "language_learn", type: "string", isOptional: true },
 				{ name: "email_verified", type: "boolean", isOptional: true },
+			{ name: "onboarded", type: "boolean", isOptional: true },
 			],
 		}),
 		tableSchema({
@@ -80,6 +81,14 @@ export const schema = appSchema({
 				{ name: "user_id", type: "string", isIndexed: true },
 				{ name: "setting_key", type: "string" },
 				{ name: "setting_value", type: "string" },
+			],
+		}),
+		tableSchema({
+			name: "word_synonym_groups",
+			columns: [
+				{ name: "remote_id", type: "number", isIndexed: true },
+				{ name: "language", type: "string", isIndexed: true },
+				{ name: "word_ids", type: "string" }, // JSON array of word remoteIds
 			],
 		}),
 		tableSchema({

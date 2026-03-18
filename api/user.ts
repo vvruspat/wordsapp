@@ -7,4 +7,5 @@ export const updateUser = (body: {
 	language_speak?: string;
 	language_learn?: string;
 	email_verified: boolean;
+	onboarded: boolean;
 }) => $fetch("/user", "put", { body });

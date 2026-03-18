@@ -1,6 +1,9 @@
 import type { Language } from "@vvruspat/words-types";
 import { $fetch } from "@/utils/fetch";
 
+export const getSynonymGroups = (language: string) =>
+	$fetch("/word/synonym-groups", "get", { query: { language } });
+
 export const getCatalogs = (query: {
 	offset: number;
 	limit: number;
