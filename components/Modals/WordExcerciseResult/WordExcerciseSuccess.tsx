@@ -1,9 +1,9 @@
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { Modal, type ModalProps, View } from "react-native";
 import { WButton, WCard, WText } from "@/mob-ui/atoms";
 import { Colors } from "@/mob-ui/brand/colors";
 import { getBiggestWordLength } from "@/utils/getBiggestWordLength";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Modal, type ModalProps, View } from "react-native";
 import { ThumbsUpIcon } from "./assets/ThumbsUpIcon";
 
 export type WordExcerciseSuccessModalProps = ModalProps & {
@@ -75,7 +75,7 @@ export const WordExcerciseSuccessModal = ({
 					>
 						<ThumbsUpIcon />
 					</View>
-					<WText mode="primary" size="3xl">
+					<WText mode="primary" size="2xl">
 						{t("excelent")}
 					</WText>
 					<View

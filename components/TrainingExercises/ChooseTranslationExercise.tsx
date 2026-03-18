@@ -3,11 +3,11 @@ import { StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
+import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
+import { translationsRepository } from "@/db/repositories/translations.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WText } from "@/mob-ui";
 import { shuffleArray } from "@/utils";
-import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
-import { translationsRepository } from "@/db/repositories/translations.repository";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const score = 0.2;
@@ -31,13 +31,17 @@ export function ChooseTranslationExercise() {
 		translation: null,
 	};
 
-	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>([]);
+	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>(
+		[],
+	);
 
 	const wordRemoteId = word?.remoteId;
 	const wordLanguage = word?.language;
 	const translationLanguage = translation?.language;
 
 	useEffect(() => {
+		setSelection(null);
+		setAcceptedTranslations([]);
 		if (!wordRemoteId || !wordLanguage || !translationLanguage) return;
 		(async () => {
 			const synonymIds = await synonymGroupsRepository.getSynonymWordIds(
@@ -74,14 +78,19 @@ export function ChooseTranslationExercise() {
 			return [];
 		}
 
+		const correctText = translation.translation;
 		const distractors = randomTranslations
 			.map((t) => t.translation)
+			.filter((t) => t !== correctText)
 			.slice(0, 3);
 
-		return shuffleArray([translation.translation, ...distractors]);
+		return shuffleArray([correctText, ...distractors]);
 	}, [randomTranslations, translation]);
 
-	const [selectedOption, setSelectedOption] = useState<string | null>(null);
+	const [selection, setSelection] = useState<{
+		wordId: number;
+		option: string;
+	} | null>(null);
 	const [modalPair, setModalPair] = useState<{
 		word: string;
 		translation: string;
@@ -91,7 +100,7 @@ export function ChooseTranslationExercise() {
 		(option: string) => {
 			if (!word || !translation) return;
 
-			setSelectedOption(option);
+			setSelection({ wordId: word.remoteId, option });
 
 			const isAccepted =
 				acceptedTranslations.length > 0
@@ -139,7 +148,11 @@ export function ChooseTranslationExercise() {
 				{options.map((option) => (
 					<WButton
 						key={option}
-						mode={selectedOption === option ? "primary" : "dark"}
+						mode={
+							selection?.wordId === wordRemoteId && selection?.option === option
+								? "primary"
+								: "dark"
+						}
 						fullWidth
 						onPress={() => handlePress(option)}
 					>

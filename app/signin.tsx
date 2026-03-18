@@ -107,13 +107,13 @@ export default function SignIn() {
 					{error && <WAlert mode="error">{error}</WAlert>}
 
 					{stage === "email" && (
-						<WText mode="primary" size="3xl" weight="bold" align="center">
+						<WText mode="primary" size="2xl" weight="bold" align="center">
 							{t("sign_in_message")}
 						</WText>
 					)}
 
 					{stage === "password" && (
-						<WText mode="primary" size="3xl" weight="bold" align="center">
+						<WText mode="primary" size="2xl" weight="bold" align="center">
 							{t("sign_in_password_message")}
 						</WText>
 					)}

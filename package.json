@@ -24,7 +24,7 @@
     "@react-navigation/native": "^7.1.33",
     "@sentry/react-native": "^8.4.0",
     "@storybook/react-native": "^10.2.3",
-    "@vvruspat/words-types": "^1.0.2",
+    "@vvruspat/words-types": "^1.0.3",
     "dotenv": "^17.3.1",
     "expo": "^55.0.6",
     "expo-asset": "~55.0.8",

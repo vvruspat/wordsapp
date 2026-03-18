@@ -11,6 +11,7 @@ import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLear
 import { SelectLanguageButton } from "@/components/SelectLanguageButton";
 import { LanguageItem } from "@/constants/languages";
 import { useSessionUser } from "@/hooks/useSession";
+import { useVocabularySync } from "@/hooks/useVocabularySync";
 import { WAlert, WButton, WInput, WText } from "@/mob-ui";
 import { styles } from "../../general.styles";
 
@@ -20,6 +21,7 @@ export default function Profile() {
 	const database = useDatabase();
 	const currentUser = useSessionUser();
 	const user = currentUser?.user;
+	const { syncVocabulary } = useVocabularySync();
 
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
@@ -72,6 +74,9 @@ export default function Profile() {
 				return;
 			}
 
+			const prevLanguageSpeak = user.language_speak;
+			const prevLanguageLearn = user.language_learn;
+
 			await database.write(async () => {
 				await user.update((u) => {
 					u.name = name;
@@ -80,6 +85,14 @@ export default function Profile() {
 					u.language_learn = languageToLearn;
 				});
 			});
+
+			if (languageISpeak !== prevLanguageSpeak) {
+				i18n.changeLanguage(languageISpeak);
+			}
+
+			if (languageToLearn !== prevLanguageLearn || languageISpeak !== prevLanguageSpeak) {
+				syncVocabulary(languageToLearn as LanguageItem["isoCode"]);
+			}
 
 			setSuccess(true);
 		} catch (e) {
@@ -95,7 +108,7 @@ export default function Profile() {
 		setError(undefined);
 
 		try {
-			await resendVerificationEmail();
+			await resendVerificationEmail(user.email);
 
 			router.push({
 				pathname: "/verify",

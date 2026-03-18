@@ -1,13 +1,8 @@
-import { signUp as apiSignUp } from "@/api/auth";
-import SelectLanguageISpeakModal from "@/components/Modals/SelectLanguageISpeakModal";
-import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLearnModal";
-import { SelectLanguageButton } from "@/components/SelectLanguageButton";
-import { LanguageItem } from "@/constants/languages";
+import { requestTmpPassword } from "@/api/auth";
 import { useApiError } from "@/hooks/useApiError";
-import { useSessionUser } from "@/hooks/useSession";
 import { WAlert, WButton, WInput, WText } from "@/mob-ui";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	KeyboardAvoidingView,
@@ -22,36 +17,16 @@ import { styles } from "../general.styles";
 
 export default function SignUp() {
 	const router = useRouter();
-	const { authUser } = useSessionUser();
 
-	const [
-		isSelectLanguageISpeakModalVisible,
-		setSelectLanguageISpeakModalVisible,
-	] = useState(false);
-	const [
-		isSelectLanguageToLearnModalVisible,
-		setSelectLanguageToLearnModalVisible,
-	] = useState(false);
-	const [languageISpeak, setLanguageISpeak] =
-		useState<LanguageItem["isoCode"]>("en");
-	const [languageToLearn, setLanguageToLearn] =
-		useState<LanguageItem["isoCode"]>("nl");
-
-	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [error, setError] = useState<string>();
 
-	const { t, i18n } = useTranslation();
+	const { t } = useTranslation();
 	const { getErrorMessage } = useApiError();
 
 	const handleContinueClick = async () => {
 		try {
-			const response = await apiSignUp({
-				name,
-				email,
-				language_speak: languageISpeak,
-				language_learn: languageToLearn,
-			});
+			const response = await requestTmpPassword(email);
 
 			if (response.status === "error") {
 				setError(
@@ -61,38 +36,15 @@ export default function SignUp() {
 				return;
 			}
 
-			const accessToken = response.data?.access_token;
-			const refreshToken = response.data?.refresh_token;
-			const userData = response.data?.user;
-
-			if (!accessToken || !refreshToken || !userData) {
-				setError(t("sign_up_error_generic"));
-				return;
-			}
-
-			await authUser(accessToken, refreshToken, userData);
-
 			router.push({ pathname: "/verify", params: { email } });
 		} catch (e) {
 			setError(getErrorMessage((e as Error).message));
 		}
 	};
 
-	const onNameChange = (e: TextInputChangeEvent) => {
-		const text = e.nativeEvent.text;
-
-		setName(text);
-	};
-
 	const onEmailChange = (e: TextInputChangeEvent) => {
-		const text = e.nativeEvent.text;
-
-		setEmail(text);
+		setEmail(e.nativeEvent.text);
 	};
-
-	useEffect(() => {
-		i18n.changeLanguage(languageISpeak);
-	}, [languageISpeak, i18n]);
 
 	return (
 		<SafeAreaView mode="padding" style={styles.page}>
@@ -100,20 +52,14 @@ export default function SignUp() {
 				behavior={Platform.OS === "ios" ? "padding" : "height"}
 				style={{ flex: 1, width: "100%" }}
 			>
-				<View style={[styles.formWrapper, signUpStyles.wrapper]}>
-					<View style={signUpStyles.header}>
-						<WText mode="primary" size="3xl" weight="bold" align="center">
+				<View style={[styles.formWrapper, entryStyles.wrapper]}>
+					<View style={entryStyles.header}>
+						<WText mode="primary" size="2xl" weight="bold" align="center">
 							{t("sign_up_message")}
 						</WText>
 						{error && <WAlert mode="error">{error}</WAlert>}
 					</View>
 					<View style={styles.fieldsGroup}>
-						<WInput
-							autoCorrect={false}
-							placeholder={t("placeholder_name")}
-							label={t("label_name")}
-							onChange={onNameChange}
-						/>
 						<WInput
 							autoCapitalize="none"
 							autoCorrect={false}
@@ -122,50 +68,11 @@ export default function SignUp() {
 							label={t("label_email")}
 							onChange={onEmailChange}
 						/>
-
-						<SelectLanguageButton
-							label={t("language_i_speak_label")}
-							languageValue={languageISpeak}
-							onPress={() => setSelectLanguageISpeakModalVisible(true)}
-						/>
-
-						<SelectLanguageButton
-							label={t("language_i_learn_label")}
-							languageValue={languageToLearn}
-							onPress={() => setSelectLanguageToLearnModalVisible(true)}
-						/>
-
-						<SelectLanguageISpeakModal
-							visible={isSelectLanguageISpeakModalVisible}
-							languageValue={languageISpeak}
-							onClose={() => setSelectLanguageISpeakModalVisible(false)}
-							onSelect={(isoCode) => {
-								setLanguageISpeak(isoCode);
-								setSelectLanguageISpeakModalVisible(false);
-							}}
-						/>
-						<SelectLanguageToLearnModal
-							visible={isSelectLanguageToLearnModalVisible}
-							languageValue={languageToLearn}
-							onClose={() => setSelectLanguageToLearnModalVisible(false)}
-							onSelect={(isoCode) => {
-								setLanguageToLearn(isoCode);
-								setSelectLanguageToLearnModalVisible(false);
-							}}
-						/>
 					</View>
 
 					<View style={{ gap: 24, width: "100%" }}>
 						<WButton mode="primary" fullWidth onPress={handleContinueClick}>
-							<Text>{t("button_sign_up")}</Text>
-						</WButton>
-
-						<WButton
-							mode="secondary"
-							fullWidth
-							onPress={() => router.push({ pathname: "/signin" })}
-						>
-							<Text>{t("button_sign_in")}</Text>
+							<Text>{t("button_continue")}</Text>
 						</WButton>
 					</View>
 				</View>
@@ -174,7 +81,7 @@ export default function SignUp() {
 	);
 }
 
-const signUpStyles = StyleSheet.create({
+const entryStyles = StyleSheet.create({
 	wrapper: {
 		gap: 24,
 	},

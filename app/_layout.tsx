@@ -47,6 +47,7 @@ export default Sentry.wrap(function RootLayout() {
 	const { t } = useTranslation();
 	const router = useRouter();
 	const backgroundedAt = useRef<number | null>(null);
+	const startupAuthDone = useRef(false);
 
 	const isFocused = useIsFocused();
 
@@ -85,10 +86,11 @@ export default Sentry.wrap(function RootLayout() {
 	}, []);
 
 	useEffect(() => {
-		if (!isFocused) {
+		if (!isFocused || startupAuthDone.current) {
 			return;
 		}
 
+		startupAuthDone.current = true;
 		triggerBiometricAuth();
 	}, [isFocused, triggerBiometricAuth]);
 
@@ -151,6 +153,7 @@ export default Sentry.wrap(function RootLayout() {
 			>
 				<Stack.Screen name="index" options={{ title: t("sign_up") }} />
 				<Stack.Screen name="verify" options={{ title: "" }} />
+				<Stack.Screen name="onboarding" options={{ title: "", headerShown: false }} />
 				<Stack.Screen name="authorized" options={{ headerShown: false }} />
 			</Stack>
 			<DevPanel />

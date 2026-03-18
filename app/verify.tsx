@@ -6,6 +6,7 @@ import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-nat
 import { SafeAreaView } from "react-native-safe-area-context";
 import { resendVerificationEmail, verifyEmail } from "@/api/auth";
 import { useAuthContext } from "@/context/AuthContext";
+import { useSessionUser } from "@/hooks/useSession";
 import { WAlert, WButton, WCharInput, WText, WTimer } from "@/mob-ui";
 import { styles } from "../general.styles";
 
@@ -14,6 +15,7 @@ const PIN_LENGTH = 4;
 export default function Verify() {
 	const router = useRouter();
 	const { triggerBiometricAuth } = useAuthContext();
+	const { authUser } = useSessionUser();
 
 	const { email } = useLocalSearchParams<{ email: string }>();
 	const [error, setError] = useState<string>();
@@ -24,9 +26,22 @@ export default function Verify() {
 	const onCodeChangeHandler = async (text: string) => {
 		if (text.length === PIN_LENGTH) {
 			try {
-				await verifyEmail({ code: text, email });
+				const response = await verifyEmail({ code: text, email });
 
-				triggerBiometricAuth();
+				if (response.status === "error") {
+					setError(response.error?.message ?? t("sign_in_error_generic"));
+					return;
+				}
+
+				const { access_token, refresh_token, user: userData } = response.data;
+
+				await authUser(access_token, refresh_token, userData);
+
+				if (!userData.onboarded) {
+					router.replace("/onboarding");
+				} else {
+					triggerBiometricAuth();
+				}
 			} catch (e) {
 				setError((e as Error).message);
 			}
@@ -35,7 +50,12 @@ export default function Verify() {
 
 	const onCodeResendHandler = async () => {
 		try {
-			await resendVerificationEmail();
+			const response = await resendVerificationEmail(email);
+
+			if (response.status === "error") {
+				setError(response.error?.message ?? t("sign_in_error_generic"));
+				return;
+			}
 
 			setIsReadyToResend(false);
 		} catch (e) {
@@ -81,10 +101,6 @@ export default function Verify() {
 							disabled={!isReadyToResend}
 						>
 							<Text>{t("resend_code")}</Text>
-						</WButton>
-
-						<WButton mode="secondary" onPress={() => router.push("/")}>
-							<Text>{t("skip_verification")}</Text>
 						</WButton>
 					</View>
 				</View>

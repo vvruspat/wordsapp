@@ -8,6 +8,15 @@ import {
 export default schemaMigrations({
 	migrations: [
 		{
+			toVersion: 7,
+			steps: [
+				addColumns({
+					table: "users",
+					columns: [{ name: "onboarded", type: "boolean", isOptional: true }],
+				}),
+			],
+		},
+		{
 			toVersion: 6,
 			steps: [
 				createTable({

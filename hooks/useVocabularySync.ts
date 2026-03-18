@@ -327,7 +327,10 @@ export const useVocabularySync = () => {
 				// Fetch synonym groups for validation (best-effort, non-blocking)
 				let synonymGroups: { id: number; language: string; word_ids: number[] }[] = [];
 				try {
-					synonymGroups = await getSynonymGroups(targetLanguage);
+					const synonymGroupsResponse = await getSynonymGroups(targetLanguage);
+					if (synonymGroupsResponse.status === "success" && synonymGroupsResponse.data) {
+						synonymGroups = synonymGroupsResponse.data as unknown as typeof synonymGroups;
+					}
 				} catch (error) {
 					logger.warn("Failed to fetch synonym groups:", error, "sync");
 				}

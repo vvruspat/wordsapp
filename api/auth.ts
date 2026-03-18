@@ -16,8 +16,8 @@ export const requestTmpPassword = (email: string) =>
 export const verifyEmail = (body: { code: string; email: string }) =>
 	$fetch("/auth/verify-email", "post", { body });
 
-export const resendVerificationEmail = () =>
-	$fetch("/auth/verify-email/resend", "post", {});
+export const resendVerificationEmail = (email: string) =>
+	$fetch("/auth/verify-email/resend", "post", { body: { email } });
 
 export const refreshToken = (refresh_token: string) =>
 	$fetch("/auth/refresh-token", "post", { body: { refresh_token } });

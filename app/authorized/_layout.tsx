@@ -4,7 +4,7 @@
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Language } from "@vvruspat/words-types";
 import Constants from "expo-constants";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
@@ -20,6 +20,7 @@ import { Colors } from "@/mob-ui/brand/colors";
 
 export default function RootLayout() {
 	const { t } = useTranslation();
+	const router = useRouter();
 
 	// react-i18next v16 + React 19: useSyncExternalStore subscription can be
 	// unreliable when subscribe deps are unstable. Manually subscribe so that
@@ -33,10 +34,57 @@ export default function RootLayout() {
 
 	const { syncVocabulary } = useVocabularySync();
 	const { user } = useSessionUser();
+
+	useEffect(() => {
+		if (user && !user.onboarded && !user.name) {
+			router.replace("/onboarding");
+		}
+	}, [user, router]);
 	const { isSyncing } = useVocabularyStore();
-	const { setCurrentCatalogs, setCurrentTopics, setHasHydrated, setTopicsInitialized, _hasHydrated } =
-		useExcerciseStore();
+	const {
+		setCurrentCatalogs,
+		setCurrentTopics,
+		setHasHydrated,
+		setTopicsInitialized,
+		_hasHydrated,
+	} = useExcerciseStore();
 	const lastSyncedLanguageRef = useRef<string | null>(null);
+	const lastLanguageLearnRef = useRef<string | null>(null);
+
+	// Reset catalog/topic selection when the learning language changes
+	useEffect(() => {
+		if (!user?.userId || !user.language_learn) return;
+
+		const prevLanguage = lastLanguageLearnRef.current;
+		lastLanguageLearnRef.current = user.language_learn;
+
+		if (prevLanguage !== null && prevLanguage !== user.language_learn) {
+			const userId = user.userId.toString();
+			setCurrentCatalogs([]);
+			setCurrentTopics([]);
+			setTopicsInitialized(false);
+			setHasHydrated(false);
+			Promise.all([
+				userSettingsRepository.set(
+					userId,
+					"selected_catalogs",
+					JSON.stringify([]),
+				),
+				userSettingsRepository.set(
+					userId,
+					"selected_topics",
+					JSON.stringify([]),
+				),
+			]).catch(() => {});
+		}
+	}, [
+		user?.userId,
+		user?.language_learn,
+		setCurrentCatalogs,
+		setCurrentTopics,
+		setTopicsInitialized,
+		setHasHydrated,
+	]);
 
 	useEffect(() => {
 		if (!user?.userId || _hasHydrated) return;

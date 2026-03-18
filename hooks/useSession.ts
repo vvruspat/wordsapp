@@ -48,6 +48,9 @@ export const useSessionUser = () => {
 					if (incomeUserData.email_verified) {
 						u.email_verified = incomeUserData.email_verified;
 					}
+					if (incomeUserData.onboarded !== undefined) {
+						u.onboarded = incomeUserData.onboarded;
+					}
 					if (incomeUserData.created_at) {
 						u.remoteCreatedAt = incomeUserData.created_at;
 					}
@@ -65,6 +68,7 @@ export const useSessionUser = () => {
 					if (incomeUserData.email_verified) {
 						u.email_verified = incomeUserData.email_verified;
 					}
+					u.onboarded = incomeUserData.onboarded ?? false;
 					if (incomeUserData.created_at) {
 						u.remoteCreatedAt = incomeUserData.created_at;
 					}

@@ -1,11 +1,11 @@
-import AntDesign from "@expo/vector-icons/AntDesign";
-import { ReactNode, useCallback, useState } from "react";
-import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { GlowingEllipse } from "@/components/GlowingEllipse";
 import { ReportButton } from "@/components/ReportButton";
 import { SkipButton } from "@/components/SkipButton";
 import { WCard, WText, WZStack } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { ReactNode, useCallback, useState } from "react";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
 
 export type TrainingPromptCardProps = {
 	word?: string;
@@ -40,7 +40,7 @@ export function TrainingPromptCard({
 								{word && (
 									<View style={styles.wordRow}>
 										{meaning && <View style={styles.infoButtonSpacer} />}
-										<WText mode="primary" weight="bold" size="3xl">
+										<WText mode="primary" weight="bold" size="2xl">
 											{word}
 										</WText>
 										{meaning && (

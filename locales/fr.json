@@ -13,7 +13,7 @@
 	"language_i_learn_label": "La langue que je veux apprendre",
 	"sign_in_message": "Entrez votre e-mail pour vous connecter",
 	"sign_in_password_message": "Entrez le mot de passe temporaire reçu par e-mail",
-	"sign_up_message": "Créez votre compte pour commencer",
+	"sign_up_message": "Entrez votre e-mail pour continuer",
 	"sign_up_error_generic": "Une erreur s'est produite lors de l'inscription. Veuillez réessayer.",
 	"label_your_email": "Votre e-mail",
 	"verify_enter_code": "Entrez le code que nous avons envoyé à votre e-mail",
