@@ -79,10 +79,13 @@ export function ChooseTranslationExercise() {
 		}
 
 		const correctText = translation.translation;
-		const distractors = randomTranslations
-			.map((t) => t.translation)
-			.filter((t) => t !== correctText)
-			.slice(0, 3);
+		const distractors = [
+			...new Set(
+				randomTranslations
+					.map((t) => t.translation)
+					.filter((t) => t !== correctText),
+			),
+		].slice(0, 3);
 
 		return shuffleArray([correctText, ...distractors]);
 	}, [randomTranslations, translation]);
