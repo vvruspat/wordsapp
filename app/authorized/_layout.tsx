@@ -190,6 +190,11 @@ export default function RootLayout() {
 							<FontAwesome5 name="chalkboard-teacher" size={24} color={color} />
 						),
 					}}
+					listeners={{
+						tabPress: () => {
+							router.navigate("/authorized/learning");
+						},
+					}}
 				/>
 				<Tabs.Screen
 					name="catalog"

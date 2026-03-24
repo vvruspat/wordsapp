@@ -7,8 +7,8 @@ import { useCallback } from "react";
 import {
 	getCatalogs,
 	getSynonymGroups,
-	getTopicTranslations,
 	getTopics,
+	getTopicTranslations,
 	getWords,
 	getWordTranslations,
 } from "@/api/vocabulary";
@@ -195,7 +195,11 @@ export const useVocabularySync = () => {
 
 				// Fetch topic name translations for the native language
 				let topicTranslations: TopicTranslationDto[] = [];
-				if (user.language_speak && user.language_speak !== targetLanguage && topics.length > 0) {
+				if (
+					user.language_speak &&
+					user.language_speak !== targetLanguage &&
+					topics.length > 0
+				) {
 					try {
 						const topicTranslationsResponse = await getTopicTranslations({
 							offset: 0,
@@ -325,11 +329,19 @@ export const useVocabularySync = () => {
 				}
 
 				// Fetch synonym groups for validation (best-effort, non-blocking)
-				let synonymGroups: { id: number; language: string; word_ids: number[] }[] = [];
+				let synonymGroups: {
+					id: number;
+					language: string;
+					word_ids: number[];
+				}[] = [];
 				try {
 					const synonymGroupsResponse = await getSynonymGroups(targetLanguage);
-					if (synonymGroupsResponse.status === "success" && synonymGroupsResponse.data) {
-						synonymGroups = synonymGroupsResponse.data as unknown as typeof synonymGroups;
+					if (
+						synonymGroupsResponse.status === "success" &&
+						synonymGroupsResponse.data
+					) {
+						synonymGroups =
+							synonymGroupsResponse.data as unknown as typeof synonymGroups;
 					}
 				} catch (error) {
 					logger.warn("Failed to fetch synonym groups:", error, "sync");
@@ -377,7 +389,10 @@ export const useVocabularySync = () => {
 					for (const topic of topics) {
 						const existing = await database
 							.get<Topic>("topics")
-							.query(Q.where("remote_id", topic.id), Q.where("language", topic.language))
+							.query(
+								Q.where("remote_id", topic.id),
+								Q.where("language", topic.language),
+							)
 							.fetch();
 
 						if (existing.length > 0) {
@@ -464,21 +479,24 @@ export const useVocabularySync = () => {
 					}
 
 					// Sync synonym groups: clear all groups for this language and replace
-					const existingSynonymGroups = await database
-						.get<WordSynonymGroup>("word_synonym_groups")
-						.query(Q.where("language", targetLanguage))
-						.fetch();
-					for (const existing of existingSynonymGroups) {
-						await existing.markAsDeleted();
-					}
-					for (const group of synonymGroups) {
-						await database
+					// Only replace if fetch succeeded (synonymGroups would be empty on failure)
+					if (synonymGroups.length > 0) {
+						const existingSynonymGroups = await database
 							.get<WordSynonymGroup>("word_synonym_groups")
-							.create((sg) => {
-								sg.remoteId = group.id;
-								sg.language = group.language;
-								sg.wordIdsJson = JSON.stringify(group.word_ids);
-							});
+							.query(Q.where("language", targetLanguage))
+							.fetch();
+						for (const existing of existingSynonymGroups) {
+							await existing.markAsDeleted();
+						}
+						for (const group of synonymGroups) {
+							await database
+								.get<WordSynonymGroup>("word_synonym_groups")
+								.create((sg) => {
+									sg.remoteId = group.id;
+									sg.language = group.language;
+									sg.wordIdsJson = JSON.stringify(group.word_ids);
+								});
+						}
 					}
 				});
 
