@@ -112,5 +112,6 @@
 	"error_user_not_found": "Nessun account trovato con questa email.",
 	"error_invalid_credentials": "Password errata. Per favore riprova.",
 	"error_unauthorized": "Effettua l'accesso per continuare.",
-	"error_generic": "Qualcosa è andato storto. Per favore riprova."
+	"error_generic": "Qualcosa è andato storto. Per favore riprova.",
+	"biometric_auth_error": "Autenticazione biometrica fallita. Per favore riprova."
 }

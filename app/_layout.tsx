@@ -1,13 +1,13 @@
 import { DatabaseProvider } from "@nozbe/watermelondb/DatabaseProvider";
 import { useIsFocused } from "@react-navigation/native";
 import { File, Paths } from "expo-file-system";
-import { authenticateAsync } from "expo-local-authentication";
+import { authenticateAsync, isEnrolledAsync } from "expo-local-authentication";
 import { Stack, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, AppState } from "react-native";
+import { ActivityIndicator } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { DevPanel } from "@/components/DevPanel";
 import { ScreenBackground } from "@/components/ScreenBackground";
@@ -39,19 +39,16 @@ Sentry.init({
   // spotlight: __DEV__,
 });
 
-const BACKGROUND_TIMEOUT_MS = 60 * 1000; // 60 seconds
-
 export default Sentry.wrap(function RootLayout() {
 	const [isAuthenticated, setAuthenticated] = useState(false);
 	const [isReady, setIsReady] = useState(false);
 	const { t } = useTranslation();
 	const router = useRouter();
-	const backgroundedAt = useRef<number | null>(null);
 	const startupAuthDone = useRef(false);
 
 	const isFocused = useIsFocused();
 
-	const triggerBiometricAuth = useCallback(async () => {
+	const triggerBiometricAuth = useCallback(async (): Promise<boolean> => {
 		// On iOS, Keychain (SecureStore) persists across app uninstalls.
 		// Detect a fresh install by checking a flag in the documents directory
 		// (which is cleared on uninstall) and wipe any stale tokens.
@@ -61,14 +58,22 @@ export default Sentry.wrap(function RootLayout() {
 			await SecureStore.deleteItemAsync("access_token");
 			await SecureStore.deleteItemAsync("refresh_token");
 			setIsReady(true);
-			return;
+			return true;
 		}
 
 		const access_token = await SecureStore.getItemAsync("access_token");
 
 		if (!access_token) {
 			setIsReady(true);
-			return;
+			return true;
+		}
+
+		const enrolled = await isEnrolledAsync();
+
+		if (!enrolled) {
+			setAuthenticated(true);
+			setIsReady(true);
+			return true;
 		}
 
 		const result = await authenticateAsync({
@@ -78,11 +83,12 @@ export default Sentry.wrap(function RootLayout() {
 		if (!result.success) {
 			setAuthenticated(false);
 			setIsReady(true);
-			return;
+			return false;
 		}
 
 		setAuthenticated(true);
 		setIsReady(true);
+		return true;
 	}, []);
 
 	useEffect(() => {
@@ -93,29 +99,6 @@ export default Sentry.wrap(function RootLayout() {
 		startupAuthDone.current = true;
 		triggerBiometricAuth();
 	}, [isFocused, triggerBiometricAuth]);
-
-	useEffect(() => {
-		const subscription = AppState.addEventListener("change", async (nextState) => {
-			if (nextState === "background" || nextState === "inactive") {
-				backgroundedAt.current = Date.now();
-			} else if (nextState === "active" && backgroundedAt.current !== null) {
-				const elapsed = Date.now() - backgroundedAt.current;
-				backgroundedAt.current = null;
-
-				if (elapsed >= BACKGROUND_TIMEOUT_MS && isAuthenticated) {
-					const result = await authenticateAsync({
-						promptMessage: "Authenticate to access the app",
-					});
-
-					if (!result.success) {
-						setAuthenticated(false);
-					}
-				}
-			}
-		});
-
-		return () => subscription.remove();
-	}, [isAuthenticated]);
 
 	useEffect(() => {
 		if (isAuthenticated) {

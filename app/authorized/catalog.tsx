@@ -176,6 +176,9 @@ export default function Catalog() {
 		setTopics(topics);
 	}, []);
 
+	const { topicTranslations: topicTranslationsData, lastSyncTime } = useVocabularyStore();
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: lastSyncTime is a re-fetch trigger after sync completes
 	useEffect(() => {
 		(async () => {
 			if (user?.language_learn) {
@@ -183,9 +186,7 @@ export default function Catalog() {
 				await fetchTopics(user.language_learn);
 			}
 		})();
-	}, [user?.language_learn, fetchCatalogs, fetchTopics]);
-
-	const { topicTranslations: topicTranslationsData } = useVocabularyStore();
+	}, [user?.language_learn, fetchCatalogs, fetchTopics, lastSyncTime]);
 
 	useEffect(() => {
 		if (!user?.language_speak || user.language_speak === user?.language_learn) {

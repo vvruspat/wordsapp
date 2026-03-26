@@ -112,5 +112,6 @@
 	"error_user_not_found": "No account found with this email.",
 	"error_invalid_credentials": "Incorrect password. Please try again.",
 	"error_unauthorized": "Please sign in to continue.",
-	"error_generic": "Something went wrong. Please try again."
+	"error_generic": "Something went wrong. Please try again.",
+	"biometric_auth_error": "Biometric authentication failed. Please try again."
 }

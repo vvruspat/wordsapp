@@ -112,5 +112,6 @@
 	"error_user_not_found": "No se encontró ninguna cuenta con este correo.",
 	"error_invalid_credentials": "Contraseña incorrecta. Por favor, inténtalo de nuevo.",
 	"error_unauthorized": "Por favor, inicia sesión para continuar.",
-	"error_generic": "Algo salió mal. Por favor, inténtalo de nuevo."
+	"error_generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
+	"biometric_auth_error": "La autenticación biométrica falló. Por favor, inténtalo de nuevo."
 }

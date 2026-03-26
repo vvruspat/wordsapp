@@ -112,5 +112,6 @@
 	"error_user_not_found": "Geen account gevonden met dit e-mailadres.",
 	"error_invalid_credentials": "Onjuist wachtwoord. Probeer het opnieuw.",
 	"error_unauthorized": "Log in om door te gaan.",
-	"error_generic": "Er is iets misgegaan. Probeer het opnieuw."
+	"error_generic": "Er is iets misgegaan. Probeer het opnieuw.",
+	"biometric_auth_error": "Biometrische authenticatie mislukt. Probeer het opnieuw."
 }

@@ -20,6 +20,10 @@ export const WCharInput = ({
 }: WCharInputProps) => {
 	const [val, setVal] = useState(defaultValue ?? "");
 	const inputRef = useRef<TextInput>(null);
+	const onChangeTextRef = useRef(onChangeText);
+	useEffect(() => {
+		onChangeTextRef.current = onChangeText;
+	});
 
 	const { addCompleteListener, removeCompleteListener } =
 		useContext(ExerciseContext);
@@ -46,8 +50,8 @@ export const WCharInput = ({
 	}, []);
 
 	useEffect(() => {
-		onChangeText?.(val);
-	}, [val, onChangeText]);
+		onChangeTextRef.current?.(val);
+	}, [val]);
 
 	const handleTextChange = (text: string) => {
 		setVal(text.slice(0, length));

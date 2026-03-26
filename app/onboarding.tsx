@@ -89,7 +89,10 @@ export default function Onboarding() {
 				});
 			}
 
-			triggerBiometricAuth();
+			const biometricSuccess = await triggerBiometricAuth();
+		if (!biometricSuccess) {
+			setError(t("biometric_auth_error"));
+		}
 		} catch (e) {
 			setError(getErrorMessage((e as Error).message));
 		}
