@@ -112,5 +112,6 @@
 	"error_user_not_found": "Aucun compte trouvé avec cet e-mail.",
 	"error_invalid_credentials": "Mot de passe incorrect. Veuillez réessayer.",
 	"error_unauthorized": "Veuillez vous connecter pour continuer.",
-	"error_generic": "Une erreur s'est produite. Veuillez réessayer."
+	"error_generic": "Une erreur s'est produite. Veuillez réessayer.",
+	"biometric_auth_error": "L'authentification biométrique a échoué. Veuillez réessayer."
 }

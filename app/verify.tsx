@@ -40,7 +40,10 @@ export default function Verify() {
 				if (!userData.onboarded) {
 					router.replace("/onboarding");
 				} else {
-					triggerBiometricAuth();
+					const biometricSuccess = await triggerBiometricAuth();
+					if (!biometricSuccess) {
+						setError(t("biometric_auth_error"));
+					}
 				}
 			} catch (e) {
 				setError((e as Error).message);

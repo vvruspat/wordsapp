@@ -112,5 +112,6 @@
 	"error_user_not_found": "Kein Konto mit dieser E-Mail gefunden.",
 	"error_invalid_credentials": "Falsches Passwort. Bitte versuche es erneut.",
 	"error_unauthorized": "Bitte melde dich an, um fortzufahren.",
-	"error_generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+	"error_generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+	"biometric_auth_error": "Biometrische Authentifizierung fehlgeschlagen. Bitte versuche es erneut."
 }

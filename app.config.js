@@ -35,6 +35,7 @@ export default ({ config }) => {
 				favicon: "./assets/images/favicon.png",
 			},
 			plugins: [
+				"react-native-edge-to-edge",
 				"expo-asset",
 				["@lovesworking/watermelondb-expo-plugin-sdk-52-plus"],
 				[
