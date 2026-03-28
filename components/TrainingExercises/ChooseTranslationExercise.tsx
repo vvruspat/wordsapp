@@ -14,6 +14,7 @@ const score = 0.2;
 
 export function ChooseTranslationExercise() {
 	const [modalVisible, setModalVisible] = useState(false);
+	const [answered, setAnswered] = useState(false);
 
 	const {
 		addCompleteListener,
@@ -22,6 +23,7 @@ export function ChooseTranslationExercise() {
 		onFailure,
 		onSuccess,
 		complete,
+		triggerLike,
 	} = useContext(ExerciseContext);
 	const { currentPairs, currentRandomTranslations: randomTranslations } =
 		useExcerciseStore();
@@ -31,9 +33,7 @@ export function ChooseTranslationExercise() {
 		translation: null,
 	};
 
-	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>(
-		[],
-	);
+	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>([]);
 
 	const wordRemoteId = word?.remoteId;
 	const wordLanguage = word?.language;
@@ -61,6 +61,7 @@ export function ChooseTranslationExercise() {
 	}, [loadData]);
 
 	const onExerciseComplete = useCallback(async () => {
+		setAnswered(false);
 		await load();
 	}, [load]);
 
@@ -74,10 +75,7 @@ export function ChooseTranslationExercise() {
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
 	const options = useMemo(() => {
-		if (!translation || randomTranslations.length === 0) {
-			return [];
-		}
-
+		if (!translation || randomTranslations.length === 0) return [];
 		const correctText = translation.translation;
 		const distractors = [
 			...new Set(
@@ -86,7 +84,6 @@ export function ChooseTranslationExercise() {
 					.filter((t) => t !== correctText),
 			),
 		].slice(0, 3);
-
 		return shuffleArray([correctText, ...distractors]);
 	}, [randomTranslations, translation]);
 
@@ -101,8 +98,7 @@ export function ChooseTranslationExercise() {
 
 	const handlePress = useCallback(
 		(option: string) => {
-			if (!word || !translation) return;
-
+			if (!word || !translation || answered) return;
 			setSelection({ wordId: word.remoteId, option });
 
 			const isAccepted =
@@ -111,12 +107,15 @@ export function ChooseTranslationExercise() {
 					: option === translation.translation;
 
 			if (isAccepted) {
-				onSuccess?.(word.remoteId, score);
+				setAnswered(true);
+				triggerLike();
+				onSuccess?.(word.remoteId, score, false);
+				complete();
 			} else {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[translation, word, acceptedTranslations, onFailure, onSuccess],
+		[translation, word, acceptedTranslations, answered, complete, triggerLike, onFailure, onSuccess],
 	);
 
 	const handleSkip = useCallback(() => {
@@ -132,7 +131,7 @@ export function ChooseTranslationExercise() {
 	}, [complete]);
 
 	if (!word || !translation || options.length === 0) {
-		return null; // or a loading spinner
+		return null;
 	}
 
 	return (
@@ -163,6 +162,7 @@ export function ChooseTranslationExercise() {
 					</WButton>
 				))}
 			</View>
+
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
