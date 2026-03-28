@@ -4,10 +4,10 @@ import { View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { WButton, WText } from "@/mob-ui";
 import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
 import { translationsRepository } from "@/db/repositories/translations.repository";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { WButton, WText } from "@/mob-ui";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const score = 0.2;
@@ -19,6 +19,7 @@ export function TrueOrFalseExercise() {
 		word: string;
 		translation: string;
 	} | null>(null);
+	const [answered, setAnswered] = useState(false);
 
 	const {
 		addCompleteListener,
@@ -27,6 +28,7 @@ export function TrueOrFalseExercise() {
 		onFailure,
 		onSuccess,
 		complete,
+		triggerLike,
 	} = useContext(ExerciseContext);
 	const { currentPairs, currentRandomTranslations: randomTranslations } =
 		useExcerciseStore();
@@ -62,6 +64,7 @@ export function TrueOrFalseExercise() {
 	}, [loadData]);
 
 	const onExerciseComplete = useCallback(async () => {
+		setAnswered(false);
 		await load();
 	}, [load]);
 
@@ -78,7 +81,6 @@ export function TrueOrFalseExercise() {
 	const firstRandomText = randomTranslations[0]?.translation;
 	const randomTranslationsCount = randomTranslations.length;
 
-	// statement is fixed when the pair loads; re-rolls only when translation or distractor changes
 	const statement = useMemo(() => {
 		if (!translationText || randomTranslationsCount === 0 || firstRandomText == null) return "";
 		return Math.random() >= 0.5 ? translationText : firstRandomText;
@@ -86,22 +88,24 @@ export function TrueOrFalseExercise() {
 
 	const handleAnswer = useCallback(
 		(choice: "yes" | "no") => {
-			if (!word || !translation) return;
-			const userThinksCorrect = choice === "yes";
+			if (!word || !translation || answered) return;
+			setAnswered(true);
 
-			// Check against all valid translations for this word (not just the stored one)
+			const userThinksCorrect = choice === "yes";
 			const isCorrect =
 				acceptedTranslations.length > 0
 					? acceptedTranslations.includes(statement)
 					: statement === translation.translation;
 
 			if (userThinksCorrect === isCorrect) {
-				onSuccess?.(word.remoteId, score);
+				triggerLike();
+				onSuccess?.(word.remoteId, score, false);
+				complete();
 			} else {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[statement, acceptedTranslations, word, translation, onFailure, onSuccess],
+		[statement, acceptedTranslations, answered, complete, triggerLike, word, translation, onFailure, onSuccess],
 	);
 
 	const handleSkip = useCallback(() => {
@@ -117,7 +121,7 @@ export function TrueOrFalseExercise() {
 	}, [complete]);
 
 	if (!word || !translation || randomTranslations.length === 0) {
-		return null; // or a loading spinner
+		return null;
 	}
 
 	return (
@@ -154,6 +158,7 @@ export function TrueOrFalseExercise() {
 					<WText>{t("true_or_false_no")}</WText>
 				</WButton>
 			</View>
+
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}

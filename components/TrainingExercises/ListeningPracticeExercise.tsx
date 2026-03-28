@@ -16,6 +16,7 @@ export function ListeningPracticeExercise() {
 		word: string;
 		translation: string;
 	} | null>(null);
+	const [answered, setAnswered] = useState(false);
 
 	const {
 		addCompleteListener,
@@ -24,6 +25,7 @@ export function ListeningPracticeExercise() {
 		onFailure,
 		onSuccess,
 		complete,
+		triggerLike,
 	} = useContext(ExerciseContext);
 	const { currentPairs, currentRandomTranslations: randomTranslations } =
 		useExcerciseStore();
@@ -38,6 +40,7 @@ export function ListeningPracticeExercise() {
 	}, [loadData]);
 
 	const onExerciseComplete = useCallback(async () => {
+		setAnswered(false);
 		await load();
 	}, [load]);
 
@@ -51,31 +54,31 @@ export function ListeningPracticeExercise() {
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
 	const options = useMemo(() => {
-		if (!translation || randomTranslations.length === 0) {
-			return [];
-		}
-
-		const options = [
+		if (!translation || randomTranslations.length === 0) return [];
+		const opts = [
 			translation.translation,
 			...randomTranslations.map((t) => t.translation),
 		];
-
-		return shuffleArray(Array.from(options));
+		return shuffleArray(Array.from(opts));
 	}, [randomTranslations, translation]);
 
 	const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
 	const handlePress = useCallback(
 		(option: string) => {
-			if (!word || !translation) return;
+			if (!word || !translation || answered) return;
 			setSelectedOption(option);
+			setAnswered(true);
+
 			if (option === translation.translation) {
-				onSuccess?.(word.remoteId, score);
+				triggerLike();
+				onSuccess?.(word.remoteId, score, false);
+				complete();
 			} else {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[translation, word, onFailure, onSuccess],
+		[translation, word, answered, complete, triggerLike, onFailure, onSuccess],
 	);
 
 	const handleSkip = useCallback(() => {
@@ -91,7 +94,7 @@ export function ListeningPracticeExercise() {
 	}, [complete]);
 
 	if (!word || !translation || options.length === 0) {
-		return null; // or a loading spinner
+		return null;
 	}
 
 	return (
@@ -112,6 +115,7 @@ export function ListeningPracticeExercise() {
 					</WButton>
 				))}
 			</View>
+
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}

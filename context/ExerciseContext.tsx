@@ -7,6 +7,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { FloatingLike } from "@/components/FloatingLike";
 import {
 	WordExcerciseFailureModal,
 	WordExcerciseSuccessModal,
@@ -45,6 +46,7 @@ type ExerciseType = {
 	onFailure: (wordId: Word["id"], score: number, showModal?: boolean) => void;
 	onSuccess: (wordId: Word["id"], score: number, showModal?: boolean) => void;
 	setCurrentTrainingId: (trainingId: number | null) => void;
+	triggerLike: () => void;
 };
 
 const ExerciseContext = createContext<ExerciseType>({
@@ -57,6 +59,7 @@ const ExerciseContext = createContext<ExerciseType>({
 	onFailure: () => {},
 	onSuccess: () => {},
 	setCurrentTrainingId: () => {},
+	triggerLike: () => {},
 });
 
 export { ExerciseContext };
@@ -73,6 +76,11 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		word: string;
 		translation: string;
 	} | null>(null);
+	const [likeTrigger, setLikeTrigger] = useState(0);
+
+	const triggerLike = useCallback(() => {
+		setLikeTrigger((n) => n + 1);
+	}, []);
 	const [currentTrainingId, setCurrentTrainingIdState] = useState<
 		number | null
 	>(null);
@@ -84,6 +92,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const successQueue = useRef<SessionPair[]>([]);
 	// Promise that resolves when queue initialization is complete
 	const initializationPromise = useRef<Promise<void> | null>(null);
+	// Track last served word to avoid immediate repeats
+	const lastServedWordId = useRef<number | null>(null);
 
 	const { user } = useSessionUser();
 	const { syncToBackend } = useLearningSync();
@@ -267,6 +277,18 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					item = failedQueue.current.shift();
 				}
 
+				// Avoid showing the same word twice in a row when an alternative exists
+				if (item && item.word.remoteId === lastServedWordId.current) {
+					const alt =
+						failedQueue.current.shift() ?? successQueue.current.shift();
+					if (alt) {
+						failedQueue.current.push(item);
+						item = alt;
+					}
+				}
+
+				lastServedWordId.current = item?.word.remoteId ?? null;
+
 				pairs = item ? [item] : [];
 			}
 
@@ -407,6 +429,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		onFailure,
 		onSuccess,
 		setCurrentTrainingId,
+		triggerLike,
 	};
 
 	return (
@@ -427,6 +450,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					onRequestClose={onRequestClose}
 				/>
 			)}
+			<FloatingLike trigger={likeTrigger} />
 		</ExerciseContext.Provider>
 	);
 };

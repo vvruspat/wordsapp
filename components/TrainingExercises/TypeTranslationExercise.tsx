@@ -3,10 +3,10 @@ import { View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { WCharInput, WCharInputProps } from "@/mob-ui";
 import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
 import { translationsRepository } from "@/db/repositories/translations.repository";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { WCharInput, WCharInputProps } from "@/mob-ui";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 type CharInputStatus = WCharInputProps["status"];
@@ -20,6 +20,7 @@ export function TypeTranslationExercise() {
 		word: string;
 		translation: string;
 	} | null>(null);
+	const [answered, setAnswered] = useState(false);
 
 	const {
 		addCompleteListener,
@@ -28,6 +29,7 @@ export function TypeTranslationExercise() {
 		onFailure,
 		onSuccess,
 		complete,
+		triggerLike,
 	} = useContext(ExerciseContext);
 	const { currentPairs } = useExcerciseStore();
 
@@ -63,6 +65,7 @@ export function TypeTranslationExercise() {
 	}, [loadData]);
 
 	const onExerciseComplete = useCallback(async () => {
+		setAnswered(false);
 		await load();
 	}, [load]);
 
@@ -80,8 +83,6 @@ export function TypeTranslationExercise() {
 			if (!translation) return "default";
 			const primaryAnswer = translation.translation.trim().toLowerCase();
 			const normalizedInput = text.trim().toLowerCase();
-
-			// All accepted answers of the same length as the primary (WCharInput has fixed length)
 			const answers =
 				acceptedTranslations.length > 0
 					? acceptedTranslations
@@ -92,7 +93,6 @@ export function TypeTranslationExercise() {
 			if (normalizedInput.length === primaryAnswer.length) {
 				return answers.some((a) => a === normalizedInput) ? "success" : "error";
 			}
-
 			return answers.some((a) => a.startsWith(normalizedInput)) ? "default" : "error";
 		},
 		[translation, acceptedTranslations],
@@ -100,17 +100,20 @@ export function TypeTranslationExercise() {
 
 	const handleChange = useCallback(
 		(text: string) => {
-			if (!word || !translation) return;
+			if (!word || !translation || answered) return;
 			const nextStatus = evaluateStatus(text);
 			setStatus(nextStatus);
 
 			if (nextStatus === "success") {
-				onSuccess?.(word.remoteId, score);
+				setAnswered(true);
+				triggerLike();
+				onSuccess?.(word.remoteId, score, false);
+				complete();
 			} else if (nextStatus === "error" && text.trim().length === translation.translation.trim().length) {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[translation, word, evaluateStatus, onFailure, onSuccess],
+		[translation, word, answered, complete, triggerLike, evaluateStatus, onFailure, onSuccess],
 	);
 
 	const handleSkip = useCallback(() => {
@@ -126,7 +129,7 @@ export function TypeTranslationExercise() {
 	}, [complete]);
 
 	if (!word || !translation) {
-		return null; // or a loading spinner
+		return null;
 	}
 
 	return (
@@ -148,6 +151,7 @@ export function TypeTranslationExercise() {
 				onChangeText={handleChange}
 				status={status}
 			/>
+
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}

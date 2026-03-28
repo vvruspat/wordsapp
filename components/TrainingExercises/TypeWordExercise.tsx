@@ -2,11 +2,11 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { ExerciseContext } from "@/context/ExerciseContext";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { WCharInput, WCharInputProps } from "@/mob-ui";
 import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
 import { translationsRepository } from "@/db/repositories/translations.repository";
 import { wordsRepository } from "@/db/repositories/words.repository";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { WCharInput, WCharInputProps } from "@/mob-ui";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 type CharInputStatus = WCharInputProps["status"];
@@ -20,6 +20,7 @@ export function TypeWordExercise() {
 		word: string;
 		translation: string;
 	} | null>(null);
+	const [answered, setAnswered] = useState(false);
 
 	const {
 		addCompleteListener,
@@ -28,6 +29,7 @@ export function TypeWordExercise() {
 		onFailure,
 		onSuccess,
 		complete,
+		triggerLike,
 	} = useContext(ExerciseContext);
 	const { currentPairs } = useExcerciseStore();
 
@@ -36,7 +38,6 @@ export function TypeWordExercise() {
 		translation: null,
 	};
 
-	// All Dutch words that share the same translation text (e.g., "sorry" and "pardon" both → "извини")
 	const [acceptedWords, setAcceptedWords] = useState<string[]>([]);
 
 	const wordRemoteId = word?.remoteId;
@@ -48,12 +49,10 @@ export function TypeWordExercise() {
 	useEffect(() => {
 		if (!wordRemoteId || !wordLanguage || !translationRemoteId || !translationText || !translationLanguage) return;
 		(async () => {
-			// Words in the same synonym group
 			const synonymIds = await synonymGroupsRepository.getSynonymWordIds(
 				wordRemoteId,
 				wordLanguage,
 			);
-			// Also words that share the exact same translation text
 			const translationMatches = await translationsRepository.getByTranslationText(
 				translationText,
 				translationLanguage,
@@ -72,6 +71,7 @@ export function TypeWordExercise() {
 	}, [loadData]);
 
 	const onExerciseComplete = useCallback(async () => {
+		setAnswered(false);
 		await load();
 	}, [load]);
 
@@ -89,8 +89,6 @@ export function TypeWordExercise() {
 			if (!word) return "default";
 			const primaryAnswer = word.word.trim().toLowerCase();
 			const normalizedInput = text.trim().toLowerCase();
-
-			// All accepted words of the same length as the primary (WCharInput has fixed length)
 			const answers =
 				acceptedWords.length > 0
 					? acceptedWords
@@ -101,7 +99,6 @@ export function TypeWordExercise() {
 			if (normalizedInput.length === primaryAnswer.length) {
 				return answers.some((a) => a === normalizedInput) ? "success" : "error";
 			}
-
 			return answers.some((a) => a.startsWith(normalizedInput)) ? "default" : "error";
 		},
 		[word, acceptedWords],
@@ -109,17 +106,20 @@ export function TypeWordExercise() {
 
 	const handleChange = useCallback(
 		(text: string) => {
-			if (!word || !translation) return;
+			if (!word || !translation || answered) return;
 			const nextStatus = evaluateStatus(text);
 			setStatus(nextStatus);
 
 			if (nextStatus === "success") {
-				onSuccess?.(word.remoteId, score);
+				setAnswered(true);
+				triggerLike();
+				onSuccess?.(word.remoteId, score, false);
+				complete();
 			} else if (nextStatus === "error" && text.trim().length === word.word.trim().length) {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[word, translation, evaluateStatus, onFailure, onSuccess],
+		[word, translation, answered, complete, triggerLike, evaluateStatus, onFailure, onSuccess],
 	);
 
 	const handleSkip = useCallback(() => {
@@ -151,6 +151,7 @@ export function TypeWordExercise() {
 				onChangeText={handleChange}
 				status={status}
 			/>
+
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
