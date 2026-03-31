@@ -13,6 +13,7 @@ import { useSessionUser } from "@/hooks/useSession";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { WText } from "@/mob-ui";
 import { logger } from "@/utils/logger";
+import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, ListRenderItemInfo, View } from "react-native";
@@ -61,14 +62,16 @@ export default function Catalog() {
 		filterTopics().then((topics) => setFilteredTopics(topics));
 	}, [filterTopics]);
 
-	useEffect(() => {
-		if (filteredTopics.length === 0) {
-			setTopicWords([]);
-			return;
-		}
-		const topicIds = filteredTopics.map((t) => t.remoteId);
-		wordsRepository.getByTopicIds(topicIds, currentCatalogs).then(setTopicWords);
-	}, [filteredTopics, currentCatalogs]);
+	useFocusEffect(
+		useCallback(() => {
+			if (filteredTopics.length === 0 || !user?.userId) {
+				setTopicWords([]);
+				return;
+			}
+			const topicIds = filteredTopics.map((t) => t.remoteId);
+			wordsRepository.getByTopicIds(topicIds, currentCatalogs).then(setTopicWords);
+		}, [filteredTopics, currentCatalogs, user?.userId]),
+	);
 
 	useEffect(() => {
 		if (topicWords.length === 0 || !user?.userId) return;
