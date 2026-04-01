@@ -51,11 +51,13 @@ export function CardsExercise() {
 	const likeTranslateY = useSharedValue(0);
 	const likeOpacity = useSharedValue(0);
 
+	const [loadKey, setLoadKey] = useState(0);
+
 	const load = useCallback(async () => {
 		await loadData(1, 0, 0);
 	}, [loadData]);
 
-	const onExerciseComplete = useCallback(async () => {
+	const onExerciseComplete = useCallback(() => {
 		setAnswered(false);
 		setAnsweredKnow(false);
 		flipProgress.value = 0;
@@ -64,22 +66,20 @@ export function CardsExercise() {
 		buttonsOpacity.value = 0;
 		likeTranslateY.value = 0;
 		likeOpacity.value = 0;
-		await load();
-		cardOpacity.value = withDelay(16, withTiming(1, { duration: 250 }));
-		buttonsOpacity.value = withDelay(16, withTiming(1, { duration: 250 }));
-	}, [
-		load,
-		flipProgress,
-		cardTranslateX,
-		cardOpacity,
-		buttonsOpacity,
-		likeTranslateY,
-		likeOpacity,
-	]);
+		setLoadKey((k) => k + 1);
+	}, [flipProgress, cardTranslateX, cardOpacity, buttonsOpacity, likeTranslateY, likeOpacity]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
 	useEffect(() => {
 		load();
-	}, [load]);
+	}, [load, loadKey]);
+
+	// Animate card in when a new word arrives after exercise completion
+	useEffect(() => {
+		if (word?.remoteId == null) return;
+		cardOpacity.value = withDelay(16, withTiming(1, { duration: 250 }));
+		buttonsOpacity.value = withDelay(16, withTiming(1, { duration: 250 }));
+	}, [word?.remoteId, cardOpacity, buttonsOpacity]);
 
 	useEffect(() => {
 		addCompleteListener(onExerciseComplete);
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
 	},
 	likeContainer: {
 		position: "absolute",
-		alignSelf: "center",
+		right: 24,
 		bottom: "35%",
 		zIndex: 10,
 	},

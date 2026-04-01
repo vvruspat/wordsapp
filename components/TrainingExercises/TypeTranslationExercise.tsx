@@ -59,19 +59,22 @@ export function TypeTranslationExercise() {
 		})();
 	}, [wordRemoteId, wordLanguage, translationLanguage]);
 
+	const [loadKey, setLoadKey] = useState(0);
+
 	const load = useCallback(async () => {
 		setStatus("default");
 		await loadData(1, 0, 4);
 	}, [loadData]);
 
-	const onExerciseComplete = useCallback(async () => {
+	const onExerciseComplete = useCallback(() => {
 		setAnswered(false);
-		await load();
-	}, [load]);
+		setLoadKey((k) => k + 1);
+	}, []);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
 	useEffect(() => {
 		load();
-	}, [load]);
+	}, [load, loadKey]);
 
 	useEffect(() => {
 		addCompleteListener(onExerciseComplete);
