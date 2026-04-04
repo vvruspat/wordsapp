@@ -8,6 +8,18 @@ import {
 export default schemaMigrations({
 	migrations: [
 		{
+			toVersion: 8,
+			steps: [
+				// SQLite uses dynamic typing — TEXT can be stored in the existing INTEGER-affinity
+				// "training" column without any DDL changes. We only bump the schema version so
+				// WatermelonDB accepts the updated schema declaration (type: "string").
+				// Clear any old numeric values so they don't linger as phantom integer IDs.
+				unsafeExecuteSql(
+					'UPDATE "learning_progress" SET "training" = NULL;',
+				),
+			],
+		},
+		{
 			toVersion: 7,
 			steps: [
 				addColumns({

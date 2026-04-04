@@ -7,7 +7,7 @@ import Constants from "expo-constants";
 import { Tabs, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SyncProgressBar } from "@/components/SyncProgressBar";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
@@ -164,6 +164,8 @@ export default function RootLayout() {
 	}, [syncVocabulary, user, isSyncing]);
 
 	const insets = useSafeAreaInsets();
+	const androidBottomInset = Platform.OS === "android" ? 12 : 0;
+	const tabBarBottomInset = Math.max(insets.bottom, androidBottomInset);
 
 	return (
 		<View style={styles.container}>
@@ -175,8 +177,8 @@ export default function RootLayout() {
 					tabBarStyle: {
 						backgroundColor: Colors.backgrounds.primaryBackground,
 						borderTopColor: Colors.greys.whiteAlpha60,
-						paddingBottom: insets.bottom,
-						height: 49 + insets.bottom,
+						paddingBottom: tabBarBottomInset,
+						height: 49 + tabBarBottomInset,
 					},
 					sceneStyle: { backgroundColor: "transparent" },
 				}}

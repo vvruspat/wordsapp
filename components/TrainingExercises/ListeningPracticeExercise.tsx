@@ -1,9 +1,10 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
 import { WButton, WText } from "@/mob-ui";
 import { shuffleArray } from "@/utils";
 import { TrainingPromptCard } from "./TrainingPromptCard";
@@ -17,6 +18,9 @@ export function ListeningPracticeExercise() {
 		translation: string;
 	} | null>(null);
 	const [answered, setAnswered] = useState(false);
+	const [selectedOption, setSelectedOption] = useState<string | null>(null);
+
+	const { translateX, buttonAnims, swipeOut, notifyContentChanged } = useSwipeAnimation(4);
 
 	const {
 		addCompleteListener,
@@ -42,9 +46,12 @@ export function ListeningPracticeExercise() {
 	}, [loadData]);
 
 	const onExerciseComplete = useCallback(() => {
-		setAnswered(false);
-		setLoadKey((k) => k + 1);
-	}, []);
+		swipeOut(() => {
+			setAnswered(false);
+			setSelectedOption(null);
+			setLoadKey((k) => k + 1);
+		});
+	}, [swipeOut]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
 	useEffect(() => {
@@ -65,7 +72,11 @@ export function ListeningPracticeExercise() {
 		return shuffleArray(Array.from(opts));
 	}, [randomTranslations, translation]);
 
-	const [selectedOption, setSelectedOption] = useState<string | null>(null);
+	useEffect(() => {
+		if (word && options.length > 0) {
+			notifyContentChanged();
+		}
+	}, [word, options, notifyContentChanged]);
 
 	const handlePress = useCallback(
 		(option: string) => {
@@ -102,23 +113,35 @@ export function ListeningPracticeExercise() {
 
 	return (
 		<>
-			<TrainingPromptCard wordId={word.remoteId} onSkip={handleSkip}>
-				<PlayWordButton autoplay audio={word.audio} />
-			</TrainingPromptCard>
+			<View style={styles.wrapper}>
+				<Animated.View
+					style={[styles.content, { transform: [{ translateX }] }]}
+				>
+					<TrainingPromptCard wordId={word.remoteId} onSkip={handleSkip}>
+						<PlayWordButton autoplay audio={word.audio} />
+					</TrainingPromptCard>
+				</Animated.View>
 
-			<View style={styles.buttonsContainer}>
-				{options.map((option) => (
-					<WButton
-						key={option}
-						mode={selectedOption === option ? "primary" : "dark"}
-						fullWidth
-						onPress={() => handlePress(option)}
-					>
-						<WText>{option}</WText>
-					</WButton>
-				))}
+				<View style={styles.buttonsContainer}>
+					{options.map((option, i) => (
+						<Animated.View
+							key={option}
+							style={[
+								styles.buttonWrapper,
+								buttonAnims[i] ? { transform: [{ translateX: buttonAnims[i] }] } : undefined,
+							]}
+						>
+							<WButton
+								mode={selectedOption === option ? "primary" : "dark"}
+								fullWidth
+								onPress={() => handlePress(option)}
+							>
+								<WText>{option}</WText>
+							</WButton>
+						</Animated.View>
+					))}
+				</View>
 			</View>
-
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
@@ -131,6 +154,15 @@ export function ListeningPracticeExercise() {
 }
 
 const styles = StyleSheet.create({
+	wrapper: {
+		flex: 1,
+		width: "100%",
+		overflow: "hidden",
+	},
+	content: {
+		flex: 1,
+		width: "100%",
+	},
 	buttonsContainer: {
 		width: "100%",
 		flexDirection: "column",
@@ -138,5 +170,9 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		alignContent: "stretch",
 		gap: 16,
+		overflow: "hidden",
+	},
+	buttonWrapper: {
+		width: "100%",
 	},
 });

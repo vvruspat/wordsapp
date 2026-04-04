@@ -1,6 +1,6 @@
 import NetInfo from "@react-native-community/netinfo";
 import { useCallback } from "react";
-import { createLearning, getLearning } from "@/api/learning";
+import { createLearning, getLearning, updateLearning } from "@/api/learning";
 import { learningRepository } from "@/db/repositories/learning.repository";
 import { useSessionUser } from "./useSession";
 
@@ -13,24 +13,36 @@ export const useLearningSync = () => {
 		const netState = await NetInfo.fetch();
 		if (!netState.isConnected) return;
 
-		const unsynced = await learningRepository.getUnsynced();
+		const allRecords = await learningRepository.getByUser(user.userId);
 
-		for (const record of unsynced) {
+		for (const record of allRecords) {
 			// Backend requires training and translation — skip records missing them
 			if (!record.training || !record.translation) continue;
 
-			const result = await createLearning({
-				user: user.userId,
-				word: record.wordId,
-				score: record.score,
-				last_review: record.lastReview,
-				created_at: record.createdAtRemote,
-				training: record.training,
-				translation: record.translation,
-			});
+			if (record.remoteId) {
+				// Already on backend — push latest score/review via PUT
+				await updateLearning({
+					id: record.remoteId,
+					score: record.score,
+					last_review: record.lastReview,
+					training: record.training,
+					translation: record.translation,
+				});
+			} else {
+				// New local record — create on backend
+				const result = await createLearning({
+					user: user.userId,
+					word: record.wordId,
+					score: record.score,
+					last_review: record.lastReview,
+					created_at: record.createdAtRemote,
+					training: record.training,
+					translation: record.translation,
+				});
 
-			if (result.status === "success" && result.data?.id) {
-				await learningRepository.markSynced(record.id, result.data.id);
+				if (result.status === "success" && result.data?.id) {
+					await learningRepository.markSynced(record.id, result.data.id);
+				}
 			}
 		}
 	}, [user]);

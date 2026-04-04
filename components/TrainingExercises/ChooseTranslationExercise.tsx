@@ -1,11 +1,12 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
 import { translationsRepository } from "@/db/repositories/translations.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
 import { WButton, WText } from "@/mob-ui";
 import { shuffleArray } from "@/utils";
 import { TrainingPromptCard } from "./TrainingPromptCard";
@@ -15,6 +16,8 @@ const score = 0.2;
 export function ChooseTranslationExercise() {
 	const [modalVisible, setModalVisible] = useState(false);
 	const [answered, setAnswered] = useState(false);
+
+	const { translateX, buttonAnims, swipeOut, notifyContentChanged } = useSwipeAnimation(4);
 
 	const {
 		addCompleteListener,
@@ -63,9 +66,11 @@ export function ChooseTranslationExercise() {
 	}, [loadData]);
 
 	const onExerciseComplete = useCallback(() => {
-		setAnswered(false);
-		setLoadKey((k) => k + 1);
-	}, []);
+		swipeOut(() => {
+			setAnswered(false);
+			setLoadKey((k) => k + 1);
+		});
+	}, [swipeOut]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
 	useEffect(() => {
@@ -89,6 +94,12 @@ export function ChooseTranslationExercise() {
 		].slice(0, 3);
 		return shuffleArray([correctText, ...distractors]);
 	}, [randomTranslations, translation]);
+
+	useEffect(() => {
+		if (word && options.length > 0) {
+			notifyContentChanged();
+		}
+	}, [word, options, notifyContentChanged]);
 
 	const [selection, setSelection] = useState<{
 		wordId: number;
@@ -139,33 +150,45 @@ export function ChooseTranslationExercise() {
 
 	return (
 		<>
-			<TrainingPromptCard
-				word={word.word}
-				transcription={word.transcription}
-				meaning={word.meaning}
-				wordId={word.remoteId}
-				onSkip={handleSkip}
-			>
-				<PlayWordButton audio={word.audio} />
-			</TrainingPromptCard>
-
-			<View style={styles.buttonsContainer}>
-				{options.map((option) => (
-					<WButton
-						key={option}
-						mode={
-							selection?.wordId === wordRemoteId && selection?.option === option
-								? "primary"
-								: "dark"
-						}
-						fullWidth
-						onPress={() => handlePress(option)}
+			<View style={styles.wrapper}>
+				<Animated.View
+					style={[styles.content, { transform: [{ translateX }] }]}
+				>
+					<TrainingPromptCard
+						word={word.word}
+						transcription={word.transcription}
+						meaning={word.meaning}
+						wordId={word.remoteId}
+						onSkip={handleSkip}
 					>
-						<WText>{option}</WText>
-					</WButton>
-				))}
-			</View>
+						<PlayWordButton audio={word.audio} />
+					</TrainingPromptCard>
+				</Animated.View>
 
+				<View style={styles.buttonsContainer}>
+					{options.map((option, i) => (
+						<Animated.View
+							key={option}
+							style={[
+								styles.buttonWrapper,
+								buttonAnims[i] ? { transform: [{ translateX: buttonAnims[i] }] } : undefined,
+							]}
+						>
+							<WButton
+								mode={
+									selection?.wordId === wordRemoteId && selection?.option === option
+										? "primary"
+										: "dark"
+								}
+								fullWidth
+								onPress={() => handlePress(option)}
+							>
+								<WText>{option}</WText>
+							</WButton>
+						</Animated.View>
+					))}
+				</View>
+			</View>
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
@@ -178,6 +201,15 @@ export function ChooseTranslationExercise() {
 }
 
 const styles = StyleSheet.create({
+	wrapper: {
+		flex: 1,
+		width: "100%",
+		overflow: "hidden",
+	},
+	content: {
+		flex: 1,
+		width: "100%",
+	},
 	buttonsContainer: {
 		width: "100%",
 		flexDirection: "column",
@@ -185,5 +217,9 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		alignContent: "stretch",
 		gap: 16,
+		overflow: "hidden",
+	},
+	buttonWrapper: {
+		width: "100%",
 	},
 });
