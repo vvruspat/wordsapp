@@ -71,15 +71,11 @@ export function CardsExercise() {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
 	useEffect(() => {
-		load();
-	}, [load, loadKey]);
-
-	// Animate card in when a new word arrives after exercise completion
-	useEffect(() => {
-		if (word?.remoteId == null) return;
-		cardOpacity.value = withDelay(16, withTiming(1, { duration: 250 }));
-		buttonsOpacity.value = withDelay(16, withTiming(1, { duration: 250 }));
-	}, [word?.remoteId, cardOpacity, buttonsOpacity]);
+		load().then(() => {
+			cardOpacity.value = withDelay(16, withTiming(1, { duration: 250 }));
+			buttonsOpacity.value = withDelay(16, withTiming(1, { duration: 250 }));
+		});
+	}, [load, loadKey, cardOpacity, buttonsOpacity]);
 
 	useEffect(() => {
 		addCompleteListener(onExerciseComplete);

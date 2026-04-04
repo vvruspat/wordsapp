@@ -6,9 +6,17 @@ export const createLearning = (body: {
 	score: number;
 	last_review: string;
 	created_at: string;
-	training: number;
+	training: string;
 	translation: number;
 }) => $fetch("/learning", "post", { body });
+
+export const updateLearning = (body: {
+	id: number;
+	score: number;
+	last_review: string;
+	training: string;
+	translation: number;
+}) => $fetch("/learning", "put", { body });
 
 export const getLearning = (query: {
 	user?: number;

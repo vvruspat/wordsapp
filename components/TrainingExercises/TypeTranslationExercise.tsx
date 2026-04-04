@@ -1,11 +1,12 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
 import { translationsRepository } from "@/db/repositories/translations.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
 import { WCharInput, WCharInputProps } from "@/mob-ui";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
@@ -21,6 +22,8 @@ export function TypeTranslationExercise() {
 		translation: string;
 	} | null>(null);
 	const [answered, setAnswered] = useState(false);
+
+	const { translateX, swipeOut, notifyContentChanged } = useSwipeAnimation();
 
 	const {
 		addCompleteListener,
@@ -67,9 +70,11 @@ export function TypeTranslationExercise() {
 	}, [loadData]);
 
 	const onExerciseComplete = useCallback(() => {
-		setAnswered(false);
-		setLoadKey((k) => k + 1);
-	}, []);
+		swipeOut(() => {
+			setAnswered(false);
+			setLoadKey((k) => k + 1);
+		});
+	}, [swipeOut]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
 	useEffect(() => {
@@ -80,6 +85,12 @@ export function TypeTranslationExercise() {
 		addCompleteListener(onExerciseComplete);
 		return () => removeCompleteListener(onExerciseComplete);
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
+
+	useEffect(() => {
+		if (word && translation) {
+			notifyContentChanged();
+		}
+	}, [word, translation, notifyContentChanged]);
 
 	const evaluateStatus = useCallback(
 		(text: string): CharInputStatus => {
@@ -136,25 +147,26 @@ export function TypeTranslationExercise() {
 	}
 
 	return (
-		<View style={{ flex: 1, width: "100%" }}>
-			<TrainingPromptCard
-				word={word.word}
-				transcription={word.transcription}
-				meaning={word.meaning}
-				wordId={word.remoteId}
-				onSkip={handleSkip}
-			>
-				<View style={{ gap: 24, alignItems: "center" }}>
-					<PlayWordButton audio={word.audio} />
-				</View>
-			</TrainingPromptCard>
+		<View style={styles.wrapper}>
+			<Animated.View style={[styles.content, { transform: [{ translateX }] }]}>
+				<TrainingPromptCard
+					word={word.word}
+					transcription={word.transcription}
+					meaning={word.meaning}
+					wordId={word.remoteId}
+					onSkip={handleSkip}
+				>
+					<View style={{ gap: 24, alignItems: "center" }}>
+						<PlayWordButton audio={word.audio} />
+					</View>
+				</TrainingPromptCard>
 
-			<WCharInput
-				length={translation.translation.length}
-				onChangeText={handleChange}
-				status={status}
-			/>
-
+				<WCharInput
+					length={translation.translation.length}
+					onChangeText={handleChange}
+					status={status}
+				/>
+			</Animated.View>
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
@@ -165,3 +177,15 @@ export function TypeTranslationExercise() {
 		</View>
 	);
 }
+
+const styles = StyleSheet.create({
+	wrapper: {
+		flex: 1,
+		width: "100%",
+		overflow: "hidden",
+	},
+	content: {
+		flex: 1,
+		width: "100%",
+	},
+});

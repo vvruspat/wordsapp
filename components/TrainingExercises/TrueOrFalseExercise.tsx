@@ -1,12 +1,13 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
 import { translationsRepository } from "@/db/repositories/translations.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
 import { WButton, WText } from "@/mob-ui";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
@@ -20,6 +21,8 @@ export function TrueOrFalseExercise() {
 		translation: string;
 	} | null>(null);
 	const [answered, setAnswered] = useState(false);
+
+	const { translateX, swipeOut, notifyContentChanged } = useSwipeAnimation();
 
 	const {
 		addCompleteListener,
@@ -66,9 +69,11 @@ export function TrueOrFalseExercise() {
 	}, [loadData]);
 
 	const onExerciseComplete = useCallback(() => {
-		setAnswered(false);
-		setLoadKey((k) => k + 1);
-	}, []);
+		swipeOut(() => {
+			setAnswered(false);
+			setLoadKey((k) => k + 1);
+		});
+	}, [swipeOut]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
 	useEffect(() => {
@@ -88,6 +93,12 @@ export function TrueOrFalseExercise() {
 		if (!translationText || randomTranslationsCount === 0 || firstRandomText == null) return "";
 		return Math.random() >= 0.5 ? translationText : firstRandomText;
 	}, [translationText, firstRandomText, randomTranslationsCount]);
+
+	useEffect(() => {
+		if (word && randomTranslations.length > 0) {
+			notifyContentChanged();
+		}
+	}, [word, randomTranslations, notifyContentChanged]);
 
 	const handleAnswer = useCallback(
 		(choice: "yes" | "no") => {
@@ -129,39 +140,35 @@ export function TrueOrFalseExercise() {
 
 	return (
 		<>
-			<TrainingPromptCard
-				word={word.word}
-				transcription={word.transcription}
-				meaning={word.meaning}
-				wordId={word.remoteId}
-				onSkip={handleSkip}
-			>
-				<View style={{ gap: 24, alignItems: "center" }}>
-					<WText mode="primary" size="xl">
-						{statement}
-					</WText>
-					<PlayWordButton audio={word.audio} />
-				</View>
-			</TrainingPromptCard>
+			<View style={styles.wrapper}>
+				<Animated.View
+					style={[styles.content, { transform: [{ translateX }] }]}
+				>
+					<TrainingPromptCard
+						word={word.word}
+						transcription={word.transcription}
+						meaning={word.meaning}
+						wordId={word.remoteId}
+						onSkip={handleSkip}
+					>
+						<View style={{ gap: 24, alignItems: "center" }}>
+							<WText mode="primary" size="xl">
+								{statement}
+							</WText>
+							<PlayWordButton audio={word.audio} />
+						</View>
+					</TrainingPromptCard>
 
-			<View
-				style={{
-					width: "100%",
-					flexDirection: "row",
-					justifyContent: "center",
-					alignItems: "center",
-					alignContent: "stretch",
-					gap: 24,
-				}}
-			>
-				<WButton mode="dark" stretch onPress={() => handleAnswer("yes")}>
-					<WText>{t("true_or_false_yes")}</WText>
-				</WButton>
-				<WButton mode="dark" stretch onPress={() => handleAnswer("no")}>
-					<WText>{t("true_or_false_no")}</WText>
-				</WButton>
+					<View style={styles.buttonsContainer}>
+						<WButton mode="dark" stretch onPress={() => handleAnswer("yes")}>
+							<WText>{t("true_or_false_yes")}</WText>
+						</WButton>
+						<WButton mode="dark" stretch onPress={() => handleAnswer("no")}>
+							<WText>{t("true_or_false_no")}</WText>
+						</WButton>
+					</View>
+				</Animated.View>
 			</View>
-
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
@@ -172,3 +179,23 @@ export function TrueOrFalseExercise() {
 		</>
 	);
 }
+
+const styles = StyleSheet.create({
+	wrapper: {
+		flex: 1,
+		width: "100%",
+		overflow: "hidden",
+	},
+	content: {
+		flex: 1,
+		width: "100%",
+	},
+	buttonsContainer: {
+		width: "100%",
+		flexDirection: "row",
+		justifyContent: "center",
+		alignItems: "center",
+		alignContent: "stretch",
+		gap: 24,
+	},
+});

@@ -23,7 +23,7 @@ export default class LearningProgress extends Model {
 	createdAtRemote!: string;
 
 	@field("training")
-	training!: number;
+	training!: string;
 
 	@field("translation")
 	translation!: number;

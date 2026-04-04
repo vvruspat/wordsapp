@@ -15,6 +15,7 @@ export type PlayWordButtonProps = {
 export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [hasError, setHasError] = useState(false);
+	const pendingAutoplay = useRef(false);
 
 	const scaleAnim = useRef(new Animated.Value(1)).current;
 	const colorAnim = useRef(new Animated.Value(0)).current;
@@ -44,10 +45,24 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 			return;
 		}
 
+		setHasError(false);
 		player.loop = false;
+		pendingAutoplay.current = !!autoplay;
 
 		const listener = (status: AudioStatus) => {
 			setIsPlaying(status.playing);
+
+			// Autoplay only after the audio is fully loaded into the player
+			if (pendingAutoplay.current && status.isLoaded && !status.playing) {
+				pendingAutoplay.current = false;
+				try {
+					player.play();
+				} catch (error) {
+					logger.error("Error playing audio:", error, "audio");
+					setHasError(true);
+				}
+			}
+
 			if (status.didJustFinish) {
 				try {
 					player.pause();
@@ -60,17 +75,16 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 
 		player.addListener("playbackStatusUpdate", listener);
 
-		if (autoplay) {
-			try {
-				player.play();
-			} catch (error) {
-				logger.error("Error playing audio:", error, "audio");
-				setHasError(true);
-			}
-		}
-
 		return () => {
 			player.removeListener("playbackStatusUpdate", listener);
+			// Stop previous word's audio immediately when audio source changes
+			pendingAutoplay.current = false;
+			try {
+				player.pause();
+				player.seekTo(0);
+			} catch {
+				// ignore cleanup errors
+			}
 		};
 	}, [player, autoplay, audioPath]);
 

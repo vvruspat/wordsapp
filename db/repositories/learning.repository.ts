@@ -1,4 +1,5 @@
 import { Q } from "@nozbe/watermelondb";
+import { logger } from "@/utils/logger";
 import database from "../database";
 import LearningProgress from "../models/LearningProgress";
 
@@ -16,7 +17,7 @@ type RecordResultParams = {
 	scoreDelta: number;
 	result: "success" | "failure";
 	translationId?: number;
-	trainingId?: number;
+	trainingId?: string;
 };
 
 type UpsertFromRemoteParams = {
@@ -24,7 +25,7 @@ type UpsertFromRemoteParams = {
 	wordId: number;
 	score: number;
 	translationId?: number;
-	trainingId?: number;
+	trainingId?: string;
 	remoteId?: number;
 	createdAt?: string;
 };
@@ -35,17 +36,29 @@ export const learningRepository = {
 			params;
 		const now = new Date().toISOString();
 
+		// Scope lookup to (user, word, training) when trainingId is available,
+		// so each exercise maintains its own independent progress record.
 		const existing = await database
 			.get<LearningProgress>("learning_progress")
-			.query(Q.where("user_id", userId), Q.where("word_id", wordId))
+			.query(
+				trainingId != null
+					? Q.and(
+							Q.where("user_id", userId),
+							Q.where("word_id", wordId),
+							Q.where("training", trainingId),
+						)
+					: Q.and(Q.where("user_id", userId), Q.where("word_id", wordId)),
+			)
 			.fetch();
 
 		if (result === "failure") {
-			// On failure, delete the record so the word returns to the untrained pool
 			if (existing.length > 0) {
 				await database.write(async () => {
 					await existing[0].destroyPermanently();
 				});
+				logger.debug("learning_progress: deleted (failure)", { userId, wordId, trainingId }, "db");
+			} else {
+				logger.debug("learning_progress: failure but no record to delete", { userId, wordId, trainingId }, "db");
 			}
 			return null;
 		}
@@ -61,6 +74,7 @@ export const learningRepository = {
 					if (trainingId !== undefined) r.training = trainingId;
 				});
 			});
+			logger.debug("learning_progress: updated (success)", { userId, wordId, trainingId, newScore: Math.min(1, (existing[0].score ?? 0) + scoreDelta) }, "db");
 			return record;
 		}
 
@@ -78,6 +92,7 @@ export const learningRepository = {
 					if (trainingId !== undefined) r.training = trainingId;
 				});
 		});
+		logger.debug("learning_progress: created (success)", { userId, wordId, trainingId, score: scoreDelta }, "db");
 		return created;
 	},
 
@@ -111,6 +126,7 @@ export const learningRepository = {
 					if (remoteId !== undefined) r.remoteId = remoteId;
 				});
 			});
+			logger.debug("learning_progress: upserted from remote (update)", { userId, wordId, trainingId, score }, "db");
 			return record;
 		}
 
@@ -129,6 +145,7 @@ export const learningRepository = {
 					if (remoteId !== undefined) r.remoteId = remoteId;
 				});
 		});
+		logger.debug("learning_progress: upserted from remote (create)", { userId, wordId, trainingId, score }, "db");
 		return created;
 	},
 
@@ -151,10 +168,24 @@ export const learningRepository = {
 	},
 
 	async getByUser(userId: number): Promise<LearningProgress[]> {
-		return database
+		const records = await database
 			.get<LearningProgress>("learning_progress")
 			.query(Q.where("user_id", userId))
 			.fetch();
+		logger.debug("learning_progress: getByUser", { userId, count: records.length }, "db");
+		return records;
+	},
+
+	async getByUserAndTraining(
+		userId: number,
+		trainingId: string,
+	): Promise<LearningProgress[]> {
+		const records = await database
+			.get<LearningProgress>("learning_progress")
+			.query(Q.where("user_id", userId), Q.where("training", trainingId))
+			.fetch();
+		logger.debug("learning_progress: getByUserAndTraining", { userId, trainingId, count: records.length }, "db");
+		return records;
 	},
 
 	observeByUser(userId: number) {

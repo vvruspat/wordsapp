@@ -18,7 +18,6 @@ import { learningRepository } from "@/db/repositories/learning.repository";
 import { translationsRepository } from "@/db/repositories/translations.repository";
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useLearningSync } from "@/hooks/useLearningSync";
 import { useSessionUser } from "@/hooks/useSession";
 import { logger } from "@/utils/logger";
 
@@ -45,8 +44,13 @@ type ExerciseType = {
 	) => Promise<void>;
 	onFailure: (wordId: Word["id"], score: number, showModal?: boolean) => void;
 	onSuccess: (wordId: Word["id"], score: number, showModal?: boolean) => void;
-	setCurrentTrainingId: (trainingId: number | null) => void;
+	setCurrentTrainingId: (trainingId: string | null) => void;
 	triggerLike: () => void;
+	sessionStats: {
+		successCount: number;
+		failureCount: number;
+		totalCount: number;
+	};
 };
 
 const ExerciseContext = createContext<ExerciseType>({
@@ -60,6 +64,7 @@ const ExerciseContext = createContext<ExerciseType>({
 	onSuccess: () => {},
 	setCurrentTrainingId: () => {},
 	triggerLike: () => {},
+	sessionStats: { successCount: 0, failureCount: 0, totalCount: 0 },
 });
 
 export { ExerciseContext };
@@ -82,7 +87,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		setLikeTrigger((n) => n + 1);
 	}, []);
 	const [currentTrainingId, setCurrentTrainingIdState] = useState<
-		number | null
+		string | null
 	>(null);
 
 	const completeListeners = useRef(new Set<() => void>());
@@ -95,8 +100,14 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	// Track last served word to avoid immediate repeats
 	const lastServedWordId = useRef<number | null>(null);
 
+	// Session progress tracking
+	const [sessionSuccessCount, setSessionSuccessCount] = useState(0);
+	const [sessionFailureCount, setSessionFailureCount] = useState(0);
+	const [sessionTotalCount, setSessionTotalCount] = useState(0);
+	const succeededWordIds = useRef(new Set<number>());
+	const failedWordIds = useRef(new Set<number>());
+
 	const { user } = useSessionUser();
-	const { syncToBackend } = useLearningSync();
 
 	const {
 		currentCatalogs,
@@ -145,8 +156,9 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		onRequestClose();
 	}, [onRequestClose]);
 
-	// Pre-load all words into failed/success queues before training begins
-	const initializeQueues = useCallback(async () => {
+	// Pre-load all words into failed/success queues before training begins.
+	// When trainingId is provided, progress is scoped to that exercise only.
+	const initializeQueues = useCallback(async (trainingId?: string | null) => {
 		try {
 			const allWords = await wordsRepository.getRandomWords(
 				user?.language_learn ?? "en",
@@ -169,7 +181,10 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				.filter((p): p is SessionPair => p.translation !== undefined);
 
 			if (user?.userId) {
-				const progressRecords = await learningRepository.getByUser(user.userId);
+				const progressRecords =
+					trainingId != null
+						? await learningRepository.getByUserAndTraining(user.userId, trainingId)
+						: await learningRepository.getByUser(user.userId);
 				const progressByWordId = new Map(
 					progressRecords.map((r) => [r.wordId, r]),
 				);
@@ -207,22 +222,44 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		}
 	}, [currentCatalogs, currentTopics, user]);
 
+	const resetSessionStats = useCallback(() => {
+		succeededWordIds.current = new Set();
+		failedWordIds.current = new Set();
+		setSessionSuccessCount(0);
+		setSessionFailureCount(0);
+		setSessionTotalCount(0);
+	}, []);
+
 	// Re-initialize queues when language or filters change mid-session
 	useEffect(() => {
 		failedQueue.current = [];
 		successQueue.current = [];
-		initializationPromise.current = initializeQueues();
-	}, [initializeQueues]);
+		resetSessionStats();
+		initializationPromise.current = initializeQueues().then(() => {
+			setSessionTotalCount(
+				failedQueue.current.length + successQueue.current.length,
+			);
+		});
+	}, [initializeQueues, resetSessionStats]);
 
 	// Clear queues and re-initialize when switching training sessions
 	const setCurrentTrainingId = useCallback(
-		(trainingId: number | null) => {
+		(trainingId: string | null) => {
+			logger.debug("ExerciseContext: setCurrentTrainingId", { trainingId }, "general");
 			failedQueue.current = [];
 			successQueue.current = [];
+			resetSessionStats();
 			setCurrentTrainingIdState(trainingId);
-			initializationPromise.current = initializeQueues();
+			initializationPromise.current = initializeQueues(trainingId).then(() => {
+				const total = failedQueue.current.length + successQueue.current.length;
+				const alreadySucceeded = successQueue.current.map((p) => p.word.remoteId);
+				logger.debug("ExerciseContext: queue initialized", { total, succeeded: alreadySucceeded.length, trainingId }, "general");
+				succeededWordIds.current = new Set(alreadySucceeded);
+				setSessionTotalCount(total);
+				setSessionSuccessCount(alreadySucceeded.length);
+			});
 		},
-		[initializeQueues],
+		[initializeQueues, resetSessionStats],
 	);
 
 	const loadData = useCallback(
@@ -348,6 +385,15 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				});
 			}
 
+			// Track unique failed words (skip if already succeeded or already counted)
+			if (
+				!succeededWordIds.current.has(wordId) &&
+				!failedWordIds.current.has(wordId)
+			) {
+				failedWordIds.current.add(wordId);
+				setSessionFailureCount((c) => c + 1);
+			}
+
 			if (user?.userId) {
 				learningRepository
 					.recordResult({
@@ -358,7 +404,6 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						translationId,
 						trainingId: currentTrainingId ?? undefined,
 					})
-					.then(() => syncToBackend())
 					.catch((err) => logger.error("Failed to record result", err, "db"));
 			}
 
@@ -370,7 +415,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				showFailureModal();
 			}
 		},
-		[showFailureModal, user, currentTrainingId, syncToBackend],
+		[showFailureModal, user, currentTrainingId],
 	);
 
 	const onSuccess = useCallback(
@@ -394,6 +439,16 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				});
 			}
 
+			// Track unique succeeded words (move from failed to succeeded if needed)
+			if (!succeededWordIds.current.has(wordId)) {
+				succeededWordIds.current.add(wordId);
+				setSessionSuccessCount((c) => c + 1);
+				if (failedWordIds.current.has(wordId)) {
+					failedWordIds.current.delete(wordId);
+					setSessionFailureCount((c) => Math.max(0, c - 1));
+				}
+			}
+
 			if (user?.userId) {
 				learningRepository
 					.recordResult({
@@ -404,7 +459,6 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						translationId,
 						trainingId: currentTrainingId ?? undefined,
 					})
-					.then(() => syncToBackend())
 					.catch((err) => logger.error("Failed to record result", err, "db"));
 			}
 
@@ -416,7 +470,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				showSuccessModal();
 			}
 		},
-		[showSuccessModal, user, currentTrainingId, syncToBackend],
+		[showSuccessModal, user, currentTrainingId],
 	);
 
 	const value: ExerciseValue = {
@@ -430,6 +484,11 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		onSuccess,
 		setCurrentTrainingId,
 		triggerLike,
+		sessionStats: {
+			successCount: sessionSuccessCount,
+			failureCount: sessionFailureCount,
+			totalCount: sessionTotalCount,
+		},
 	};
 
 	return (
