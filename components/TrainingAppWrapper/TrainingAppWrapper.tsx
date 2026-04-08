@@ -107,7 +107,7 @@ export const TrainingAppWrapper = ({
 			behavior={Platform.OS === "ios" ? "padding" : "height"}
 			style={{ flex: 1 }}
 		>
-			<SafeAreaView
+		<SafeAreaView
 				mode="padding"
 				style={[styles.page, style]}
 				{...restViewProps}

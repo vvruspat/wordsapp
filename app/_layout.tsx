@@ -5,6 +5,8 @@ import { authenticateAsync, isEnrolledAsync } from "expo-local-authentication";
 import { Stack, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
+import { Platform } from "react-native";
+import { SystemBars } from "react-native-edge-to-edge";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
@@ -124,6 +126,7 @@ export default Sentry.wrap(function RootLayout() {
 					<BackgroundProvider>
 						<WZStack>
 							<StatusBar style="light" />
+							{Platform.OS === "android" && <SystemBars hidden={{ navigationBar: true }} />}
 							<ScreenBackground />
 							{children}
 						</WZStack>

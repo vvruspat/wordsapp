@@ -1,3 +1,9 @@
+import { GlowingEllipse } from "@/components/GlowingEllipse";
+import { PlayWordButton } from "@/components/PlayWordButton";
+import { ExerciseContext } from "@/context/ExerciseContext";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { WButton, WCard, WText, WZStack } from "@/mob-ui";
+import { Colors } from "@/mob-ui/brand/colors";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -11,12 +17,6 @@ import Animated, {
 	withTiming,
 } from "react-native-reanimated";
 import { runOnJS } from "react-native-worklets";
-import { GlowingEllipse } from "@/components/GlowingEllipse";
-import { PlayWordButton } from "@/components/PlayWordButton";
-import { ExerciseContext } from "@/context/ExerciseContext";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { WButton, WCard, WText, WZStack } from "@/mob-ui";
-import { Colors } from "@/mob-ui/brand/colors";
 import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const SCORE = 0.2;
@@ -67,7 +67,14 @@ export function CardsExercise() {
 		likeTranslateY.value = 0;
 		likeOpacity.value = 0;
 		setLoadKey((k) => k + 1);
-	}, [flipProgress, cardTranslateX, cardOpacity, buttonsOpacity, likeTranslateY, likeOpacity]);
+	}, [
+		flipProgress,
+		cardTranslateX,
+		cardOpacity,
+		buttonsOpacity,
+		likeTranslateY,
+		likeOpacity,
+	]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
 	useEffect(() => {
@@ -100,19 +107,23 @@ export function CardsExercise() {
 
 			buttonsOpacity.value = withTiming(0, { duration: 200 });
 
-			flipProgress.value = withTiming(1, { duration: FLIP_DURATION }, (finished) => {
-				if (!finished) return;
-				cardTranslateX.value = withDelay(
-					SHOW_ANSWER_MS,
-					withTiming(-500, { duration: SWIPE_DURATION }),
-				);
-				cardOpacity.value = withDelay(
-					SHOW_ANSWER_MS,
-					withTiming(0, { duration: SWIPE_DURATION }, (done) => {
-						if (done) runOnJS(complete)();
-					}),
-				);
-			});
+			flipProgress.value = withTiming(
+				1,
+				{ duration: FLIP_DURATION },
+				(finished) => {
+					if (!finished) return;
+					cardTranslateX.value = withDelay(
+						SHOW_ANSWER_MS,
+						withTiming(-500, { duration: SWIPE_DURATION }),
+					);
+					cardOpacity.value = withDelay(
+						SHOW_ANSWER_MS,
+						withTiming(0, { duration: SWIPE_DURATION }, (done) => {
+							if (done) runOnJS(complete)();
+						}),
+					);
+				},
+			);
 		},
 		[
 			word,
@@ -232,7 +243,7 @@ export function CardsExercise() {
 			>
 				<View style={styles.buttons}>
 					<WButton mode="dark" stretch onPress={() => handleAnswer(false)}>
-						<WText>{t("cards_dont_know")}</WText>
+						<WText wrap={false}>{t("cards_dont_know")}</WText>
 					</WButton>
 					<WButton mode="dark" stretch onPress={() => handleAnswer(true)}>
 						<WText>{t("cards_know")}</WText>
