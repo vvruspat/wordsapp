@@ -1,33 +1,34 @@
-import { StyleSheet } from "react-native";
 import { Colors } from "@/mob-ui/brand/colors";
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-	screen: {
-		backgroundColor: Colors.backgrounds.primaryBackground,
-	},
-	page: {
-		flex: 1,
-		justifyContent: "flex-start",
-		paddingHorizontal: 16,
-		alignItems: "flex-start",
-		marginTop: 16,
-	},
+  screen: {
+    backgroundColor: Colors.backgrounds.primaryBackground,
+  },
+  page: {
+    flex: 1,
+    justifyContent: "flex-start",
+    paddingHorizontal: 16,
+    alignItems: "flex-start",
+    marginTop: 16,
+    paddingBottom: 16,
+  },
 
-	formWrapper: {
-		flex: 1,
-		gap: 48,
-		width: "100%",
-		alignItems: "center",
-		justifyContent: "center",
-	},
+  formWrapper: {
+    flex: 1,
+    gap: 48,
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
-	fieldsGroup: {
-		gap: 24,
-		width: "100%",
-	},
+  fieldsGroup: {
+    gap: 24,
+    width: "100%",
+  },
 
-	spinnerContainer: {
-		flex: 1,
-		justifyContent: "center",
-	},
+  spinnerContainer: {
+    flex: 1,
+    justifyContent: "center",
+  },
 });
