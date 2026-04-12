@@ -50,6 +50,7 @@ type ExerciseType = {
 		successCount: number;
 		failureCount: number;
 		totalCount: number;
+		successEventCount: number;
 	};
 };
 
@@ -64,7 +65,12 @@ const ExerciseContext = createContext<ExerciseType>({
 	onSuccess: () => {},
 	setCurrentTrainingId: () => {},
 	triggerLike: () => {},
-	sessionStats: { successCount: 0, failureCount: 0, totalCount: 0 },
+	sessionStats: {
+		successCount: 0,
+		failureCount: 0,
+		totalCount: 0,
+		successEventCount: 0,
+	},
 });
 
 export { ExerciseContext };
@@ -104,6 +110,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const [sessionSuccessCount, setSessionSuccessCount] = useState(0);
 	const [sessionFailureCount, setSessionFailureCount] = useState(0);
 	const [sessionTotalCount, setSessionTotalCount] = useState(0);
+	const [sessionSuccessEventCount, setSessionSuccessEventCount] = useState(0);
 	const succeededWordIds = useRef(new Set<number>());
 	const failedWordIds = useRef(new Set<number>());
 
@@ -228,6 +235,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		setSessionSuccessCount(0);
 		setSessionFailureCount(0);
 		setSessionTotalCount(0);
+		setSessionSuccessEventCount(0);
 	}, []);
 
 	// Re-initialize queues when language or filters change mid-session
@@ -424,6 +432,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				.getState()
 				.currentPairs.find((p) => p.word.remoteId === wordId);
 			const translationId = pair?.translation?.remoteId;
+			setSessionSuccessEventCount((c) => c + 1);
 
 			// Remove word from failed queue and move to end of success queue
 			if (pair?.translation) {
@@ -488,6 +497,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			successCount: sessionSuccessCount,
 			failureCount: sessionFailureCount,
 			totalCount: sessionTotalCount,
+			successEventCount: sessionSuccessEventCount,
 		},
 	};
 

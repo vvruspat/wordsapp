@@ -44,7 +44,8 @@
 	"dashboard_profile": "Profiel",
 	"level_title": "Niveau",
 	"topics_title": "Onderwerpen",
-	"app_true_or_false_title": "Correcte vertaling",
+	"select_all_topics": "Alles selecteren",
+	"app_true_or_false_title": "Waar of niet",
 	"app_true_or_false_description": "Bepaal of de vertaling correct is",
 	"app_true_or_false_header": "Is dit de juiste vertaling?",
 	"app_choose_translation_title": "Kies de juiste vertaling",
@@ -113,5 +114,13 @@
 	"error_invalid_credentials": "Onjuist wachtwoord. Probeer het opnieuw.",
 	"error_unauthorized": "Log in om door te gaan.",
 	"error_generic": "Er is iets misgegaan. Probeer het opnieuw.",
-	"biometric_auth_error": "Biometrische authenticatie mislukt. Probeer het opnieuw."
+	"biometric_auth_error": "Biometrische authenticatie mislukt. Probeer het opnieuw.",
+	"training_mastered_title": "Alle woorden in deze training zijn voltooid",
+	"training_mastered_description": "Je kunt ze hier blijven herhalen of doorgaan naar de volgende training.",
+	"training_mastered_stay": "Blijf trainen",
+	"training_mastered_next": "Volgende training",
+	"topic_mastered_title": "Dit onderwerp is voltooid",
+	"topic_mastered_description": "Je kunt hier blijven of doorgaan naar {{topic}}.",
+	"topic_mastered_stay": "Blijf bij dit onderwerp",
+	"topic_mastered_next": "Volgend onderwerp"
 }

@@ -165,7 +165,9 @@ export default function RootLayout() {
 
 	const insets = useSafeAreaInsets();
 	const androidBottomInset = Platform.OS === "android" ? 12 : 0;
-	const tabBarBottomInset = Math.max(insets.bottom, androidBottomInset);
+	const extraTabBarPaddingBottom = Platform.OS === "android" ? 8 : 0;
+	const tabBarBottomInset =
+		Math.max(insets.bottom, androidBottomInset) + extraTabBarPaddingBottom;
 
 	return (
 		<View style={styles.container}>

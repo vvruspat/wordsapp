@@ -44,7 +44,8 @@
 	"dashboard_profile": "Perfil",
 	"level_title": "Nivel",
 	"topics_title": "Temas",
-	"app_true_or_false_title": "Traducción correcta",
+	"select_all_topics": "Seleccionar todo",
+	"app_true_or_false_title": "Verdadero o falso",
 	"app_true_or_false_description": "Decide si la traducción es correcta o no",
 	"app_true_or_false_header": "¿Es esta la traducción correcta?",
 	"app_choose_translation_title": "Elige la traducción correcta",
@@ -113,5 +114,13 @@
 	"error_invalid_credentials": "Contraseña incorrecta. Por favor, inténtalo de nuevo.",
 	"error_unauthorized": "Por favor, inicia sesión para continuar.",
 	"error_generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
-	"biometric_auth_error": "La autenticación biométrica falló. Por favor, inténtalo de nuevo."
+	"biometric_auth_error": "La autenticación biométrica falló. Por favor, inténtalo de nuevo.",
+	"training_mastered_title": "Todas las palabras de este entrenamiento ya están completadas",
+	"training_mastered_description": "Puedes seguir repasándolas aquí o pasar al siguiente entrenamiento.",
+	"training_mastered_stay": "Seguir entrenando",
+	"training_mastered_next": "Siguiente entrenamiento",
+	"topic_mastered_title": "Este tema ya está completado",
+	"topic_mastered_description": "Puedes seguir aquí o pasar al siguiente tema: {{topic}}.",
+	"topic_mastered_stay": "Quedarme en este tema",
+	"topic_mastered_next": "Siguiente tema"
 }

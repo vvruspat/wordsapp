@@ -44,7 +44,8 @@
 	"dashboard_profile": "Profil",
 	"level_title": "Level",
 	"topics_title": "Themen",
-	"app_true_or_false_title": "Korrekte Übersetzung",
+	"select_all_topics": "Alle wählen",
+	"app_true_or_false_title": "Wahr oder falsch",
 	"app_true_or_false_description": "Entscheide, ob die Übersetzung korrekt ist",
 	"app_true_or_false_header": "Ist dies die richtige Übersetzung?",
 	"app_choose_translation_title": "Wähle die richtige Übersetzung",
@@ -113,5 +114,13 @@
 	"error_invalid_credentials": "Falsches Passwort. Bitte versuche es erneut.",
 	"error_unauthorized": "Bitte melde dich an, um fortzufahren.",
 	"error_generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
-	"biometric_auth_error": "Biometrische Authentifizierung fehlgeschlagen. Bitte versuche es erneut."
+	"biometric_auth_error": "Biometrische Authentifizierung fehlgeschlagen. Bitte versuche es erneut.",
+	"training_mastered_title": "Alle Wörter in diesem Training sind abgeschlossen",
+	"training_mastered_description": "Du kannst sie hier weiter wiederholen oder zum nächsten Training wechseln.",
+	"training_mastered_stay": "Weiter trainieren",
+	"training_mastered_next": "Nächstes Training",
+	"topic_mastered_title": "Dieses Thema ist abgeschlossen",
+	"topic_mastered_description": "Du kannst hier bleiben oder mit {{topic}} weitermachen.",
+	"topic_mastered_stay": "Bei diesem Thema bleiben",
+	"topic_mastered_next": "Nächstes Thema"
 }

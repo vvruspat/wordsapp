@@ -17,6 +17,14 @@ export const EXERCISES_APPS = {
     descriptionColor: Colors.dark.dark1,
     descriptionId: "app_true_or_false_description",
   },
+  match_words: {
+    id: "match_words",
+    titleColor: Colors.dark.black,
+    titleId: "app_match_words_title",
+    backgroundColor: Colors.backgrounds.orange,
+    descriptionColor: Colors.dark.dark1,
+    descriptionId: "app_match_words_description",
+  },
   choose_translation: {
     id: "choose_translation",
     titleColor: Colors.dark.black,
@@ -32,14 +40,6 @@ export const EXERCISES_APPS = {
     backgroundColor: Colors.backgrounds.blue,
     descriptionColor: Colors.dark.dark1,
     descriptionId: "app_type_word_description",
-  },
-  match_words: {
-    id: "match_words",
-    titleColor: Colors.dark.black,
-    titleId: "app_match_words_title",
-    backgroundColor: Colors.backgrounds.orange,
-    descriptionColor: Colors.dark.dark1,
-    descriptionId: "app_match_words_description",
   },
   listening_practice: {
     id: "listening_practice",

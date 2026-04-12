@@ -44,7 +44,8 @@
 	"dashboard_profile": "Προφίλ",
 	"level_title": "Επίπεδο",
 	"topics_title": "Θέματα",
-	"app_true_or_false_title": "Σωστή μετάφραση",
+	"select_all_topics": "Επιλογή όλων",
+	"app_true_or_false_title": "Σωστό ή λάθος",
 	"app_true_or_false_description": "Αποφασίστε αν η μετάφραση είναι σωστή ή όχι",
 	"app_true_or_false_header": "Είναι αυτή η σωστή μετάφραση;",
 	"app_choose_translation_title": "Επιλέξτε τη σωστή μετάφραση",
@@ -113,5 +114,13 @@
 	"error_invalid_credentials": "Λανθασμένος κωδικός. Παρακαλώ δοκιμάστε ξανά.",
 	"error_unauthorized": "Παρακαλώ συνδεθείτε για να συνεχίσετε.",
 	"error_generic": "Κάτι πήγε στραβά. Παρακαλώ δοκιμάστε ξανά.",
-	"biometric_auth_error": "Η βιομετρική αυθεντικοποίηση απέτυχε. Παρακαλώ δοκιμάστε ξανά."
+	"biometric_auth_error": "Η βιομετρική αυθεντικοποίηση απέτυχε. Παρακαλώ δοκιμάστε ξανά.",
+	"training_mastered_title": "Όλες οι λέξεις αυτής της άσκησης έχουν ολοκληρωθεί",
+	"training_mastered_description": "Μπορείτε να συνεχίσετε την επανάληψη εδώ ή να προχωρήσετε στην επόμενη άσκηση.",
+	"training_mastered_stay": "Συνέχεια εδώ",
+	"training_mastered_next": "Επόμενη άσκηση",
+	"topic_mastered_title": "Αυτή η θεματική ολοκληρώθηκε",
+	"topic_mastered_description": "Μπορείτε να μείνετε εδώ ή να προχωρήσετε στην επόμενη θεματική: {{topic}}.",
+	"topic_mastered_stay": "Μείνετε σε αυτή τη θεματική",
+	"topic_mastered_next": "Επόμενη θεματική"
 }
