@@ -12,11 +12,12 @@ import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { WText } from "@/mob-ui";
+import { buildTopicProgressStats } from "@/utils/topicProgress";
 import { logger } from "@/utils/logger";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FlatList, ListRenderItemInfo, View } from "react-native";
+import { FlatList, ListRenderItemInfo, Pressable, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../general.styles";
 
@@ -74,62 +75,34 @@ export default function Catalog() {
 	);
 
 	useEffect(() => {
-		if (topicWords.length === 0 || !user?.userId) return;
+		if (topicWords.length === 0 || !user?.userId) {
+			setTopicStats(new Map());
+			return;
+		}
 
 		const subscription = learningRepository
 			.observeByUser(user.userId)
 			.subscribe((progressRecords) => {
-				const progressByWordId = new Map(
-					progressRecords.map((p) => [p.wordId, p]),
-				);
-
-				const threeMonthsAgo = new Date();
-				threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
-				const stats = new Map<
-					number,
-					{ total: number; learned: number; greenScore: number; yellowScore: number }
-				>();
-				for (const word of topicWords) {
-					const entry = stats.get(word.topic) ?? {
-						total: 0,
-						learned: 0,
-						greenScore: 0,
-						yellowScore: 0,
-					};
-					entry.total += 1;
-					const progress = progressByWordId.get(word.remoteId);
-					if (progress && progress.score > 0) {
-						if (progress.score >= 1) entry.learned += 1;
-						const lastReview = new Date(progress.lastReview);
-						if (lastReview >= threeMonthsAgo) {
-							entry.greenScore += progress.score;
-						} else {
-							entry.yellowScore += progress.score;
-						}
-					}
-					stats.set(word.topic, entry);
-				}
-				setTopicStats(stats);
+				setTopicStats(buildTopicProgressStats(topicWords, progressRecords));
 			});
 
 		return () => subscription.unsubscribe();
 	}, [topicWords, user?.userId]);
 
-	// Only auto-select topics when the user explicitly toggles a catalog, not on mount or hydration
+	// Only auto-select a topic when the user explicitly toggles a catalog, not on mount or hydration
 	const catalogJustToggledRef = useRef(false);
 
 	useEffect(() => {
 		if (!catalogJustToggledRef.current) return;
 		catalogJustToggledRef.current = false;
-		setCurrentTopics(filteredTopics.map((t) => t.remoteId));
+		setCurrentTopics(filteredTopics[0] ? [filteredTopics[0].remoteId] : []);
 	}, [filteredTopics, setCurrentTopics]);
 
-	// On first launch (topics never saved to DB), auto-select all filtered topics (#31)
+	// On first launch (topics never saved to DB), auto-select the first filtered topic
 	useEffect(() => {
 		if (!_hasHydrated || topicsInitialized || filteredTopics.length === 0)
 			return;
-		setCurrentTopics(filteredTopics.map((t) => t.remoteId));
+		setCurrentTopics([filteredTopics[0].remoteId]);
 		setTopicsInitialized(true);
 	}, [
 		_hasHydrated,
@@ -175,7 +148,9 @@ export default function Catalog() {
 	}, []);
 
 	const fetchTopics = useCallback(async (language: string) => {
-		const topics = await topicsRepository.getByLanguage(language);
+		const topics = (await topicsRepository.getByLanguage(language)).sort((a, b) =>
+			a.title.localeCompare(b.title),
+		);
 		setTopics(topics);
 	}, []);
 
@@ -245,6 +220,10 @@ export default function Catalog() {
 		[setCurrentTopics],
 	);
 
+	const selectAllTopics = useCallback(() => {
+		setCurrentTopics(filteredTopics.map((topic) => topic.remoteId));
+	}, [filteredTopics, setCurrentTopics]);
+
 	const renderTopicItem = (item: ListRenderItemInfo<Topic>) => {
 		const stats = topicStats.get(item.item.remoteId);
 		return (
@@ -309,9 +288,26 @@ export default function Catalog() {
 					numColumns={5}
 				/>
 
-				<WText mode="primary" size="2xl">
-					{t("topics_title")}
-				</WText>
+				<View
+					style={{
+						width: "100%",
+						flexDirection: "row",
+						alignItems: "center",
+						justifyContent: "space-between",
+						gap: 12,
+					}}
+				>
+						<WText mode="primary" size="2xl">
+							{t("topics_title")}
+						</WText>
+						{filteredTopics.length > 0 && (
+							<Pressable onPress={selectAllTopics}>
+								<WText mode="secondary" size="md">
+									{t("select_all_topics")}
+								</WText>
+							</Pressable>
+						)}
+					</View>
 
 				<View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
 					<FlatList

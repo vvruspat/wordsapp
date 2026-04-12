@@ -44,7 +44,8 @@
 	"dashboard_profile": "Profil",
 	"level_title": "Niveau",
 	"topics_title": "Sujets",
-	"app_true_or_false_title": "Traduction correcte",
+	"select_all_topics": "Tout sélectionner",
+	"app_true_or_false_title": "Vrai ou faux",
 	"app_true_or_false_description": "Décidez si la traduction est correcte ou non",
 	"app_true_or_false_header": "Est-ce la bonne traduction ?",
 	"app_choose_translation_title": "Choisissez la bonne traduction",
@@ -113,5 +114,13 @@
 	"error_invalid_credentials": "Mot de passe incorrect. Veuillez réessayer.",
 	"error_unauthorized": "Veuillez vous connecter pour continuer.",
 	"error_generic": "Une erreur s'est produite. Veuillez réessayer.",
-	"biometric_auth_error": "L'authentification biométrique a échoué. Veuillez réessayer."
+	"biometric_auth_error": "L'authentification biométrique a échoué. Veuillez réessayer.",
+	"training_mastered_title": "Tous les mots de cet entraînement sont terminés",
+	"training_mastered_description": "Vous pouvez continuer à les réviser ici ou passer à l'entraînement suivant.",
+	"training_mastered_stay": "Continuer ici",
+	"training_mastered_next": "Entraînement suivant",
+	"topic_mastered_title": "Ce thème est terminé",
+	"topic_mastered_description": "Vous pouvez rester ici ou passer au thème suivant : {{topic}}.",
+	"topic_mastered_stay": "Rester sur ce thème",
+	"topic_mastered_next": "Thème suivant"
 }

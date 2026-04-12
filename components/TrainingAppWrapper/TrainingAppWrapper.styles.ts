@@ -26,4 +26,26 @@ export const trainingAppWrapperStyles = StyleSheet.create({
 		justifyContent: "center",
 		backgroundColor: Colors.dark.black,
 	},
+	masteredPromptOverlay: {
+		position: "absolute",
+		right: 16,
+		bottom: 24,
+		left: 16,
+	},
+	masteredPromptCard: {
+		backgroundColor: Colors.dark.dark2,
+		borderWidth: 1,
+		borderColor: Colors.greys.grey4,
+		gap: 16,
+	},
+	masteredPromptTitle: {
+		color: Colors.greys.white,
+	},
+	masteredPromptDescription: {
+		color: Colors.greys.grey2,
+	},
+	masteredPromptActions: {
+		gap: 12,
+		width: "100%",
+	},
 });
