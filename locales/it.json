@@ -44,7 +44,8 @@
 	"dashboard_profile": "Profilo",
 	"level_title": "Livello",
 	"topics_title": "Argomenti",
-	"app_true_or_false_title": "Traduzione corretta",
+	"select_all_topics": "Seleziona tutto",
+	"app_true_or_false_title": "Vero o falso",
 	"app_true_or_false_description": "Decidi se la traduzione è corretta o no",
 	"app_true_or_false_header": "È questa la traduzione corretta?",
 	"app_choose_translation_title": "Scegli la traduzione corretta",
@@ -113,5 +114,13 @@
 	"error_invalid_credentials": "Password errata. Per favore riprova.",
 	"error_unauthorized": "Effettua l'accesso per continuare.",
 	"error_generic": "Qualcosa è andato storto. Per favore riprova.",
-	"biometric_auth_error": "Autenticazione biometrica fallita. Per favore riprova."
+	"biometric_auth_error": "Autenticazione biometrica fallita. Per favore riprova.",
+	"training_mastered_title": "Tutte le parole di questo allenamento sono completate",
+	"training_mastered_description": "Puoi continuare a ripassarle qui oppure passare all'allenamento successivo.",
+	"training_mastered_stay": "Continua qui",
+	"training_mastered_next": "Allenamento successivo",
+	"topic_mastered_title": "Questo argomento è completato",
+	"topic_mastered_description": "Puoi restare qui oppure passare al prossimo argomento: {{topic}}.",
+	"topic_mastered_stay": "Resta su questo argomento",
+	"topic_mastered_next": "Argomento successivo"
 }

@@ -23,7 +23,7 @@ export default function Learning() {
 	}, [setColor, setOpacity]);
 
 	return (
-		<SafeAreaView mode="padding" style={styles.page}>
+		<SafeAreaView mode="padding" edges={["top"]} style={styles.page}>
 			<View
 				style={{
 					gap: 16,
@@ -31,7 +31,6 @@ export default function Learning() {
 					width: "100%",
 					alignItems: "flex-start",
 					justifyContent: "flex-start",
-					padding: 16,
 				}}
 			>
 				<WText mode="primary" size="2xl">
