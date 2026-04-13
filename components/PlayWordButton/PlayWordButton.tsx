@@ -1,5 +1,5 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { AudioStatus, useAudioPlayer } from "expo-audio";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
@@ -11,6 +11,38 @@ export type PlayWordButtonProps = {
 	autoplay?: boolean;
 	audio: string | null | undefined;
 };
+
+function resolveAudioSource(audio: string | null | undefined): string | null {
+	if (!audio) {
+		return null;
+	}
+
+	if (
+		audio.startsWith("file://") ||
+		audio.startsWith("http://") ||
+		audio.startsWith("https://")
+	) {
+		return audio;
+	}
+
+	if (!FileSystem.documentDirectory) {
+		return null;
+	}
+
+	const normalizedAudio = audio.split("?")[0];
+
+	if (normalizedAudio.startsWith(FileSystem.documentDirectory)) {
+		return normalizedAudio;
+	}
+
+	const filename = normalizedAudio.split("/").pop();
+
+	if (!filename) {
+		return null;
+	}
+
+	return `${FileSystem.documentDirectory}assets/audio/${filename}`;
+}
 
 export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 	const [isPlaying, setIsPlaying] = useState(false);
@@ -25,23 +57,14 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		outputRange: [Colors.greys.grey10, Colors.backgrounds.green],
 	});
 
-	// Safely get audio path
-	const audioPath = (() => {
-		if (!audio || !FileSystem.documentDirectory) {
-			return null;
-		}
-		const filename = audio.split("/").pop();
-		if (!filename) {
-			return null;
-		}
-		return `${FileSystem.documentDirectory}assets/audio/${filename}`;
-	})();
-
-	const player = useAudioPlayer(audioPath ?? "");
+	const audioSource = resolveAudioSource(audio);
+	const player = useAudioPlayer(audioSource ?? undefined);
+	const status = useAudioPlayerStatus(player);
 
 	useEffect(() => {
-		if (!audioPath) {
+		if (!audioSource) {
 			setHasError(true);
+			pendingAutoplay.current = false;
 			return;
 		}
 
@@ -49,56 +72,65 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		player.loop = false;
 		pendingAutoplay.current = !!autoplay;
 
-		const listener = (status: AudioStatus) => {
-			setIsPlaying(status.playing);
-
-			// Autoplay only after the audio is fully loaded into the player
-			if (pendingAutoplay.current && status.isLoaded && !status.playing) {
-				pendingAutoplay.current = false;
-				try {
-					player.play();
-				} catch (error) {
-					logger.error("Error playing audio:", error, "audio");
-					setHasError(true);
-				}
-			}
-
-			if (status.didJustFinish) {
-				try {
-					player.pause();
-					player.seekTo(0);
-				} catch (error) {
-					logger.error("Error stopping audio:", error, "audio");
-				}
-			}
-		};
-
-		player.addListener("playbackStatusUpdate", listener);
-
 		return () => {
-			player.removeListener("playbackStatusUpdate", listener);
-			// Stop previous word's audio immediately when audio source changes
 			pendingAutoplay.current = false;
 			try {
 				player.pause();
-				player.seekTo(0);
+				void player.seekTo(0);
 			} catch {
 				// ignore cleanup errors
 			}
 		};
-	}, [player, autoplay, audioPath]);
+	}, [audioSource, autoplay, player]);
+
+	useEffect(() => {
+		setIsPlaying(status.playing);
+
+		if (
+			pendingAutoplay.current &&
+			status.isLoaded &&
+			!status.isBuffering &&
+			!status.playing
+		) {
+			pendingAutoplay.current = false;
+
+			try {
+				void player.seekTo(0);
+				player.play();
+			} catch (error) {
+				logger.error("Error playing audio:", error, "audio");
+				setHasError(true);
+			}
+		}
+
+		if (status.didJustFinish) {
+			try {
+				player.pause();
+				void player.seekTo(0);
+			} catch (error) {
+				logger.error("Error stopping audio:", error, "audio");
+			}
+		}
+	}, [player, status]);
 
 	const onPlayPressed = useCallback(() => {
-		if (!audioPath || hasError) {
+		if (!audioSource || hasError) {
 			return;
 		}
+
+		if (!status.isLoaded || status.isBuffering) {
+			pendingAutoplay.current = true;
+			return;
+		}
+
 		try {
+			void player.seekTo(0);
 			player.play();
 		} catch (error) {
 			logger.error("Error playing audio:", error, "audio");
 			setHasError(true);
 		}
-	}, [player, audioPath, hasError]);
+	}, [player, audioSource, hasError, status.isBuffering, status.isLoaded]);
 
 	useEffect(() => {
 		if (isPlaying) {
@@ -135,7 +167,7 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		}
 	}, [isPlaying, scaleAnim, colorAnim]);
 
-	if (!audio || !audioPath || hasError) {
+	if (!audio || !audioSource || hasError) {
 		return null;
 	}
 

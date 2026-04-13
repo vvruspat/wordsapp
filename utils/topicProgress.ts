@@ -69,13 +69,16 @@ export function buildTopicProgressStats(
 				continue;
 			}
 
-			const normalizedScore = Math.min(Math.max(record.score, 0), 1) / TRAININGS_COUNT;
+			// Topic completion is based on coverage across trainings:
+			// one completed training contributes one full training slot,
+			// regardless of how many repeated successes were needed inside it.
+			const normalizedTrainingCoverage = 1 / TRAININGS_COUNT;
 			const lastReview = new Date(record.lastReview);
 
 			if (lastReview >= threeMonthsAgo) {
-				wordGreenScore += normalizedScore;
+				wordGreenScore += normalizedTrainingCoverage;
 			} else {
-				wordYellowScore += normalizedScore;
+				wordYellowScore += normalizedTrainingCoverage;
 			}
 		}
 
