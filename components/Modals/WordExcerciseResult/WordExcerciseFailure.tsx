@@ -4,17 +4,20 @@ import { getBiggestWordLength } from "@/utils/getBiggestWordLength";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, type ModalProps, View } from "react-native";
+import { ReportButton } from "@/components/ReportButton";
 import { SadSmileIcon } from "./assets/SadSmileIcon";
 
 export type WordExcerciseFailureModalProps = ModalProps & {
 	word?: string;
 	translation?: string;
+	wordId?: number;
 };
 
 export const WordExcerciseFailureModal = ({
 	onRequestClose,
 	word,
 	translation,
+	wordId,
 	...modalProps
 }: WordExcerciseFailureModalProps) => {
 	const { t } = useTranslation();
@@ -63,6 +66,18 @@ export const WordExcerciseFailureModal = ({
 						paddingBottom: 48,
 					}}
 				>
+					{wordId !== undefined && (
+						<View
+							style={{
+								position: "absolute",
+								top: 8,
+								right: 8,
+								zIndex: 1,
+							}}
+						>
+							<ReportButton wordId={wordId} />
+						</View>
+					)}
 					<View
 						style={{
 							position: "absolute",

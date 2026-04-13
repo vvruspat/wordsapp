@@ -65,6 +65,7 @@ export const TrainingAppWrapper = ({
 	);
 	const previousMasteredRef = useRef<boolean | null>(null);
 	const previousTopicCompleteRef = useRef<boolean | null>(null);
+	const hasShownInitialTopicPromptRef = useRef(false);
 	const {
 		addCompleteListener,
 		removeCompleteListener,
@@ -74,6 +75,7 @@ export const TrainingAppWrapper = ({
 	const { setColor, setOpacity } = useContext(BackgroundContext);
 	const { user } = useSessionUser();
 	const { currentCatalogs, currentTopics, setCurrentTopics } = useExcerciseStore();
+	const selectedTopicId = currentTopics.length === 1 ? currentTopics[0] : null;
 
 	const orderedTrainingIds = useMemo(
 		() =>
@@ -156,6 +158,7 @@ export const TrainingAppWrapper = ({
 		setIsCurrentTopicComplete(false);
 		previousMasteredRef.current = null;
 		previousTopicCompleteRef.current = null;
+		hasShownInitialTopicPromptRef.current = false;
 
 		if (masteredPromptTimeoutRef.current) {
 			clearTimeout(masteredPromptTimeoutRef.current);
@@ -182,11 +185,56 @@ export const TrainingAppWrapper = ({
 		};
 	}, [currentExercise, setColor, setOpacity, t]);
 
+	const checkTopicCompletion = useCallback(async () => {
+		if (
+			!user?.userId ||
+			!user.language_learn ||
+			currentCatalogs.length === 0 ||
+			selectedTopicId == null
+		) {
+			return {
+				isComplete: false,
+				nextTopicId: null,
+				nextTopicTitle: null,
+			};
+		}
+
+		const [topics, words, progressRecords, availableTopicIds] = await Promise.all([
+			topicsRepository.getByLanguage(user.language_learn),
+			wordsRepository.getByTopicIds(currentTopics, currentCatalogs),
+			learningRepository.getByUser(user.userId),
+			wordsRepository.getTopicsByCatalogs(currentCatalogs),
+		]);
+
+		const sortedTopics = topics.sort((a, b) => a.title.localeCompare(b.title));
+		const filteredTopics = sortedTopics.filter((topic) =>
+			availableTopicIds.has(topic.remoteId),
+		);
+		const currentTopicIndex = filteredTopics.findIndex(
+			(topic) => topic.remoteId === selectedTopicId,
+		);
+		const nextTopic = currentTopicIndex >= 0 ? filteredTopics[currentTopicIndex + 1] : null;
+		const stats = buildTopicProgressStats(words, progressRecords);
+		const topicStats = stats.get(selectedTopicId);
+
+		return {
+			isComplete: Boolean(
+				topicStats && topicStats.total > 0 && topicStats.learned >= topicStats.total,
+			),
+			nextTopicId: nextTopic?.remoteId ?? null,
+			nextTopicTitle: nextTopic?.title ?? null,
+		};
+	}, [
+		currentCatalogs,
+		currentTopics,
+		selectedTopicId,
+		user?.language_learn,
+		user?.userId,
+	]);
+
 	useEffect(() => {
 		let isMounted = true;
 		let unsubscribe: (() => void) | undefined;
-
-		const selectedTopicId = currentTopics.length === 1 ? currentTopics[0] : null;
 
 		if (
 			!user?.userId ||
@@ -200,46 +248,19 @@ export const TrainingAppWrapper = ({
 			return;
 		}
 
-		const loadTopicProgress = async () => {
-			const [topics, words] = await Promise.all([
-				topicsRepository.getByLanguage(user.language_learn),
-				wordsRepository.getByTopicIds(currentTopics, currentCatalogs),
-			]);
+		const syncProgress = async () => {
+			const result = await checkTopicCompletion();
 
 			if (!isMounted) {
 				return;
 			}
 
-			const sortedTopics = topics.sort((a, b) => a.title.localeCompare(b.title));
-			const availableTopicIds = await wordsRepository.getTopicsByCatalogs(currentCatalogs);
-			const filteredTopics = sortedTopics.filter((topic) =>
-				availableTopicIds.has(topic.remoteId),
-			);
-			const currentTopicIndex = filteredTopics.findIndex(
-				(topic) => topic.remoteId === selectedTopicId,
-			);
-			const nextTopic = currentTopicIndex >= 0 ? filteredTopics[currentTopicIndex + 1] : null;
-
-			setNextTopicId(nextTopic?.remoteId ?? null);
-			setNextTopicTitle(nextTopic?.title ?? null);
-
-			const syncProgress = (progressRecords: Awaited<ReturnType<typeof learningRepository.getByUser>>) => {
-				const stats = buildTopicProgressStats(words, progressRecords);
-				const topicStats = stats.get(selectedTopicId);
-				setIsCurrentTopicComplete(
-					Boolean(topicStats && topicStats.total > 0 && topicStats.learned >= topicStats.total),
-				);
-			};
-
-			syncProgress(await learningRepository.getByUser(user.userId));
-
-			const subscription = learningRepository
-				.observeByUser(user.userId)
-				.subscribe(syncProgress);
-			unsubscribe = () => subscription.unsubscribe();
+			setIsCurrentTopicComplete(result.isComplete);
+			setNextTopicId(result.nextTopicId);
+			setNextTopicTitle(result.nextTopicTitle);
 		};
 
-		loadTopicProgress().catch(() => {
+		syncProgress().catch(() => {
 			if (!isMounted) {
 				return;
 			}
@@ -249,11 +270,32 @@ export const TrainingAppWrapper = ({
 			setNextTopicTitle(null);
 		});
 
+		const subscription = learningRepository
+			.observeByUser(user.userId)
+			.subscribe(() => {
+				syncProgress().catch(() => {
+					if (!isMounted) {
+						return;
+					}
+
+					setIsCurrentTopicComplete(false);
+					setNextTopicId(null);
+					setNextTopicTitle(null);
+				});
+			});
+		unsubscribe = () => subscription.unsubscribe();
+
 		return () => {
 			isMounted = false;
 			unsubscribe?.();
 		};
-	}, [currentCatalogs, currentTopics, user?.language_learn, user?.userId]);
+	}, [
+		checkTopicCompletion,
+		currentCatalogs,
+		selectedTopicId,
+		user?.language_learn,
+		user?.userId,
+	]);
 
 	useEffect(() => {
 		if (!exercise) {
@@ -280,16 +322,54 @@ export const TrainingAppWrapper = ({
 			}
 
 			masteredPromptTimeoutRef.current = setTimeout(() => {
-				setShowMasteredPrompt(true);
+				void (async () => {
+					const shouldCheckTopic =
+						selectedTopicId != null &&
+						user?.userId != null &&
+						user.language_learn &&
+						currentCatalogs.length > 0;
+
+					if (!shouldCheckTopic) {
+						setShowMasteredPrompt(true);
+						return;
+					}
+
+					try {
+						const result = await checkTopicCompletion();
+
+						setIsCurrentTopicComplete(result.isComplete);
+						setNextTopicId(result.nextTopicId);
+						setNextTopicTitle(result.nextTopicTitle);
+
+						if (result.isComplete && result.nextTopicId != null) {
+							setShowMasteredPrompt(false);
+							setShowNextTopicPrompt(true);
+							return;
+						}
+					} catch {
+						// Fall back to the training prompt when the topic refresh fails.
+					}
+
+					setShowMasteredPrompt(true);
+				})();
 			}, 900);
 		}
 
 		previousMasteredRef.current = isMastered;
-	}, [exercise, isCurrentTopicComplete, successCount, successEventCount, totalCount]);
+	}, [
+		checkTopicCompletion,
+		currentCatalogs.length,
+		exercise,
+		isCurrentTopicComplete,
+		selectedTopicId,
+		successCount,
+		successEventCount,
+		totalCount,
+		user?.language_learn,
+		user?.userId,
+	]);
 
 	useEffect(() => {
-		const selectedTopicId = currentTopics.length === 1 ? currentTopics[0] : null;
-
 		if (selectedTopicId == null) {
 			setShowNextTopicPrompt(false);
 			previousTopicCompleteRef.current = null;
@@ -324,7 +404,30 @@ export const TrainingAppWrapper = ({
 		}
 
 		previousTopicCompleteRef.current = isCurrentTopicComplete;
-	}, [currentTopics, isCurrentTopicComplete, nextTopicId, successEventCount]);
+	}, [isCurrentTopicComplete, nextTopicId, selectedTopicId, successEventCount]);
+
+	useEffect(() => {
+		if (
+			!exercise ||
+			selectedTopicId == null ||
+			successEventCount > 0 ||
+			!isCurrentTopicComplete ||
+			nextTopicId == null ||
+			hasShownInitialTopicPromptRef.current
+		) {
+			return;
+		}
+
+		hasShownInitialTopicPromptRef.current = true;
+		setShowMasteredPrompt(false);
+		setShowNextTopicPrompt(true);
+	}, [
+		exercise,
+		isCurrentTopicComplete,
+		nextTopicId,
+		selectedTopicId,
+		successEventCount,
+	]);
 
 	useEffect(() => {
 		return () => {
@@ -343,6 +446,7 @@ export const TrainingAppWrapper = ({
 	}, []);
 
 	const handleStayOnCurrentTopic = useCallback(() => {
+		hasShownInitialTopicPromptRef.current = true;
 		setShowNextTopicPrompt(false);
 	}, []);
 

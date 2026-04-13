@@ -141,7 +141,13 @@ export const wordsRepository = {
       .query(Q.where("user_id", userId))
       .fetch();
 
-    const progressByWordId = new Map(progressRecords.map((r) => [r.wordId, r]));
+    const progressByWordId = new Map<number, LearningProgress[]>();
+
+    for (const record of progressRecords) {
+      const wordProgress = progressByWordId.get(record.wordId) ?? [];
+      wordProgress.push(record);
+      progressByWordId.set(record.wordId, wordProgress);
+    }
 
     // Priority 1: no record at all (never trained, or previously failed and deleted)
     // Priority 2: has a record but for a different exercise (not done in this training yet)
@@ -151,10 +157,14 @@ export const wordsRepository = {
     const thisTraining: Word[] = [];
 
     for (const word of candidates) {
-      const progress = progressByWordId.get(word.remoteId);
-      if (!progress) {
+      const progressRecordsForWord = progressByWordId.get(word.remoteId) ?? [];
+      const currentTrainingProgress = progressRecordsForWord.find(
+        (record) => record.training === trainingId,
+      );
+
+      if (progressRecordsForWord.length === 0) {
         untrained.push(word);
-      } else if (progress.training !== trainingId) {
+      } else if (!currentTrainingProgress) {
         otherTraining.push(word);
       } else {
         thisTraining.push(word);
@@ -165,8 +175,16 @@ export const wordsRepository = {
     otherTraining.sort(() => Math.random() - 0.5);
     thisTraining.sort(
       (a, b) =>
-        new Date(progressByWordId.get(a.remoteId)?.lastReview ?? 0).getTime() -
-        new Date(progressByWordId.get(b.remoteId)?.lastReview ?? 0).getTime(),
+        new Date(
+          progressByWordId
+            .get(a.remoteId)
+            ?.find((record) => record.training === trainingId)?.lastReview ?? 0,
+        ).getTime() -
+        new Date(
+          progressByWordId
+            .get(b.remoteId)
+            ?.find((record) => record.training === trainingId)?.lastReview ?? 0,
+        ).getTime(),
     );
 
     return [...untrained, ...otherTraining, ...thisTraining].slice(0, count);

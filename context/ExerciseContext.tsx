@@ -26,8 +26,6 @@ type SessionPair = {
 	translation: WatermelonWordTranslation;
 };
 
-// Probability of picking from the success (review) queue when failed queue is empty or by chance
-const SUCCESS_QUEUE_PROB = 0.15;
 // Large number to fetch all words when initializing queues
 const ALL_WORDS_COUNT = 999999;
 
@@ -86,6 +84,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const [modalPair, setModalPair] = useState<{
 		word: string;
 		translation: string;
+		wordId?: number;
 	} | null>(null);
 	const [likeTrigger, setLikeTrigger] = useState(0);
 
@@ -306,11 +305,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					await initializationPromise.current;
 				}
 
-				// Pick from failed queue primarily; occasionally review from success queue
-				const useSuccessQueue =
-					failedQueue.current.length === 0 ||
-					(successQueue.current.length > 0 &&
-						Math.random() < SUCCESS_QUEUE_PROB);
+				// Review already-successful words only after the unfinished queue is exhausted.
+				const useSuccessQueue = failedQueue.current.length === 0;
 
 				let item: SessionPair | undefined;
 				if (useSuccessQueue) {
@@ -419,6 +415,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				setModalPair({
 					word: pair?.word.word ?? "",
 					translation: pair?.translation?.translation ?? "",
+					wordId,
 				});
 				showFailureModal();
 			}
@@ -475,6 +472,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				setModalPair({
 					word: pair?.word.word ?? "",
 					translation: pair?.translation?.translation ?? "",
+					wordId,
 				});
 				showSuccessModal();
 			}
@@ -516,6 +514,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				<WordExcerciseFailureModal
 					word={modalPair?.word}
 					translation={modalPair?.translation}
+					wordId={modalPair?.wordId}
 					onRequestClose={onRequestClose}
 				/>
 			)}
