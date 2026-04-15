@@ -118,7 +118,11 @@ export function ListeningPracticeExercise() {
 					style={[styles.content, { transform: [{ translateX }] }]}
 				>
 					<TrainingPromptCard wordId={word.remoteId} onSkip={handleSkip}>
-						<PlayWordButton autoplay audio={word.audio} />
+						<PlayWordButton
+							key={word.remoteId}
+							autoplay
+							audio={word.audio}
+						/>
 					</TrainingPromptCard>
 				</Animated.View>
 
