@@ -1,5 +1,6 @@
 import { DatabaseProvider } from "@nozbe/watermelondb/DatabaseProvider";
 import { useIsFocused } from "@react-navigation/native";
+import { setAudioModeAsync } from "expo-audio";
 import { File, Paths } from "expo-file-system";
 import { authenticateAsync, isEnrolledAsync } from "expo-local-authentication";
 import { Stack, useRouter } from "expo-router";
@@ -101,6 +102,14 @@ export default Sentry.wrap(function RootLayout() {
 		startupAuthDone.current = true;
 		triggerBiometricAuth();
 	}, [isFocused, triggerBiometricAuth]);
+
+	useEffect(() => {
+		setAudioModeAsync({
+			playsInSilentMode: true,
+			shouldPlayInBackground: false,
+			interruptionMode: "mixWithOthers",
+		}).catch(() => {});
+	}, []);
 
 	useEffect(() => {
 		if (isAuthenticated) {
