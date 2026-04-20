@@ -385,7 +385,8 @@ export const TrainingAppWrapper = ({
 			!previousTopicCompleteRef.current &&
 			isCurrentTopicComplete &&
 			successEventCount > 0 &&
-			nextTopicId != null
+			nextTopicId != null &&
+			!showNextTopicPrompt
 		) {
 			setShowMasteredPrompt(false);
 
@@ -404,7 +405,7 @@ export const TrainingAppWrapper = ({
 		}
 
 		previousTopicCompleteRef.current = isCurrentTopicComplete;
-	}, [isCurrentTopicComplete, nextTopicId, selectedTopicId, successEventCount]);
+	}, [isCurrentTopicComplete, nextTopicId, selectedTopicId, showNextTopicPrompt, successEventCount]);
 
 	useEffect(() => {
 		if (
@@ -468,7 +469,8 @@ export const TrainingAppWrapper = ({
 
 		setShowNextTopicPrompt(false);
 		setCurrentTopics([nextTopicId]);
-	}, [nextTopicId, setCurrentTopics]);
+		setCurrentExercise(orderedTrainingIds[0] ?? null);
+	}, [nextTopicId, orderedTrainingIds, setCurrentTopics]);
 
 	return (
 		<KeyboardAvoidingView
