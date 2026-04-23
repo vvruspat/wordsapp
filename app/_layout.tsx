@@ -14,7 +14,7 @@ import { ActivityIndicator } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { DevPanel } from "@/components/DevPanel";
 import { ScreenBackground } from "@/components/ScreenBackground";
-import { AuthContext } from "@/context/AuthContext";
+import { AuthContext, resetBiometricsPreference } from "@/context/AuthContext";
 import { BackgroundProvider } from "@/context/BackgroundContext";
 import database from "@/db/database";
 import { styles } from "@/general.styles";
@@ -73,7 +73,10 @@ export default Sentry.wrap(function RootLayout() {
 
 		const enrolled = await isEnrolledAsync();
 
-		if (!enrolled) {
+		// User previously opted out of biometrics — authenticate via tokens only.
+		const biometricsSkipped = await SecureStore.getItemAsync("biometrics_skipped");
+
+		if (!enrolled || biometricsSkipped === "true") {
 			setAuthenticated(true);
 			setIsReady(true);
 			return true;
@@ -84,6 +87,20 @@ export default Sentry.wrap(function RootLayout() {
 		});
 
 		if (!result.success) {
+			// User explicitly dismissed/cancelled — fall back to token-based auth
+			// and remember the preference so we don't prompt again next session.
+			const isUserCancellation =
+				result.error === "user_cancel" ||
+				result.error === "system_cancel" ||
+				result.error === "user_fallback";
+
+			if (isUserCancellation) {
+				await SecureStore.setItemAsync("biometrics_skipped", "true");
+				setAuthenticated(true);
+				setIsReady(true);
+				return true;
+			}
+
 			setAuthenticated(false);
 			setIsReady(true);
 			return false;
@@ -128,7 +145,7 @@ export default Sentry.wrap(function RootLayout() {
 	}
 
 	return (
-		<AuthContext.Provider value={{ triggerBiometricAuth }}>
+		<AuthContext.Provider value={{ triggerBiometricAuth, resetBiometricsPreference }}>
 		<DatabaseProvider database={database}>
 			<Stack
 				screenLayout={({ children }) => (
