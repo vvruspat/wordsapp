@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { ExerciseContext } from "@/context/ExerciseContext";
@@ -69,12 +69,12 @@ export function TypeWordExercise() {
 	}, [wordRemoteId, wordLanguage, translationRemoteId, translationText, translationLanguage]);
 
 	const [loadKey, setLoadKey] = useState(0);
-	const [mistakeCount, setMistakeCount] = useState(0);
+	const mistakeCountRef = useRef(0);
 	const [clearKey, setClearKey] = useState(0);
 
 	const load = useCallback(async () => {
 		setStatus("default");
-		setMistakeCount(0);
+		mistakeCountRef.current = 0;
 		setClearKey(0);
 		await loadData(1, 0, 4);
 	}, [loadData]);
@@ -135,8 +135,8 @@ export function TypeWordExercise() {
 				complete();
 			} else if (nextStatus === "error" && text.trim().length === word.word.trim().length) {
 				const maxMistakes = Math.ceil(word.word.length / 2);
-				const nextMistakeCount = mistakeCount + 1;
-				setMistakeCount(nextMistakeCount);
+				const nextMistakeCount = mistakeCountRef.current + 1;
+				mistakeCountRef.current = nextMistakeCount;
 
 				if (nextMistakeCount >= maxMistakes) {
 					onFailure?.(word.remoteId, score);
@@ -149,7 +149,7 @@ export function TypeWordExercise() {
 				}
 			}
 		},
-		[word, translation, answered, mistakeCount, complete, triggerLike, evaluateStatus, onFailure, onSuccess],
+		[word, translation, answered, complete, triggerLike, evaluateStatus, onFailure, onSuccess],
 	);
 
 	const handleSkip = useCallback(() => {
