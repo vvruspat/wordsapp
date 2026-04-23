@@ -91,7 +91,6 @@ export default Sentry.wrap(function RootLayout() {
 			// and remember the preference so we don't prompt again next session.
 			const isUserCancellation =
 				result.error === "user_cancel" ||
-				result.error === "system_cancel" ||
 				result.error === "user_fallback";
 
 			if (isUserCancellation) {

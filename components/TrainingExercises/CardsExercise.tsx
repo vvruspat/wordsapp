@@ -54,9 +54,9 @@ export function CardsExercise() {
 	const buttonsOpacity = useSharedValue(1);
 	const likeTranslateY = useSharedValue(0);
 	const likeOpacity = useSharedValue(0);
-	const isAnswered = useSharedValue(false);
+	const isFlipDone = useSharedValue(false);
 
-	const swipeOutTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+	const swipeOutTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const [loadKey, setLoadKey] = useState(0);
 
@@ -78,7 +78,7 @@ export function CardsExercise() {
 		clearTimeout(swipeOutTimeoutRef.current);
 		setAnswered(false);
 		setAnsweredKnow(false);
-		isAnswered.value = false;
+		isFlipDone.value = false;
 		flipProgress.value = 0;
 		cardTranslateX.value = 0;
 		cardOpacity.value = 0;
@@ -87,7 +87,7 @@ export function CardsExercise() {
 		likeOpacity.value = 0;
 		setLoadKey((k) => k + 1);
 	}, [
-		isAnswered,
+		isFlipDone,
 		flipProgress,
 		cardTranslateX,
 		cardOpacity,
@@ -127,13 +127,13 @@ export function CardsExercise() {
 
 			buttonsOpacity.value = withTiming(0, { duration: 200 });
 
-			isAnswered.value = true;
-
 			flipProgress.value = withTiming(
 				1,
 				{ duration: FLIP_DURATION },
 				(finished) => {
 					if (!finished) return;
+					// Enable swipe-to-skip only after the card is fully revealed
+					isFlipDone.value = true;
 					swipeOutTimeoutRef.current = setTimeout(
 						() => runOnJS(triggerSwipeOut)(),
 						SHOW_ANSWER_MS,
@@ -147,7 +147,7 @@ export function CardsExercise() {
 			answered,
 			onSuccess,
 			onFailure,
-			isAnswered,
+			isFlipDone,
 			triggerSwipeOut,
 			flipProgress,
 			buttonsOpacity,
@@ -194,11 +194,11 @@ export function CardsExercise() {
 
 	const swipeGesture = Gesture.Pan()
 		.onUpdate((e) => {
-			if (!isAnswered.value) return;
+			if (!isFlipDone.value) return;
 			cardTranslateX.value = e.translationX;
 		})
 		.onEnd((e) => {
-			if (!isAnswered.value) return;
+			if (!isFlipDone.value) return;
 			if (Math.abs(e.translationX) > SWIPE_THRESHOLD) {
 				runOnJS(triggerSwipeOut)();
 			} else {

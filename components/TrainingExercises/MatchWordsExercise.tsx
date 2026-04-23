@@ -25,7 +25,7 @@ export function MatchWordsExercise() {
 	const [selectedTranslation, setSelectedTranslation] = useState<WordTranslation | null>(null);
 	const [flashingWordIds, setFlashingWordIds] = useState<Set<number>>(new Set());
 	const [flashingTranslationIds, setFlashingTranslationIds] = useState<Set<number>>(new Set());
-	const flashTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+	const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const flashWrong = useCallback((wordId: number, translationRemoteId: number) => {
 		clearTimeout(flashTimeoutRef.current);
