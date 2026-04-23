@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Animated, Easing, Pressable, TextInput, TextInputProps, View } from "react-native";
+import { Animated, Easing, InteractionManager, Pressable, TextInput, TextInputProps, View } from "react-native";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { WInputProps, WText } from "@/mob-ui/atoms";
 import { styles as wInputStyles } from "../../atoms/WInput/WInput.styles";
@@ -93,8 +93,15 @@ export const WCharInput = ({
 		setVal(text.slice(0, length));
 	};
 
+	const focusInput = useCallback(() => {
+		InteractionManager.runAfterInteractions(() => {
+			inputRef.current?.focus();
+		});
+	}, []);
+
 	return (
-		<View
+		<Pressable
+			onPress={focusInput}
 			style={{
 				flexDirection: "row",
 				gap: 8,
@@ -111,11 +118,7 @@ export const WCharInput = ({
 				>
 					<Pressable
 						testID={`pin-input-${index}`}
-						onPress={() => {
-							if (typeof inputRef === "object" && inputRef?.current) {
-								inputRef.current.focus();
-							}
-						}}
+						onPress={focusInput}
 						style={[
 							wInputStyles.inputRow,
 							styles.inputRow,
@@ -149,6 +152,6 @@ export const WCharInput = ({
 				ref={inputRef}
 				{...inputProps}
 			/>
-		</View>
+		</Pressable>
 	);
 };

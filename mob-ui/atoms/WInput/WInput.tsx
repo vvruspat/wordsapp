@@ -170,6 +170,7 @@ export const WInput = forwardRef<TextInput, WInputProps>((props, ref) => {
 					},
 					inputRowStyle,
 				]}
+				onTouchStart={() => internalRef.current?.focus()}
 			>
 				{/* blurred background */}
 				<BlurView intensity={50} tint="dark" style={styles.blur} blurMethod="dimezisBlurView" />
