@@ -74,7 +74,6 @@ export function TypeWordExercise() {
 
 	const load = useCallback(async () => {
 		setStatus("default");
-		mistakeCountRef.current = 0;
 		setClearKey(0);
 		await loadData(1, 0, 4);
 	}, [loadData]);
@@ -95,6 +94,10 @@ export function TypeWordExercise() {
 		addCompleteListener(onExerciseComplete);
 		return () => removeCompleteListener(onExerciseComplete);
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
+
+	useEffect(() => {
+		mistakeCountRef.current = 0;
+	}, [wordRemoteId]);
 
 	useEffect(() => {
 		if (word && translation) {
