@@ -25,24 +25,29 @@ export function ReportButton({ wordId }: ReportButtonProps) {
 	);
 
 	const handlePress = useCallback(() => {
-		Alert.alert(t("report_button_title"), undefined, [
-			{
-				text: t("report_word"),
-				onPress: () => submitReport("word"),
-			},
-			{
-				text: t("report_translation"),
-				onPress: () => submitReport("translation"),
-			},
-			{
-				text: t("report_audio"),
-				onPress: () => submitReport("audio"),
-			},
-			{
-				text: t("report_cancel"),
-				style: "cancel",
-			},
-		]);
+		Alert.alert(
+			t("report_button_title"),
+			undefined,
+			[
+				{
+					text: t("report_word"),
+					onPress: () => submitReport("word"),
+				},
+				{
+					text: t("report_translation"),
+					onPress: () => submitReport("translation"),
+				},
+				{
+					text: t("report_audio"),
+					onPress: () => submitReport("audio"),
+				},
+				{
+					text: t("report_cancel"),
+					style: "cancel",
+				},
+			],
+			{ cancelable: true },
+		);
 	}, [t, submitReport]);
 
 	return (
