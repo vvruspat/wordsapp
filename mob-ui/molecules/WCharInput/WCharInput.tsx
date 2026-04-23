@@ -15,6 +15,8 @@ export interface WCharInputProps extends TextInputProps {
 	status?: WInputProps["status"];
 	/** When true, cells appear one by one (typewriter effect) on mount */
 	animateIn?: boolean;
+	/** When true, cell text is rendered in uppercase. Default false. */
+	uppercase?: boolean;
 }
 
 export const WCharInput = ({
@@ -24,6 +26,7 @@ export const WCharInput = ({
 	secureTextEntry,
 	defaultValue,
 	animateIn = false,
+	uppercase = false,
 	...inputProps
 }: WCharInputProps) => {
 	const [val, setVal] = useState(defaultValue ?? "");
@@ -133,7 +136,7 @@ export const WCharInput = ({
 							size={length >= 6 ? "xl" : "4xl"}
 							weight="bold"
 							mode="primary"
-							uppercase
+							uppercase={uppercase}
 						>
 							{secureTextEntry ? "•" : (val[index] ?? "")}
 						</WText>

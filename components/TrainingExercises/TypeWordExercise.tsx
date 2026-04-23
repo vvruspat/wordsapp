@@ -184,6 +184,7 @@ export function TypeWordExercise() {
 				onChangeText={handleChange}
 				status={status}
 				animateIn={clearKey === 0}
+				autoCapitalize="none"
 			/>
 
 			<WordExcerciseCardResultModal
