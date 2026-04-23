@@ -23,6 +23,19 @@ export function MatchWordsExercise() {
 	const [failedWords, setFailedWords] = useState<Set<Word["remoteId"]>>(new Set());
 	const [selectedWord, setSelectedWord] = useState<Word | null>(null);
 	const [selectedTranslation, setSelectedTranslation] = useState<WordTranslation | null>(null);
+	const [flashingWordIds, setFlashingWordIds] = useState<Set<number>>(new Set());
+	const [flashingTranslationIds, setFlashingTranslationIds] = useState<Set<number>>(new Set());
+	const flashTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+	const flashWrong = useCallback((wordId: number, translationRemoteId: number) => {
+		clearTimeout(flashTimeoutRef.current);
+		setFlashingWordIds(new Set([wordId]));
+		setFlashingTranslationIds(new Set([translationRemoteId]));
+		flashTimeoutRef.current = setTimeout(() => {
+			setFlashingWordIds(new Set());
+			setFlashingTranslationIds(new Set());
+		}, 400);
+	}, []);
 
 	const { width } = useWindowDimensions();
 	// Left column: slides from left (-width), right column: from right (+width)
@@ -178,6 +191,7 @@ export function MatchWordsExercise() {
 				setFailedWords((prev) =>
 					new Set(prev).add(selectedWord.remoteId).add(translation.word),
 				);
+				flashWrong(selectedWord.remoteId, translation.remoteId);
 				const wrongWordPair = pairs.find((p) => p.word.remoteId === selectedWord.remoteId);
 				const wrongTranslationPair = pairs.find(
 					(p) => p.translation?.remoteId === translation.remoteId,
@@ -187,7 +201,7 @@ export function MatchWordsExercise() {
 				setSelectedTranslation(null);
 			}
 		},
-		[burnedPairs, selectedWord, pairs, onMatch, onFailure, resetSelections],
+		[burnedPairs, selectedWord, pairs, onMatch, onFailure, resetSelections, flashWrong],
 	);
 
 	const handleWordPress = useCallback(
@@ -210,6 +224,7 @@ export function MatchWordsExercise() {
 				setFailedWords((prev) =>
 					new Set(prev).add(word.remoteId).add(selectedTranslation.word),
 				);
+				flashWrong(word.remoteId, selectedTranslation.remoteId);
 				const wrongWordPair = pairs.find((p) => p.word.remoteId === word.remoteId);
 				const wrongTranslationPair = pairs.find(
 					(p) => p.translation?.remoteId === selectedTranslation.remoteId,
@@ -219,7 +234,7 @@ export function MatchWordsExercise() {
 				setSelectedWord(null);
 			}
 		},
-		[burnedPairs, selectedTranslation, pairs, onMatch, onFailure, resetSelections],
+		[burnedPairs, selectedTranslation, pairs, onMatch, onFailure, resetSelections, flashWrong],
 	);
 
 	if (pairs.length === 0) {
@@ -243,9 +258,11 @@ export function MatchWordsExercise() {
 								state={
 									burnedPairs.some((bp) => bp.word.remoteId === pair.word.remoteId)
 										? "correct"
-										: selectedWord?.remoteId === pair.word.remoteId
-											? "selected"
-											: "default"
+										: flashingWordIds.has(pair.word.remoteId)
+											? "incorrect"
+											: selectedWord?.remoteId === pair.word.remoteId
+												? "selected"
+												: "default"
 								}
 								text={pair.word.word}
 							/>
@@ -268,9 +285,11 @@ export function MatchWordsExercise() {
 								state={
 									burnedPairs.some((bp) => bp.translation === pair.translation)
 										? "correct"
-										: selectedTranslation === pair.translation
-											? "selected"
-											: "default"
+										: pair.translation && flashingTranslationIds.has(pair.translation.remoteId)
+											? "incorrect"
+											: selectedTranslation === pair.translation
+												? "selected"
+												: "default"
 								}
 							/>
 						</Animated.View>
