@@ -5,15 +5,18 @@ import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WCard, WText, WZStack } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
 	Extrapolation,
+	cancelAnimation,
 	interpolate,
 	useAnimatedStyle,
 	useSharedValue,
 	withDelay,
+	withSpring,
 	withTiming,
 } from "react-native-reanimated";
 import { runOnJS } from "react-native-worklets";
@@ -21,8 +24,9 @@ import { TrainingPromptCard } from "./TrainingPromptCard";
 
 const SCORE = 0.2;
 const FLIP_DURATION = 400;
-const SHOW_ANSWER_MS = 3000;
+const SHOW_ANSWER_MS = 2000;
 const SWIPE_DURATION = 300;
+const SWIPE_THRESHOLD = 80;
 
 export function CardsExercise() {
 	const { t } = useTranslation();
@@ -50,6 +54,9 @@ export function CardsExercise() {
 	const buttonsOpacity = useSharedValue(1);
 	const likeTranslateY = useSharedValue(0);
 	const likeOpacity = useSharedValue(0);
+	const isAnswered = useSharedValue(false);
+
+	const swipeOutTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
 	const [loadKey, setLoadKey] = useState(0);
 
@@ -57,9 +64,21 @@ export function CardsExercise() {
 		await loadData(1, 0, 0);
 	}, [loadData]);
 
+	const triggerSwipeOut = useCallback(() => {
+		clearTimeout(swipeOutTimeoutRef.current);
+		cancelAnimation(cardTranslateX);
+		cancelAnimation(cardOpacity);
+		cardTranslateX.value = withTiming(-500, { duration: SWIPE_DURATION });
+		cardOpacity.value = withTiming(0, { duration: SWIPE_DURATION }, (done) => {
+			if (done) runOnJS(complete)();
+		});
+	}, [cardTranslateX, cardOpacity, complete]);
+
 	const onExerciseComplete = useCallback(() => {
+		clearTimeout(swipeOutTimeoutRef.current);
 		setAnswered(false);
 		setAnsweredKnow(false);
+		isAnswered.value = false;
 		flipProgress.value = 0;
 		cardTranslateX.value = 0;
 		cardOpacity.value = 0;
@@ -68,6 +87,7 @@ export function CardsExercise() {
 		likeOpacity.value = 0;
 		setLoadKey((k) => k + 1);
 	}, [
+		isAnswered,
 		flipProgress,
 		cardTranslateX,
 		cardOpacity,
@@ -107,20 +127,16 @@ export function CardsExercise() {
 
 			buttonsOpacity.value = withTiming(0, { duration: 200 });
 
+			isAnswered.value = true;
+
 			flipProgress.value = withTiming(
 				1,
 				{ duration: FLIP_DURATION },
 				(finished) => {
 					if (!finished) return;
-					cardTranslateX.value = withDelay(
+					swipeOutTimeoutRef.current = setTimeout(
+						() => runOnJS(triggerSwipeOut)(),
 						SHOW_ANSWER_MS,
-						withTiming(-500, { duration: SWIPE_DURATION }),
-					);
-					cardOpacity.value = withDelay(
-						SHOW_ANSWER_MS,
-						withTiming(0, { duration: SWIPE_DURATION }, (done) => {
-							if (done) runOnJS(complete)();
-						}),
 					);
 				},
 			);
@@ -131,10 +147,9 @@ export function CardsExercise() {
 			answered,
 			onSuccess,
 			onFailure,
-			complete,
+			isAnswered,
+			triggerSwipeOut,
 			flipProgress,
-			cardTranslateX,
-			cardOpacity,
 			buttonsOpacity,
 			likeTranslateY,
 			likeOpacity,
@@ -177,6 +192,20 @@ export function CardsExercise() {
 		opacity: likeOpacity.value,
 	}));
 
+	const swipeGesture = Gesture.Pan()
+		.onUpdate((e) => {
+			if (!isAnswered.value) return;
+			cardTranslateX.value = e.translationX;
+		})
+		.onEnd((e) => {
+			if (!isAnswered.value) return;
+			if (Math.abs(e.translationX) > SWIPE_THRESHOLD) {
+				runOnJS(triggerSwipeOut)();
+			} else {
+				cardTranslateX.value = withSpring(0);
+			}
+		});
+
 	if (!word || !translation) return null;
 
 	const accentColor = answeredKnow
@@ -185,6 +214,7 @@ export function CardsExercise() {
 
 	return (
 		<>
+			<GestureDetector gesture={swipeGesture}>
 			<Animated.View style={[styles.cardContainer, cardContainerStyle]}>
 				{/* Front face */}
 				<Animated.View style={[StyleSheet.absoluteFill, frontStyle]}>
@@ -236,6 +266,7 @@ export function CardsExercise() {
 					/>
 				</Animated.View>
 			</Animated.View>
+			</GestureDetector>
 
 			<Animated.View
 				style={buttonsStyle}
