@@ -69,9 +69,13 @@ export function TypeWordExercise() {
 	}, [wordRemoteId, wordLanguage, translationRemoteId, translationText, translationLanguage]);
 
 	const [loadKey, setLoadKey] = useState(0);
+	const [mistakeCount, setMistakeCount] = useState(0);
+	const [clearKey, setClearKey] = useState(0);
 
 	const load = useCallback(async () => {
 		setStatus("default");
+		setMistakeCount(0);
+		setClearKey(0);
 		await loadData(1, 0, 4);
 	}, [loadData]);
 
@@ -130,10 +134,22 @@ export function TypeWordExercise() {
 				onSuccess?.(word.remoteId, score, false);
 				complete();
 			} else if (nextStatus === "error" && text.trim().length === word.word.trim().length) {
-				onFailure?.(word.remoteId, score);
+				const maxMistakes = Math.ceil(word.word.length / 2);
+				const nextMistakeCount = mistakeCount + 1;
+				setMistakeCount(nextMistakeCount);
+
+				if (nextMistakeCount >= maxMistakes) {
+					onFailure?.(word.remoteId, score);
+					setModalPair({ word: word.word, translation: translation.translation });
+					setModalVisible(true);
+				} else {
+					// Non-fatal mistake — reset input so user can try again
+					setClearKey((k) => k + 1);
+					setStatus("default");
+				}
 			}
 		},
-		[word, translation, answered, complete, triggerLike, evaluateStatus, onFailure, onSuccess],
+		[word, translation, answered, mistakeCount, complete, triggerLike, evaluateStatus, onFailure, onSuccess],
 	);
 
 	const handleSkip = useCallback(() => {
@@ -163,11 +179,11 @@ export function TypeWordExercise() {
 			</Animated.View>
 
 			<WCharInput
-				key={word.remoteId}
+				key={`${word.remoteId}-${clearKey}`}
 				length={word.word.length}
 				onChangeText={handleChange}
 				status={status}
-				animateIn
+				animateIn={clearKey === 0}
 			/>
 
 			<WordExcerciseCardResultModal
