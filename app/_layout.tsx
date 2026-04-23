@@ -113,7 +113,7 @@ export default Sentry.wrap(function RootLayout() {
 
 	useEffect(() => {
 		if (isAuthenticated) {
-			router.push("/authorized/learning");
+			router.replace("/authorized/learning");
 		}
 	}, [isAuthenticated, router]);
 

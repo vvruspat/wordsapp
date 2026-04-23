@@ -1,8 +1,8 @@
 import { AntDesign } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
+import { BackHandler, KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { resendVerificationEmail, verifyEmail } from "@/api/auth";
 import { useAuthContext } from "@/context/AuthContext";
@@ -22,6 +22,16 @@ export default function Verify() {
 	const [isReadyToResend, setIsReadyToResend] = useState<boolean>(false);
 
 	const { t } = useTranslation();
+
+	const goBack = useCallback(() => {
+		router.replace("/");
+		return true;
+	}, [router]);
+
+	useEffect(() => {
+		const sub = BackHandler.addEventListener("hardwareBackPress", goBack);
+		return () => sub.remove();
+	}, [goBack]);
 
 	const onCodeChangeHandler = async (text: string) => {
 		if (text.length === PIN_LENGTH) {
@@ -68,7 +78,7 @@ export default function Verify() {
 
 	return (
 		<SafeAreaView mode="padding" style={styles.page}>
-			<Pressable onPress={() => router.back()} style={{ padding: 8 }}>
+			<Pressable onPress={goBack} style={{ padding: 8 }}>
 				<AntDesign name="arrow-left" size={24} color="white" />
 			</Pressable>
 			<KeyboardAvoidingView
