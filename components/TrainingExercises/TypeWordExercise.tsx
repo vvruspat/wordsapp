@@ -140,7 +140,7 @@ export function TypeWordExercise() {
 
 				if (nextMistakeCount >= maxMistakes) {
 					setAnswered(true);
-					onFailure?.(word.remoteId, score);
+					onFailure?.(word.remoteId, score, false);
 					setModalPair({ word: word.word, translation: translation.translation });
 					setModalVisible(true);
 				} else {
