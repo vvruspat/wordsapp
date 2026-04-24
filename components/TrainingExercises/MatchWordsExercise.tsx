@@ -12,6 +12,7 @@ const ITEM_COUNT = 4;
 const OUT_DURATION = 200;
 const IN_DURATION = 180;
 const ROW_STAGGER = 60;
+const INCORRECT_FLASH_MS = 450;
 
 export type MatchWordPair = {
 	word: Word;
@@ -21,6 +22,12 @@ export type MatchWordPair = {
 export function MatchWordsExercise() {
 	const [burnedPairs, setBurnedPairs] = useState<MatchWordPair[]>([]);
 	const [failedWords, setFailedWords] = useState<Set<Word["remoteId"]>>(new Set());
+	const [incorrectWordIds, setIncorrectWordIds] = useState<Set<Word["remoteId"]>>(
+		new Set(),
+	);
+	const [incorrectTranslationIds, setIncorrectTranslationIds] = useState<
+		Set<WordTranslation["remoteId"]>
+	>(new Set());
 	const [selectedWord, setSelectedWord] = useState<Word | null>(null);
 	const [selectedTranslation, setSelectedTranslation] = useState<WordTranslation | null>(null);
 
@@ -33,6 +40,33 @@ export function MatchWordsExercise() {
 		Array.from({ length: ITEM_COUNT }, () => new Animated.Value(0)),
 	).current;
 	const waitingForContent = useRef(false);
+	const incorrectFlashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+		null,
+	);
+
+	const flashIncorrectCards = useCallback(
+		({
+			wordIds = [],
+			translationIds = [],
+		}: {
+			wordIds?: Word["remoteId"][];
+			translationIds?: WordTranslation["remoteId"][];
+		}) => {
+			if (incorrectFlashTimeoutRef.current) {
+				clearTimeout(incorrectFlashTimeoutRef.current);
+			}
+
+			setIncorrectWordIds(new Set(wordIds));
+			setIncorrectTranslationIds(new Set(translationIds));
+
+			incorrectFlashTimeoutRef.current = setTimeout(() => {
+				setIncorrectWordIds(new Set());
+				setIncorrectTranslationIds(new Set());
+				incorrectFlashTimeoutRef.current = null;
+			}, INCORRECT_FLASH_MS);
+		},
+		[],
+	);
 
 	const swipeOut = useCallback(
 		(afterSwipeOut: () => void) => {
@@ -125,6 +159,14 @@ export function MatchWordsExercise() {
 		}
 	}, [pairs, notifyContentChanged]);
 
+	useEffect(() => {
+		return () => {
+			if (incorrectFlashTimeoutRef.current) {
+				clearTimeout(incorrectFlashTimeoutRef.current);
+			}
+		};
+	}, []);
+
 	const onMatch = useCallback(
 		(pair: MatchWordPair) => {
 			setBurnedPairs((prev) => {
@@ -178,6 +220,10 @@ export function MatchWordsExercise() {
 				setFailedWords((prev) =>
 					new Set(prev).add(selectedWord.remoteId).add(translation.word),
 				);
+				flashIncorrectCards({
+					wordIds: [selectedWord.remoteId],
+					translationIds: [translation.remoteId],
+				});
 				const wrongWordPair = pairs.find((p) => p.word.remoteId === selectedWord.remoteId);
 				const wrongTranslationPair = pairs.find(
 					(p) => p.translation?.remoteId === translation.remoteId,
@@ -187,7 +233,7 @@ export function MatchWordsExercise() {
 				setSelectedTranslation(null);
 			}
 		},
-		[burnedPairs, selectedWord, pairs, onMatch, onFailure, resetSelections],
+		[burnedPairs, selectedWord, pairs, onMatch, onFailure, resetSelections, flashIncorrectCards],
 	);
 
 	const handleWordPress = useCallback(
@@ -210,6 +256,10 @@ export function MatchWordsExercise() {
 				setFailedWords((prev) =>
 					new Set(prev).add(word.remoteId).add(selectedTranslation.word),
 				);
+				flashIncorrectCards({
+					wordIds: [word.remoteId],
+					translationIds: [selectedTranslation.remoteId],
+				});
 				const wrongWordPair = pairs.find((p) => p.word.remoteId === word.remoteId);
 				const wrongTranslationPair = pairs.find(
 					(p) => p.translation?.remoteId === selectedTranslation.remoteId,
@@ -219,7 +269,7 @@ export function MatchWordsExercise() {
 				setSelectedWord(null);
 			}
 		},
-		[burnedPairs, selectedTranslation, pairs, onMatch, onFailure, resetSelections],
+		[burnedPairs, selectedTranslation, pairs, onMatch, onFailure, resetSelections, flashIncorrectCards],
 	);
 
 	if (pairs.length === 0) {
@@ -243,6 +293,8 @@ export function MatchWordsExercise() {
 								state={
 									burnedPairs.some((bp) => bp.word.remoteId === pair.word.remoteId)
 										? "correct"
+										: incorrectWordIds.has(pair.word.remoteId)
+											? "incorrect"
 										: selectedWord?.remoteId === pair.word.remoteId
 											? "selected"
 											: "default"
@@ -268,6 +320,9 @@ export function MatchWordsExercise() {
 								state={
 									burnedPairs.some((bp) => bp.translation === pair.translation)
 										? "correct"
+										: pair.translation &&
+												incorrectTranslationIds.has(pair.translation.remoteId)
+											? "incorrect"
 										: selectedTranslation === pair.translation
 											? "selected"
 											: "default"
