@@ -26,17 +26,22 @@ type ExcerciseActions = {
 	setCurrentRandomTranslations: (translations: WordTranslation[]) => void;
 	setHasHydrated: (value: boolean) => void;
 	setTopicsInitialized: (value: boolean) => void;
+	reset: () => void;
+};
+
+const initialState: ExcerciseState = {
+	currentPairs: [],
+	currentCatalogs: [],
+	currentTopics: [],
+	currentRandomWords: [],
+	currentRandomTranslations: [],
+	_hasHydrated: false,
+	topicsInitialized: false,
 };
 
 export const useExcerciseStore = create<ExcerciseState & ExcerciseActions>()(
 	immer((set) => ({
-		currentPairs: [],
-		currentCatalogs: [],
-		currentTopics: [],
-		currentRandomWords: [],
-		currentRandomTranslations: [],
-		_hasHydrated: false,
-		topicsInitialized: false,
+		...initialState,
 
 		setCurrentCatalogs: (catalogs: number[]) =>
 			set((state) => {
@@ -65,6 +70,10 @@ export const useExcerciseStore = create<ExcerciseState & ExcerciseActions>()(
 		setTopicsInitialized: (value: boolean) =>
 			set((state) => {
 				state.topicsInitialized = value;
+			}),
+		reset: () =>
+			set((state) => {
+				Object.assign(state, initialState);
 			}),
 	})),
 );

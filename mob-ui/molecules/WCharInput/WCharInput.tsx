@@ -1,5 +1,12 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Animated, Easing, Pressable, TextInput, TextInputProps, View } from "react-native";
+import {
+	Animated,
+	Easing,
+	Pressable,
+	TextInput,
+	TextInputProps,
+	View,
+} from "react-native";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { WInputProps, WText } from "@/mob-ui/atoms";
 import { styles as wInputStyles } from "../../atoms/WInput/WInput.styles";
@@ -15,6 +22,8 @@ export interface WCharInputProps extends TextInputProps {
 	status?: WInputProps["status"];
 	/** When true, cells appear one by one (typewriter effect) on mount */
 	animateIn?: boolean;
+	/** Controls only cell display casing; onChangeText always receives raw input */
+	displayUppercase?: boolean;
 }
 
 export const WCharInput = ({
@@ -24,6 +33,7 @@ export const WCharInput = ({
 	secureTextEntry,
 	defaultValue,
 	animateIn = false,
+	displayUppercase = true,
 	...inputProps
 }: WCharInputProps) => {
 	const [val, setVal] = useState(defaultValue ?? "");
@@ -35,7 +45,10 @@ export const WCharInput = ({
 	});
 
 	const cellAnims = useRef(
-		Array.from({ length: MAX_CELLS }, () => new Animated.Value(animateIn ? 0 : 1)),
+		Array.from(
+			{ length: MAX_CELLS },
+			() => new Animated.Value(animateIn ? 0 : 1),
+		),
 	).current;
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally runs once on mount
@@ -93,6 +106,8 @@ export const WCharInput = ({
 		setVal(text.slice(0, length));
 	};
 
+	const cellTextStyle = length >= 6 ? styles.inputTextSmall : styles.inputText;
+
 	return (
 		<View
 			style={{
@@ -130,7 +145,8 @@ export const WCharInput = ({
 							size={length >= 6 ? "xl" : "4xl"}
 							weight="bold"
 							mode="primary"
-							uppercase
+							uppercase={displayUppercase}
+							style={cellTextStyle}
 						>
 							{secureTextEntry ? "•" : (val[index] ?? "")}
 						</WText>
@@ -142,9 +158,12 @@ export const WCharInput = ({
 				onChangeText={handleTextChange}
 				autoFocus
 				maxLength={length}
+				autoCapitalize="none"
 				autoCorrect={false}
 				autoComplete="off"
+				importantForAutofill="no"
 				spellCheck={false}
+				textContentType="none"
 				style={styles.input}
 				ref={inputRef}
 				{...inputProps}

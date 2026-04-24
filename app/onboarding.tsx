@@ -3,13 +3,13 @@ import SelectLanguageISpeakModal from "@/components/Modals/SelectLanguageISpeakM
 import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLearnModal";
 import { SelectLanguageButton } from "@/components/SelectLanguageButton";
 import { LanguageItem } from "@/constants/languages";
-import { useAuthContext } from "@/context/AuthContext";
 import User from "@/db/models/User";
 import { useApiError } from "@/hooks/useApiError";
 import { useSessionUser } from "@/hooks/useSession";
 import { WAlert, WButton, WInput, WText } from "@/mob-ui";
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -24,9 +24,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../general.styles";
 
 export default function Onboarding() {
-	const { triggerBiometricAuth } = useAuthContext();
 	const { user } = useSessionUser();
 	const database = useDatabase();
+	const router = useRouter();
 
 	const [
 		isSelectLanguageISpeakModalVisible,
@@ -89,10 +89,7 @@ export default function Onboarding() {
 				});
 			}
 
-			const biometricSuccess = await triggerBiometricAuth();
-		if (!biometricSuccess) {
-			setError(t("biometric_auth_error"));
-		}
+			router.replace("/authorized/learning");
 		} catch (e) {
 			setError(getErrorMessage((e as Error).message));
 		}

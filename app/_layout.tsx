@@ -1,16 +1,12 @@
 import { DatabaseProvider } from "@nozbe/watermelondb/DatabaseProvider";
-import { useIsFocused } from "@react-navigation/native";
 import { setAudioModeAsync } from "expo-audio";
 import { File, Paths } from "expo-file-system";
-import { authenticateAsync, isEnrolledAsync } from "expo-local-authentication";
-import { Stack, useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Platform } from "react-native";
+import { ActivityIndicator, Platform } from "react-native";
 import { SystemBars } from "react-native-edge-to-edge";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { DevPanel } from "@/components/DevPanel";
 import { ScreenBackground } from "@/components/ScreenBackground";
@@ -18,90 +14,70 @@ import { AuthContext } from "@/context/AuthContext";
 import { BackgroundProvider } from "@/context/BackgroundContext";
 import database from "@/db/database";
 import { styles } from "@/general.styles";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { WZStack } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
+import { clearAuthTokens, getAuthTokens } from "@/utils/authTokenStorage";
 import "../i18n";
-import * as Sentry from '@sentry/react-native';
+import * as Sentry from "@sentry/react-native";
 
 Sentry.init({
-  dsn: 'https://a8b716bcc9e76aa60e8c6611605c48e5@o1062861.ingest.us.sentry.io/4510963666124800',
+	dsn: "https://a8b716bcc9e76aa60e8c6611605c48e5@o1062861.ingest.us.sentry.io/4510963666124800",
 
-  // Adds more context data to events (IP address, cookies, user, etc.)
-  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
-  sendDefaultPii: true,
+	// Adds more context data to events (IP address, cookies, user, etc.)
+	// For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+	sendDefaultPii: true,
 
-  // Enable Logs
-  enableLogs: true,
+	// Enable Logs
+	enableLogs: true,
 
-  // Configure Session Replay
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1,
-  integrations: [Sentry.mobileReplayIntegration()],
+	// Configure Session Replay
+	replaysSessionSampleRate: 0.1,
+	replaysOnErrorSampleRate: 1,
+	integrations: [Sentry.mobileReplayIntegration()],
 
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: __DEV__,
+	// uncomment the line below to enable Spotlight (https://spotlightjs.com)
+	// spotlight: __DEV__,
 });
 
 export default Sentry.wrap(function RootLayout() {
-	const [isAuthenticated, setAuthenticated] = useState(false);
 	const [isReady, setIsReady] = useState(false);
+	const [hasStoredSession, setHasStoredSession] = useState(false);
 	const { t } = useTranslation();
 	const router = useRouter();
-	const startupAuthDone = useRef(false);
+	const segments = useSegments();
+	const rootSegment = segments[0];
 
-	const isFocused = useIsFocused();
-
-	const triggerBiometricAuth = useCallback(async (): Promise<boolean> => {
+	const prepareStoredSession = useCallback(async () => {
 		// On iOS, Keychain (SecureStore) persists across app uninstalls.
 		// Detect a fresh install by checking a flag in the documents directory
 		// (which is cleared on uninstall) and wipe any stale tokens.
 		const flag = new File(Paths.document, "has_launched");
 		if (!flag.exists) {
 			flag.write("1");
-			await SecureStore.deleteItemAsync("access_token");
-			await SecureStore.deleteItemAsync("refresh_token");
+			await clearAuthTokens();
+			setHasStoredSession(false);
 			setIsReady(true);
-			return true;
-		}
-
-		const access_token = await SecureStore.getItemAsync("access_token");
-
-		if (!access_token) {
-			setIsReady(true);
-			return true;
-		}
-
-		const enrolled = await isEnrolledAsync();
-
-		if (!enrolled) {
-			setAuthenticated(true);
-			setIsReady(true);
-			return true;
-		}
-
-		const result = await authenticateAsync({
-			promptMessage: "Authenticate to access the app",
-		});
-
-		if (!result.success) {
-			setAuthenticated(false);
-			setIsReady(true);
-			return false;
-		}
-
-		setAuthenticated(true);
-		setIsReady(true);
-		return true;
-	}, []);
-
-	useEffect(() => {
-		if (!isFocused || startupAuthDone.current) {
 			return;
 		}
 
-		startupAuthDone.current = true;
-		triggerBiometricAuth();
-	}, [isFocused, triggerBiometricAuth]);
+		const tokens = await getAuthTokens();
+		setHasStoredSession(Boolean(tokens));
+		setIsReady(true);
+	}, []);
+
+	useEffect(() => {
+		prepareStoredSession();
+	}, [prepareStoredSession]);
+
+	const logout = useCallback(async () => {
+		await clearAuthTokens();
+		useExcerciseStore.getState().reset();
+		useVocabularyStore.getState().reset();
+		setHasStoredSession(false);
+		router.replace("/");
+	}, [router]);
 
 	useEffect(() => {
 		setAudioModeAsync({
@@ -112,10 +88,16 @@ export default Sentry.wrap(function RootLayout() {
 	}, []);
 
 	useEffect(() => {
-		if (isAuthenticated) {
-			router.push("/authorized/learning");
+		if (!isReady || !hasStoredSession) {
+			return;
 		}
-	}, [isAuthenticated, router]);
+
+		if (rootSegment === "authorized" || rootSegment === "onboarding") {
+			return;
+		}
+
+		router.replace("/authorized/learning");
+	}, [hasStoredSession, isReady, rootSegment, router]);
 
 	if (!isReady) {
 		return (
@@ -128,31 +110,36 @@ export default Sentry.wrap(function RootLayout() {
 	}
 
 	return (
-		<AuthContext.Provider value={{ triggerBiometricAuth }}>
-		<DatabaseProvider database={database}>
-			<Stack
-				screenLayout={({ children }) => (
-					<BackgroundProvider>
-						<WZStack>
-							<StatusBar style="light" />
-							{Platform.OS === "android" && <SystemBars hidden={{ navigationBar: true }} />}
-							<ScreenBackground />
-							{children}
-						</WZStack>
-					</BackgroundProvider>
-				)}
-				screenOptions={{
-					headerShown: false,
-					contentStyle: styles.screen,
-				}}
-			>
-				<Stack.Screen name="index" options={{ title: t("sign_up") }} />
-				<Stack.Screen name="verify" options={{ title: "" }} />
-				<Stack.Screen name="onboarding" options={{ title: "", headerShown: false }} />
-				<Stack.Screen name="authorized" options={{ headerShown: false }} />
-			</Stack>
-			<DevPanel />
-		</DatabaseProvider>
+		<AuthContext.Provider value={{ logout }}>
+			<DatabaseProvider database={database}>
+				<Stack
+					screenLayout={({ children }) => (
+						<BackgroundProvider>
+							<WZStack>
+								<StatusBar style="light" />
+								{Platform.OS === "android" && (
+									<SystemBars hidden={{ navigationBar: true }} />
+								)}
+								<ScreenBackground />
+								{children}
+							</WZStack>
+						</BackgroundProvider>
+					)}
+					screenOptions={{
+						headerShown: false,
+						contentStyle: styles.screen,
+					}}
+				>
+					<Stack.Screen name="index" options={{ title: t("sign_up") }} />
+					<Stack.Screen name="verify" options={{ title: "" }} />
+					<Stack.Screen
+						name="onboarding"
+						options={{ title: "", headerShown: false }}
+					/>
+					<Stack.Screen name="authorized" options={{ headerShown: false }} />
+				</Stack>
+				<DevPanel />
+			</DatabaseProvider>
 		</AuthContext.Provider>
 	);
 });

@@ -1,7 +1,7 @@
 import type { paths as Paths } from "@vvruspat/words-types";
-import * as SecureStore from "expo-secure-store";
 import { logger } from "./logger";
 import { genericErrorMessage } from "./genericErrorMessage";
+import { getAccessToken } from "./authTokenStorage";
 
 const server = process.env.EXPO_PUBLIC_API_URL;
 
@@ -106,7 +106,7 @@ export const $fetch = async <U extends ValidUrl, M extends ValidMethod<U>>(
 			contentTypeHeader["content-type"] = "application/json";
 		}
 
-		const access = await SecureStore.getItemAsync("access_token");
+		const access = await getAccessToken();
 
 		if (access && !options.noAuth) {
 			authHeader.Authorization = `Bearer ${access}`;

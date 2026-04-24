@@ -1,11 +1,11 @@
 import { createContext, useContext } from "react";
 
 interface AuthContextType {
-	triggerBiometricAuth: () => Promise<boolean>;
+	logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
-	triggerBiometricAuth: () => Promise.resolve(false),
+	logout: () => Promise.resolve(),
 });
 
 export const useAuthContext = () => useContext(AuthContext);
