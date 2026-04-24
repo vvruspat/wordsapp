@@ -1,6 +1,6 @@
-import { memo, useEffect } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Modal, StyleSheet, Text, View } from "react-native";
+import { Animated, Modal, StyleSheet, Text, View } from "react-native";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { Colors } from "@/mob-ui/brand/colors";
 
@@ -8,6 +8,9 @@ export const SyncProgressBar = memo(() => {
 	const { t } = useTranslation();
 	const { isSyncing, syncProgress, syncStatus, error, clearError } =
 		useVocabularyStore();
+	const visible = isSyncing || !!error;
+	const [shouldRender, setShouldRender] = useState(visible);
+	const visibility = useRef(new Animated.Value(visible ? 1 : 0)).current;
 
 	useEffect(() => {
 		if (error && !isSyncing) {
@@ -18,9 +21,30 @@ export const SyncProgressBar = memo(() => {
 		}
 	}, [error, isSyncing, clearError]);
 
-	const visible = isSyncing || !!error;
+	useEffect(() => {
+		if (visible) {
+			setShouldRender(true);
+			Animated.spring(visibility, {
+				toValue: 1,
+				useNativeDriver: true,
+				damping: 18,
+				stiffness: 180,
+			}).start();
+			return;
+		}
 
-	if (!visible) {
+		Animated.timing(visibility, {
+			toValue: 0,
+			duration: 240,
+			useNativeDriver: true,
+		}).start(({ finished }) => {
+			if (finished) {
+				setShouldRender(false);
+			}
+		});
+	}, [visibility, visible]);
+
+	if (!shouldRender) {
 		return null;
 	}
 
@@ -29,28 +53,59 @@ export const SyncProgressBar = memo(() => {
 
 	return (
 		<Modal
-			visible={visible}
+			visible={shouldRender}
 			transparent
-			animationType="fade"
+			animationType="none"
 			statusBarTranslucent
 		>
-			<View style={styles.overlay}>
-				<View style={styles.container}>
+			<Animated.View
+				style={[
+					styles.overlay,
+					{
+						opacity: visibility.interpolate({
+							inputRange: [0, 1],
+							outputRange: [0, 1],
+						}),
+					},
+				]}
+			>
+				<Animated.View
+					style={[
+						styles.container,
+						{
+							opacity: visibility,
+							transform: [
+								{
+									scale: visibility.interpolate({
+										inputRange: [0, 1],
+										outputRange: [0.96, 1],
+									}),
+								},
+								{
+									translateY: visibility.interpolate({
+										inputRange: [0, 1],
+										outputRange: [12, 0],
+									}),
+								},
+							],
+						},
+					]}
+				>
 					{error ? (
 						<Text style={styles.errorLabel}>{t("sync_overlay_error")}</Text>
 					) : (
 						<>
 							<Text style={styles.label}>
-							{syncStatus ? t(syncStatus) : t("sync_overlay_syncing")}
-						</Text>
+								{syncStatus ? t(syncStatus) : t("sync_overlay_syncing")}
+							</Text>
 							<View style={styles.track}>
 								<View style={[styles.bar, { width: widthPercent }]} />
 							</View>
 							<Text style={styles.percent}>{Math.round(clamped * 100)}%</Text>
 						</>
 					)}
-				</View>
-			</View>
+				</Animated.View>
+			</Animated.View>
 		</Modal>
 	);
 });

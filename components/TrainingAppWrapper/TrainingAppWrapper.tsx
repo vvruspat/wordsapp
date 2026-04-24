@@ -4,6 +4,7 @@ import { learningRepository } from "@/db/repositories/learning.repository";
 import { topicsRepository } from "@/db/repositories/topics.repository";
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { styles } from "@/general.styles";
+import { useAudioReadiness } from "@/hooks/useAudioReadiness";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WCard, WText } from "@/mob-ui";
@@ -75,14 +76,26 @@ export const TrainingAppWrapper = ({
 	const { setColor, setOpacity } = useContext(BackgroundContext);
 	const { user } = useSessionUser();
 	const { currentCatalogs, currentTopics, setCurrentTopics } = useExcerciseStore();
+	const { isAudioReady } = useAudioReadiness();
 	const selectedTopicId = currentTopics.length === 1 ? currentTopics[0] : null;
+
+	const effectiveExcludedExercises = useMemo(() => {
+		if (
+			isAudioReady ||
+			excludedExercises.includes("listening_practice")
+		) {
+			return excludedExercises;
+		}
+
+		return [...excludedExercises, "listening_practice"];
+	}, [excludedExercises, isAudioReady]);
 
 	const orderedTrainingIds = useMemo(
 		() =>
 			(Object.keys(EXERCISES_APPS) as LearningTrainingName[]).filter(
-				(trainingId) => !excludedExercises.includes(trainingId),
+				(trainingId) => !effectiveExcludedExercises.includes(trainingId),
 			),
-		[excludedExercises],
+		[effectiveExcludedExercises],
 	);
 	const nextTrainingId = useMemo(() => {
 		if (!currentExercise) {
@@ -109,7 +122,7 @@ export const TrainingAppWrapper = ({
 
 	const setRandomExercise = useCallback(() => {
 		const availableTrainings = Object.values(EXERCISES_APPS).filter(
-			(training) => !excludedExercises.includes(training.id),
+			(training) => !effectiveExcludedExercises.includes(training.id),
 		);
 		const randomTraining = shuffleArray(availableTrainings)[0];
 
@@ -121,7 +134,7 @@ export const TrainingAppWrapper = ({
 		setCurrentTitle(t(randomTraining.titleId));
 		setColor(randomTraining.backgroundColor);
 		setOpacity(1);
-	}, [excludedExercises, t, setColor, setOpacity]);
+	}, [effectiveExcludedExercises, t, setColor, setOpacity]);
 
 	const onExerciseComplete = useCallback(() => {
 		if (!exercise) {
@@ -142,9 +155,14 @@ export const TrainingAppWrapper = ({
 
 	useEffect(() => {
 		if (exercise) {
+			if (exercise === "listening_practice" && !isAudioReady) {
+				router.replace("/authorized/learning");
+				return;
+			}
+
 			setCurrentExercise(exercise);
 		}
-	}, [exercise]);
+	}, [exercise, isAudioReady]);
 
 	useEffect(() => {
 		if (!currentExercise) {

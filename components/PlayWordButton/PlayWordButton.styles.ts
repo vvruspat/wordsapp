@@ -7,4 +7,7 @@ export const styles = StyleSheet.create({
 		borderRadius: 32,
 		backgroundColor: Colors.greys.grey10,
 	},
+	buttonDisabled: {
+		opacity: 0.45,
+	},
 });

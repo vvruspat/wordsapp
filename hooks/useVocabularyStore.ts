@@ -8,6 +8,14 @@ type VocabCatalogDto = components["schemas"]["VocabCatalogDto"];
 type TopicDto = components["schemas"]["TopicDto"];
 type TopicTranslationDto = components["schemas"]["TopicTranslationDto"];
 
+type AudioDownloadState = {
+	isAudioDownloading: boolean;
+	audioDownloadProgress: number;
+	audioDownloadCompleted: number;
+	audioDownloadTotal: number;
+	audioDownloadError: string | null;
+};
+
 type VocabularyState = {
 	words: WordDto[];
 	translations: WordTranslationDto[];
@@ -21,10 +29,11 @@ type VocabularyState = {
 	syncStatus: string | null;
 	lastSyncTime: number | null;
 	error: string | null;
-};
+} & AudioDownloadState;
 
 type VocabularyActions = {
 	setWords: (words: WordDto[]) => void;
+	setWordAudio: (wordId: number, audio: string) => void;
 	setTranslations: (translations: WordTranslationDto[]) => void;
 	setCatalogs: (catalogs: VocabCatalogDto[]) => void;
 	setTopics: (topics: TopicDto[]) => void;
@@ -37,6 +46,7 @@ type VocabularyActions = {
 	setLastSyncTime: (time: number) => void;
 	setError: (error: string | null) => void;
 	clearError: () => void;
+	setAudioDownloadState: (state: Partial<AudioDownloadState>) => void;
 	reset: () => void;
 };
 
@@ -53,6 +63,11 @@ const initialState: VocabularyState = {
 	syncStatus: null,
 	lastSyncTime: null,
 	error: null,
+	isAudioDownloading: false,
+	audioDownloadProgress: 0,
+	audioDownloadCompleted: 0,
+	audioDownloadTotal: 0,
+	audioDownloadError: null,
 };
 
 export const useVocabularyStore = create<VocabularyState & VocabularyActions>()(
@@ -61,6 +76,13 @@ export const useVocabularyStore = create<VocabularyState & VocabularyActions>()(
 		setWords: (words) =>
 			set((state) => {
 				state.words = words;
+			}),
+		setWordAudio: (wordId, audio) =>
+			set((state) => {
+				const word = state.words.find((item) => item.id === wordId);
+				if (word) {
+					word.audio = audio;
+				}
 			}),
 		setTranslations: (translations) =>
 			set((state) => {
@@ -109,6 +131,10 @@ export const useVocabularyStore = create<VocabularyState & VocabularyActions>()(
 		clearError: () =>
 			set((state) => {
 				state.error = null;
+			}),
+		setAudioDownloadState: (audioState) =>
+			set((state) => {
+				Object.assign(state, audioState);
 			}),
 		reset: () =>
 			set((state) => {

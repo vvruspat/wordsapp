@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import LearningProgress from "@/db/models/LearningProgress";
 import Word from "@/db/models/Word";
+import { useAudioReadiness } from "@/hooks/useAudioReadiness";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { WCard, WText } from "@/mob-ui";
@@ -58,6 +59,7 @@ export function LearningCatalog({
 	const database = useDatabase();
 	const { user } = useSessionUser();
 	const { currentCatalogs, currentTopics } = useExcerciseStore();
+	const { isAudioReady } = useAudioReadiness();
 	const [trainingStats, setTrainingStats] = useState<TrainingCardStatsMap>(
 		createEmptyTrainingStats(),
 	);
@@ -168,12 +170,15 @@ export function LearningCatalog({
 			};
 			const selected = isTrainingSelected?.(item.id) ?? false;
 			const stats = trainingStats[item.id];
+			const disabled =
+				!onTrainingPress ||
+				(item.id === "listening_practice" && !isAudioReady);
 
 			return (
 				<Pressable
 					style={{ flex: 1 }}
 					onPress={() => handlePress(item.id)}
-					disabled={!onTrainingPress}
+					disabled={disabled}
 				>
 					<WCard
 						style={{
@@ -181,6 +186,7 @@ export function LearningCatalog({
 							gap: 12,
 							padding: 16,
 							minHeight: 148,
+							opacity: disabled ? 0.55 : 1,
 							borderWidth: selected ? 2 : 0,
 							borderColor: selected ? Colors.greys.white : Colors.transparent,
 						}}
@@ -219,7 +225,7 @@ export function LearningCatalog({
 				</Pressable>
 			);
 		},
-		[handlePress, isTrainingSelected, onTrainingPress, t, trainingStats],
+		[handlePress, isAudioReady, isTrainingSelected, onTrainingPress, t, trainingStats],
 	);
 
 	return (

@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AudioDownloadProgressBar } from "@/components/AudioDownloadProgressBar";
 import { SyncProgressBar } from "@/components/SyncProgressBar";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
@@ -221,6 +222,7 @@ export default function RootLayout() {
 					}}
 				/>
 			</Tabs>
+			<AudioDownloadProgressBar bottomOffset={49 + tabBarBottomInset} />
 			<SyncProgressBar />
 		</View>
 	);
