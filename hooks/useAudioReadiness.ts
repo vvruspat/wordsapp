@@ -32,7 +32,7 @@ export const useAudioReadiness = () => {
 		const subscription = database
 			.get<Word>("words")
 			.query(...queryConditions)
-			.observe()
+			.observeWithColumns(["audio"])
 			.subscribe((words) => {
 				const pendingAudioCount = words.filter((word) =>
 					isRemoteAudioPath(word.audio),
