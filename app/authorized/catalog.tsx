@@ -91,25 +91,59 @@ export default function Catalog() {
 
 	// Only auto-select a topic when the user explicitly toggles a catalog, not on mount or hydration
 	const catalogJustToggledRef = useRef(false);
+	const topicProgressReady =
+		filteredTopics.length > 0 && topicWords.length > 0 && topicStats.size > 0;
+
+	const getDefaultTopic = useCallback(() => {
+		if (filteredTopics.length === 0) {
+			return null;
+		}
+
+		return (
+			filteredTopics.find(
+				(topic) => (topicStats.get(topic.remoteId)?.learned ?? 0) === 0,
+			) ?? filteredTopics[0]
+		);
+	}, [filteredTopics, topicStats]);
 
 	useEffect(() => {
 		if (!catalogJustToggledRef.current) return;
+		if (filteredTopics.length === 0) {
+			catalogJustToggledRef.current = false;
+			setCurrentTopics([]);
+			setTopicsInitialized(false);
+			return;
+		}
+		if (!topicProgressReady) return;
 		catalogJustToggledRef.current = false;
-		setCurrentTopics(filteredTopics[0] ? [filteredTopics[0].remoteId] : []);
-	}, [filteredTopics, setCurrentTopics]);
+		const defaultTopic = getDefaultTopic();
+		setCurrentTopics(defaultTopic ? [defaultTopic.remoteId] : []);
+		setTopicsInitialized(Boolean(defaultTopic));
+	}, [
+		filteredTopics,
+		getDefaultTopic,
+		setCurrentTopics,
+		setTopicsInitialized,
+		topicProgressReady,
+	]);
 
-	// On first launch (topics never saved to DB), auto-select the first filtered topic
+	// On first launch or after a language reset, auto-select the first unlearned filtered topic.
 	useEffect(() => {
 		if (!_hasHydrated || topicsInitialized || filteredTopics.length === 0)
 			return;
-		setCurrentTopics([filteredTopics[0].remoteId]);
+		if (!topicProgressReady) return;
+		const defaultTopic = getDefaultTopic();
+		if (!defaultTopic) return;
+		setCurrentTopics([defaultTopic.remoteId]);
 		setTopicsInitialized(true);
 	}, [
 		_hasHydrated,
 		topicsInitialized,
 		filteredTopics,
+		getDefaultTopic,
 		setCurrentTopics,
 		setTopicsInitialized,
+		topicProgressReady,
 	]);
 
 	// Persist catalog selection to DB after hydration
@@ -183,9 +217,11 @@ export default function Catalog() {
 	useEffect(() => {
 		if (_hasHydrated && catalogs.length > 0 && currentCatalogs.length === 0) {
 			catalogJustToggledRef.current = true;
-			const defaults = catalogs
+			const levelDefaults = catalogs
 				.filter((c) => c.title === "A1" || c.title === "A2")
 				.map((c) => c.remoteId);
+			const defaults =
+				levelDefaults.length > 0 ? levelDefaults : [catalogs[0].remoteId];
 			setCurrentCatalogs(defaults);
 		}
 	}, [_hasHydrated, catalogs, currentCatalogs, setCurrentCatalogs]);

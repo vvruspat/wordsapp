@@ -102,8 +102,11 @@ export default function RootLayout() {
 				setCurrentCatalogs(JSON.parse(savedCatalogs));
 			}
 			if (savedTopics) {
-				setCurrentTopics(JSON.parse(savedTopics));
-				setTopicsInitialized(true);
+				const parsedTopics = JSON.parse(savedTopics);
+				setCurrentTopics(parsedTopics);
+				setTopicsInitialized(
+					Array.isArray(parsedTopics) && parsedTopics.length > 0,
+				);
 			}
 
 			setHasHydrated(true);
