@@ -48,4 +48,19 @@ export const trainingAppWrapperStyles = StyleSheet.create({
 		gap: 12,
 		width: "100%",
 	},
+	audioUnavailable: {
+		flex: 1,
+		width: "100%",
+		justifyContent: "center",
+	},
+	audioUnavailableCard: {
+		backgroundColor: Colors.dark.dark2,
+		borderWidth: 1,
+		borderColor: Colors.greys.grey4,
+		alignItems: "center",
+	},
+	audioUnavailableText: {
+		color: Colors.greys.white,
+		textAlign: "center",
+	},
 });

@@ -78,6 +78,10 @@ export const TrainingAppWrapper = ({
 	const { currentCatalogs, currentTopics, setCurrentTopics } = useExcerciseStore();
 	const { isAudioReady, isAudioReadinessLoading } = useAudioReadiness();
 	const selectedTopicId = currentTopics.length === 1 ? currentTopics[0] : null;
+	const isListeningAudioUnavailable =
+		exercise === "listening_practice" &&
+		!isAudioReadinessLoading &&
+		!isAudioReady;
 
 	const effectiveExcludedExercises = useMemo(() => {
 		if (
@@ -155,18 +159,9 @@ export const TrainingAppWrapper = ({
 
 	useEffect(() => {
 		if (exercise) {
-			if (
-				exercise === "listening_practice" &&
-				!isAudioReadinessLoading &&
-				!isAudioReady
-			) {
-				router.replace("/authorized/learning");
-				return;
-			}
-
 			setCurrentExercise(exercise);
 		}
-	}, [exercise, isAudioReady, isAudioReadinessLoading]);
+	}, [exercise]);
 
 	useEffect(() => {
 		if (!currentExercise) {
@@ -527,9 +522,21 @@ export const TrainingAppWrapper = ({
 				{currentExercise === "choose_translation" && (
 					<ChooseTranslationExercise />
 				)}
-				{currentExercise === "listening_practice" && (
+				{isListeningAudioUnavailable ? (
+					<View style={trainingAppWrapperStyles.audioUnavailable}>
+						<WCard style={trainingAppWrapperStyles.audioUnavailableCard}>
+							<WText
+								mode="primary"
+								size="lg"
+								style={trainingAppWrapperStyles.audioUnavailableText}
+							>
+								{t("sync_status_audio")}
+							</WText>
+						</WCard>
+					</View>
+				) : currentExercise === "listening_practice" ? (
 					<ListeningPracticeExercise />
-				)}
+				) : null}
 				{currentExercise === "match_words" && <MatchWordsExercise />}
 				{currentExercise === "true_or_false" && <TrueOrFalseExercise />}
 				{currentExercise === "type_word" && <TypeWordExercise />}

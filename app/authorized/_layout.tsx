@@ -33,7 +33,7 @@ export default function RootLayout() {
 		return () => i18n.off("languageChanged", handler);
 	}, []);
 
-	const { syncVocabulary } = useVocabularySync();
+	const { syncVocabulary, downloadMissingAudio } = useVocabularySync();
 	const { user } = useSessionUser();
 
 	useEffect(() => {
@@ -41,7 +41,7 @@ export default function RootLayout() {
 			router.replace("/onboarding");
 		}
 	}, [user, router]);
-	const { isSyncing } = useVocabularyStore();
+	const { isSyncing, isAudioDownloading } = useVocabularyStore();
 	const {
 		setCurrentCatalogs,
 		setCurrentTopics,
@@ -164,6 +164,26 @@ export default function RootLayout() {
 		};
 	}, [syncVocabulary, user, isSyncing]);
 
+	useEffect(() => {
+		if (
+			!user?.email_verified ||
+			!user.language_learn ||
+			isSyncing ||
+			isAudioDownloading ||
+			lastSyncedLanguageRef.current !== user.language_learn
+		) {
+			return;
+		}
+
+		void downloadMissingAudio(user.language_learn as Language);
+	}, [
+		downloadMissingAudio,
+		isAudioDownloading,
+		isSyncing,
+		user?.email_verified,
+		user?.language_learn,
+	]);
+
 	const insets = useSafeAreaInsets();
 	const androidBottomInset = Platform.OS === "android" ? 12 : 0;
 	const extraTabBarPaddingBottom = Platform.OS === "android" ? 8 : 0;
@@ -231,5 +251,6 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
+		position: "relative",
 	},
 });

@@ -124,6 +124,125 @@ export const useVocabularySync = () => {
 		setAudioDownloadState,
 	} = useVocabularyStore();
 
+	const downloadMissingAudio = useCallback(
+		async (languageLearn?: Language) => {
+			const targetLanguage = languageLearn ?? (user?.language_learn as Language);
+
+			if (!targetLanguage) {
+				return;
+			}
+
+			if (useVocabularyStore.getState().isAudioDownloading) {
+				return;
+			}
+
+			const audioDownloadId = ++activeAudioDownloadId;
+			const remoteAudioWords = (
+				await database
+					.get<Word>("words")
+					.query(Q.where("language", targetLanguage))
+					.fetch()
+			).filter((word) => word.audio && isRemoteAudioPath(word.audio));
+
+			const audioCount = remoteAudioWords.length;
+
+			if (audioCount === 0) {
+				setAudioDownloadState({
+					isAudioDownloading: false,
+					audioDownloadProgress: 0,
+					audioDownloadCompleted: 0,
+					audioDownloadTotal: 0,
+					audioDownloadError: null,
+				});
+				return;
+			}
+
+			setAudioDownloadState({
+				isAudioDownloading: true,
+				audioDownloadProgress: 0.02,
+				audioDownloadCompleted: 0,
+				audioDownloadTotal: audioCount,
+				audioDownloadError: null,
+			});
+
+			const AUDIO_CONCURRENCY = 5;
+			let audioCompleted = 0;
+			let wordIndex = 0;
+			const isActiveDownload = () => activeAudioDownloadId === audioDownloadId;
+
+			const markAudioCompleted = () => {
+				audioCompleted += 1;
+
+				if (!isActiveDownload()) {
+					return;
+				}
+
+				setAudioDownloadState({
+					audioDownloadCompleted: audioCompleted,
+					audioDownloadProgress: audioCompleted / audioCount,
+				});
+			};
+
+			async function processNextAudio(): Promise<void> {
+				while (wordIndex < remoteAudioWords.length && isActiveDownload()) {
+					const word = remoteAudioWords[wordIndex++];
+					const localAudioPath = await downloadAudioFile(word.audio, word.remoteId);
+
+					if (!isRemoteAudioPath(localAudioPath) && isActiveDownload()) {
+						await database.write(async () => {
+							await word.update((w) => {
+								w.audio = localAudioPath;
+							});
+						});
+
+						if (useVocabularyStore.getState().languageLearn === targetLanguage) {
+							useVocabularyStore
+								.getState()
+								.setWordAudio(word.remoteId, localAudioPath);
+						}
+					}
+
+					markAudioCompleted();
+				}
+			}
+
+			try {
+				await Promise.all(
+					Array.from(
+						{ length: Math.min(AUDIO_CONCURRENCY, audioCount) },
+						processNextAudio,
+					),
+				);
+
+				if (!isActiveDownload()) {
+					return;
+				}
+
+				setAudioDownloadState({
+					isAudioDownloading: false,
+					audioDownloadProgress: 1,
+					audioDownloadCompleted: audioCount,
+					audioDownloadTotal: audioCount,
+					audioDownloadError: null,
+				});
+			} catch (error) {
+				if (!isActiveDownload()) {
+					return;
+				}
+
+				const errorMessage =
+					error instanceof Error ? error.message : "Unknown error occurred";
+
+				logger.warn("Failed to download audio in background:", error, "audio");
+				setAudioDownloadState({
+					isAudioDownloading: false,
+					audioDownloadError: errorMessage,
+				});
+			}
+		},
+		[database, setAudioDownloadState, user?.language_learn],
+	);
+
 	const syncVocabulary = useCallback(
 		async (languageLearn?: Language) => {
 			let didSucceed = false;
@@ -286,134 +405,7 @@ export const useVocabularySync = () => {
 					return existingLocal ? { ...word, audio: existingLocal } : word;
 				});
 
-				const audioCandidates = words.filter(
-					(word) =>
-						word.audio &&
-						isRemoteAudioPath(word.audio) &&
-						!existingAudioMap.has(word.id),
-				);
-				const audioDownloadId = ++activeAudioDownloadId;
 				setSyncProgress(0.6);
-
-				const downloadAudioInBackground = async () => {
-					const audioCount = audioCandidates.length;
-
-					if (audioCount === 0) {
-						setAudioDownloadState({
-							isAudioDownloading: false,
-							audioDownloadProgress: 0,
-							audioDownloadCompleted: 0,
-							audioDownloadTotal: 0,
-							audioDownloadError: null,
-						});
-						return;
-					}
-
-					setAudioDownloadState({
-						isAudioDownloading: true,
-						audioDownloadProgress: 0,
-						audioDownloadCompleted: 0,
-						audioDownloadTotal: audioCount,
-						audioDownloadError: null,
-					});
-
-					const AUDIO_CONCURRENCY = 5;
-					let audioCompleted = 0;
-					let wordIndex = 0;
-
-					const isActiveDownload = () => activeAudioDownloadId === audioDownloadId;
-
-					const markAudioCompleted = () => {
-						audioCompleted += 1;
-
-						if (!isActiveDownload()) {
-							return;
-						}
-
-						setAudioDownloadState({
-							audioDownloadCompleted: audioCompleted,
-							audioDownloadProgress: audioCompleted / audioCount,
-						});
-					};
-
-					const saveLocalAudio = async (
-						word: WordDto,
-						localAudioPath: string,
-					) => {
-						if (isRemoteAudioPath(localAudioPath) || !isActiveDownload()) {
-							return;
-						}
-
-						const existing = await database
-							.get<Word>("words")
-							.query(
-								Q.where("remote_id", word.id),
-								Q.where("language", targetLanguage),
-							)
-							.fetch();
-
-						if (existing.length > 0) {
-							await database.write(async () => {
-								await existing[0].update((w) => {
-									w.audio = localAudioPath;
-								});
-							});
-						}
-
-						if (useVocabularyStore.getState().languageLearn === targetLanguage) {
-							useVocabularyStore.getState().setWordAudio(word.id, localAudioPath);
-						}
-					};
-
-					async function processNextAudio(): Promise<void> {
-						while (wordIndex < audioCandidates.length && isActiveDownload()) {
-							const word = audioCandidates[wordIndex++];
-
-							if (!word.audio) {
-								markAudioCompleted();
-								continue;
-							}
-
-							const localAudioPath = await downloadAudioFile(word.audio, word.id);
-							await saveLocalAudio(word, localAudioPath);
-							markAudioCompleted();
-						}
-					}
-
-					try {
-						await Promise.all(
-							Array.from(
-								{ length: Math.min(AUDIO_CONCURRENCY, audioCount) },
-								processNextAudio,
-							),
-						);
-
-						if (!isActiveDownload()) {
-							return;
-						}
-
-						setAudioDownloadState({
-							isAudioDownloading: false,
-							audioDownloadProgress: 1,
-							audioDownloadCompleted: audioCount,
-							audioDownloadTotal: audioCount,
-							audioDownloadError: null,
-						});
-					} catch (error) {
-						if (!isActiveDownload()) {
-							return;
-						}
-
-						const errorMessage =
-							error instanceof Error ? error.message : "Unknown error occurred";
-
-						logger.warn("Failed to download audio in background:", error, "audio");
-						setAudioDownloadState({
-							isAudioDownloading: false,
-							audioDownloadError: errorMessage,
-						});
-					}
-				};
 
 				// Fetch synonym groups for validation (best-effort, non-blocking)
 				let synonymGroups: {
@@ -595,7 +587,7 @@ export const useVocabularySync = () => {
 				setTranslations(translations);
 				setLastSyncTime(Date.now());
 
-				void downloadAudioInBackground();
+				void downloadMissingAudio(targetLanguage);
 
 				setSyncProgress(1);
 				setSyncStatus(null);
@@ -630,6 +622,7 @@ export const useVocabularySync = () => {
 			setSyncProgress,
 			setSyncStatus,
 			setLastSyncTime,
+			downloadMissingAudio,
 			setAudioDownloadState,
 			setError,
 			clearError,
@@ -730,6 +723,7 @@ export const useVocabularySync = () => {
 
 	return {
 		syncVocabulary,
+		downloadMissingAudio,
 		loadFromLocal,
 	};
 };
