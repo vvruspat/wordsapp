@@ -59,7 +59,7 @@ export function LearningCatalog({
 	const database = useDatabase();
 	const { user } = useSessionUser();
 	const { currentCatalogs, currentTopics } = useExcerciseStore();
-	const { isAudioReady } = useAudioReadiness();
+	const { isAudioReady, isAudioReadinessLoading } = useAudioReadiness();
 	const [trainingStats, setTrainingStats] = useState<TrainingCardStatsMap>(
 		createEmptyTrainingStats(),
 	);
@@ -172,7 +172,8 @@ export function LearningCatalog({
 			const stats = trainingStats[item.id];
 			const disabled =
 				!onTrainingPress ||
-				(item.id === "listening_practice" && !isAudioReady);
+				(item.id === "listening_practice" &&
+					(isAudioReadinessLoading || !isAudioReady));
 
 			return (
 				<Pressable
@@ -225,7 +226,15 @@ export function LearningCatalog({
 				</Pressable>
 			);
 		},
-		[handlePress, isAudioReady, isTrainingSelected, onTrainingPress, t, trainingStats],
+		[
+			handlePress,
+			isAudioReady,
+			isAudioReadinessLoading,
+			isTrainingSelected,
+			onTrainingPress,
+			t,
+			trainingStats,
+		],
 	);
 
 	return (

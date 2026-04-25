@@ -76,19 +76,19 @@ export const TrainingAppWrapper = ({
 	const { setColor, setOpacity } = useContext(BackgroundContext);
 	const { user } = useSessionUser();
 	const { currentCatalogs, currentTopics, setCurrentTopics } = useExcerciseStore();
-	const { isAudioReady } = useAudioReadiness();
+	const { isAudioReady, isAudioReadinessLoading } = useAudioReadiness();
 	const selectedTopicId = currentTopics.length === 1 ? currentTopics[0] : null;
 
 	const effectiveExcludedExercises = useMemo(() => {
 		if (
-			isAudioReady ||
+			(!isAudioReadinessLoading && isAudioReady) ||
 			excludedExercises.includes("listening_practice")
 		) {
 			return excludedExercises;
 		}
 
 		return [...excludedExercises, "listening_practice"];
-	}, [excludedExercises, isAudioReady]);
+	}, [excludedExercises, isAudioReady, isAudioReadinessLoading]);
 
 	const orderedTrainingIds = useMemo(
 		() =>
@@ -155,14 +155,18 @@ export const TrainingAppWrapper = ({
 
 	useEffect(() => {
 		if (exercise) {
-			if (exercise === "listening_practice" && !isAudioReady) {
+			if (
+				exercise === "listening_practice" &&
+				!isAudioReadinessLoading &&
+				!isAudioReady
+			) {
 				router.replace("/authorized/learning");
 				return;
 			}
 
 			setCurrentExercise(exercise);
 		}
-	}, [exercise, isAudioReady]);
+	}, [exercise, isAudioReady, isAudioReadinessLoading]);
 
 	useEffect(() => {
 		if (!currentExercise) {

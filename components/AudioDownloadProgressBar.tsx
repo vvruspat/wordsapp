@@ -97,6 +97,8 @@ const styles = StyleSheet.create({
 		right: 0,
 		left: 0,
 		height: 6,
+		zIndex: 50,
+		elevation: 50,
 		backgroundColor: Colors.dark.black60,
 		justifyContent: "center",
 	},
