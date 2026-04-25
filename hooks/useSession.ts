@@ -1,12 +1,16 @@
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
 import { components } from "@vvruspat/words-types";
-import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { refreshToken as apiRefreshToken } from "@/api/auth";
 import User from "@/db/models/User";
+import {
+	clearAuthTokens,
+	getAuthTokens,
+	setAuthTokens,
+} from "@/utils/authTokenStorage";
 import { logger } from "@/utils/logger";
 
 export const useSessionUser = () => {
@@ -25,8 +29,7 @@ export const useSessionUser = () => {
 		incomeUserData: components["schemas"]["UserDto"],
 	) => {
 		// move to separate function to reuse
-		await SecureStore.setItemAsync("access_token", accessToken);
-		await SecureStore.setItemAsync("refresh_token", refreshToken);
+		await setAuthTokens(accessToken, refreshToken);
 
 		await database.write(async () => {
 			const usersCollection = database.get<User>("users");
@@ -109,11 +112,10 @@ export const useSessionUser = () => {
 
 	useEffect(() => {
 		const fetchTokens = async () => {
-			const refresh = await SecureStore.getItemAsync("refresh_token");
-			const access = await SecureStore.getItemAsync("access_token");
+			const tokens = await getAuthTokens();
 
-			if (access && refresh) {
-				const decoded = jwtDecode<{ exp: number }>(access);
+			if (tokens) {
+				const decoded = jwtDecode<{ exp: number }>(tokens.accessToken);
 				const expiresIn = decoded.exp;
 
 				const expiresInMs = expiresIn * 1000;
@@ -124,30 +126,27 @@ export const useSessionUser = () => {
 					// token will expire in less than 7 days
 					setAccessToken(null);
 					setRefreshToken(null);
-					await SecureStore.deleteItemAsync("access_token");
-					await SecureStore.deleteItemAsync("refresh_token");
+					await clearAuthTokens();
 
-					const response = await apiRefreshToken(refresh);
+					const response = await apiRefreshToken(tokens.refreshToken);
 
 					const newAccessToken = response?.data?.access_token;
 					const newRefreshToken = response?.data?.refresh_token;
 
 					if (newAccessToken && newRefreshToken) {
-						await SecureStore.setItemAsync("access_token", newAccessToken);
-						await SecureStore.setItemAsync("refresh_token", newRefreshToken);
+						await setAuthTokens(newAccessToken, newRefreshToken);
 						setAccessToken(newAccessToken);
 						setRefreshToken(newRefreshToken);
 					} else {
 						setAccessToken(null);
 						setRefreshToken(null);
-						await SecureStore.deleteItemAsync("access_token");
-						await SecureStore.deleteItemAsync("refresh_token");
+						await clearAuthTokens();
 					}
 					return;
 				} else {
 					// token is valid
-					setAccessToken(access);
-					setRefreshToken(refresh);
+					setAccessToken(tokens.accessToken);
+					setRefreshToken(tokens.refreshToken);
 					return;
 				}
 			}

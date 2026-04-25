@@ -2,10 +2,15 @@ import { AntDesign } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
+import {
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	Text,
+	View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { resendVerificationEmail, verifyEmail } from "@/api/auth";
-import { useAuthContext } from "@/context/AuthContext";
 import { useSessionUser } from "@/hooks/useSession";
 import { WAlert, WButton, WCharInput, WText, WTimer } from "@/mob-ui";
 import { styles } from "../general.styles";
@@ -14,7 +19,6 @@ const PIN_LENGTH = 4;
 
 export default function Verify() {
 	const router = useRouter();
-	const { triggerBiometricAuth } = useAuthContext();
 	const { authUser } = useSessionUser();
 
 	const { email } = useLocalSearchParams<{ email: string }>();
@@ -33,6 +37,11 @@ export default function Verify() {
 					return;
 				}
 
+				if (!response.data) {
+					setError(t("verification_error_generic"));
+					return;
+				}
+
 				const { access_token, refresh_token, user: userData } = response.data;
 
 				await authUser(access_token, refresh_token, userData);
@@ -40,10 +49,7 @@ export default function Verify() {
 				if (!userData.onboarded) {
 					router.replace("/onboarding");
 				} else {
-					const biometricSuccess = await triggerBiometricAuth();
-					if (!biometricSuccess) {
-						setError(t("biometric_auth_error"));
-					}
+					router.replace("/authorized/learning");
 				}
 			} catch (e) {
 				setError((e as Error).message);

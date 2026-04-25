@@ -41,7 +41,9 @@ export function TypeTranslationExercise() {
 		translation: null,
 	};
 
-	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>([]);
+	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>(
+		[],
+	);
 
 	const wordRemoteId = word?.remoteId;
 	const wordLanguage = word?.language;
@@ -107,7 +109,9 @@ export function TypeTranslationExercise() {
 			if (normalizedInput.length === primaryAnswer.length) {
 				return answers.some((a) => a === normalizedInput) ? "success" : "error";
 			}
-			return answers.some((a) => a.startsWith(normalizedInput)) ? "default" : "error";
+			return answers.some((a) => a.startsWith(normalizedInput))
+				? "default"
+				: "error";
 		},
 		[translation, acceptedTranslations],
 	);
@@ -123,11 +127,23 @@ export function TypeTranslationExercise() {
 				triggerLike();
 				onSuccess?.(word.remoteId, score, false);
 				complete();
-			} else if (nextStatus === "error" && text.trim().length === translation.translation.trim().length) {
+			} else if (
+				nextStatus === "error" &&
+				text.trim().length === translation.translation.trim().length
+			) {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[translation, word, answered, complete, triggerLike, evaluateStatus, onFailure, onSuccess],
+		[
+			translation,
+			word,
+			answered,
+			complete,
+			triggerLike,
+			evaluateStatus,
+			onFailure,
+			onSuccess,
+		],
 	);
 
 	const handleSkip = useCallback(() => {
@@ -165,6 +181,7 @@ export function TypeTranslationExercise() {
 					length={translation.translation.length}
 					onChangeText={handleChange}
 					status={status}
+					displayUppercase={false}
 				/>
 			</Animated.View>
 

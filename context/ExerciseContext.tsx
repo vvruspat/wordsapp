@@ -19,6 +19,7 @@ import { translationsRepository } from "@/db/repositories/translations.repositor
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
+import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { logger } from "@/utils/logger";
 
 type SessionPair = {
@@ -28,6 +29,11 @@ type SessionPair = {
 
 // Large number to fetch all words when initializing queues
 const ALL_WORDS_COUNT = 999999;
+
+type QueueSnapshot = {
+	failed: SessionPair[];
+	succeeded: SessionPair[];
+};
 
 type ExerciseType = {
 	showSuccessModal: () => void;
@@ -102,6 +108,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const successQueue = useRef<SessionPair[]>([]);
 	// Promise that resolves when queue initialization is complete
 	const initializationPromise = useRef<Promise<void> | null>(null);
+	const queueHydrationId = useRef(0);
 	// Track last served word to avoid immediate repeats
 	const lastServedWordId = useRef<number | null>(null);
 
@@ -114,6 +121,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const failedWordIds = useRef(new Set<number>());
 
 	const { user } = useSessionUser();
+	const lastSyncTime = useVocabularyStore((state) => state.lastSyncTime);
 
 	const {
 		currentCatalogs,
@@ -164,69 +172,80 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 
 	// Pre-load all words into failed/success queues before training begins.
 	// When trainingId is provided, progress is scoped to that exercise only.
-	const initializeQueues = useCallback(async (trainingId?: string | null) => {
-		try {
-			const allWords = await wordsRepository.getRandomWords(
-				user?.language_learn ?? "en",
-				ALL_WORDS_COUNT,
-				[],
-				currentCatalogs.length > 0 ? currentCatalogs : undefined,
-				currentTopics.length > 0 ? currentTopics : undefined,
-			);
-
-			const allTranslations = await translationsRepository.getByWordIds(
-				user?.language_speak ?? "en",
-				allWords.map((w) => w.remoteId),
-			);
-
-			const allPairs = allWords
-				.map((word) => ({
-					word,
-					translation: allTranslations.find((t) => t.word === word.remoteId),
-				}))
-				.filter((p): p is SessionPair => p.translation !== undefined);
-
-			if (user?.userId) {
-				const progressRecords =
-					trainingId != null
-						? await learningRepository.getByUserAndTraining(user.userId, trainingId)
-						: await learningRepository.getByUser(user.userId);
-				const progressByWordId = new Map(
-					progressRecords.map((r) => [r.wordId, r]),
+	const initializeQueues = useCallback(
+		async (trainingId?: string | null): Promise<QueueSnapshot> => {
+			try {
+				const allWords = await wordsRepository.getRandomWords(
+					user?.language_learn ?? "en",
+					ALL_WORDS_COUNT,
+					[],
+					currentCatalogs.length > 0 ? currentCatalogs : undefined,
+					currentTopics.length > 0 ? currentTopics : undefined,
 				);
-				const succeededWordIds = new Set(progressRecords.map((r) => r.wordId));
 
-				const failed: SessionPair[] = [];
-				const succeeded: SessionPair[] = [];
+				const allTranslations = await translationsRepository.getByWordIds(
+					user?.language_speak ?? "en",
+					allWords.map((w) => w.remoteId),
+				);
 
-				for (const pair of allPairs) {
-					if (succeededWordIds.has(pair.word.remoteId)) {
-						succeeded.push(pair);
-					} else {
-						failed.push(pair);
+				const allPairs = allWords
+					.map((word) => ({
+						word,
+						translation: allTranslations.find((t) => t.word === word.remoteId),
+					}))
+					.filter((p): p is SessionPair => p.translation !== undefined);
+
+				if (user?.userId) {
+					const progressRecords =
+						trainingId != null
+							? await learningRepository.getByUserAndTraining(user.userId, trainingId)
+							: await learningRepository.getByUser(user.userId);
+					const progressByWordId = new Map(
+						progressRecords.map((r) => [r.wordId, r]),
+					);
+					const succeededWordIds = new Set(
+						progressRecords.map((r) => r.wordId),
+					);
+
+					const failed: SessionPair[] = [];
+					const succeeded: SessionPair[] = [];
+
+					for (const pair of allPairs) {
+						if (succeededWordIds.has(pair.word.remoteId)) {
+							succeeded.push(pair);
+						} else {
+							failed.push(pair);
+						}
 					}
+
+					return {
+						failed: failed.sort(() => Math.random() - 0.5),
+						succeeded: succeeded.sort(
+							(a, b) =>
+								new Date(
+									progressByWordId.get(a.word.remoteId)?.lastReview ?? 0,
+								).getTime() -
+								new Date(
+									progressByWordId.get(b.word.remoteId)?.lastReview ?? 0,
+								).getTime(),
+						),
+					};
 				}
 
-				// Shuffle failed queue for random order
-				failedQueue.current = failed.sort(() => Math.random() - 0.5);
-				// Sort success queue by oldest lastReview so least-recently-reviewed come first
-				successQueue.current = succeeded.sort(
-					(a, b) =>
-						new Date(
-							progressByWordId.get(a.word.remoteId)?.lastReview ?? 0,
-						).getTime() -
-						new Date(
-							progressByWordId.get(b.word.remoteId)?.lastReview ?? 0,
-						).getTime(),
-				);
-			} else {
-				failedQueue.current = allPairs.sort(() => Math.random() - 0.5);
-				successQueue.current = [];
+				return {
+					failed: allPairs.sort(() => Math.random() - 0.5),
+					succeeded: [],
+				};
+			} catch (error) {
+				logger.error("Failed to initialize training queues:", error, "general");
+				return {
+					failed: [],
+					succeeded: [],
+				};
 			}
-		} catch (error) {
-			logger.error("Failed to initialize training queues:", error, "general");
-		}
-	}, [currentCatalogs, currentTopics, user]);
+		},
+		[currentCatalogs, currentTopics, user],
+	);
 
 	const resetSessionStats = useCallback(() => {
 		succeededWordIds.current = new Set();
@@ -237,36 +256,65 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		setSessionSuccessEventCount(0);
 	}, []);
 
-	// Re-initialize queues when language or filters change mid-session
+	const hydrateQueues = useCallback(
+		(trainingId?: string | null) => {
+			const hydrationId = queueHydrationId.current + 1;
+			queueHydrationId.current = hydrationId;
+			failedQueue.current = [];
+			successQueue.current = [];
+			resetSessionStats();
+			const promise = initializeQueues(trainingId).then((snapshot) => {
+				if (queueHydrationId.current !== hydrationId) {
+					return;
+				}
+
+				failedQueue.current = snapshot.failed;
+				successQueue.current = snapshot.succeeded;
+				const total = failedQueue.current.length + successQueue.current.length;
+				const alreadySucceeded = successQueue.current.map(
+					(p) => p.word.remoteId,
+				);
+				succeededWordIds.current = new Set(alreadySucceeded);
+				setSessionTotalCount(total);
+				setSessionSuccessCount(alreadySucceeded.length);
+
+				if (
+					total > 0 &&
+					useExcerciseStore.getState().currentPairs.length === 0
+				) {
+					notifyCompleteListeners();
+				}
+			});
+			initializationPromise.current = promise;
+			return promise;
+		},
+		[initializeQueues, notifyCompleteListeners, resetSessionStats],
+	);
+
+	// Re-initialize queues when language, filters, training, or synced vocabulary changes.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: lastSyncTime is a sync completion trigger for rebuilding exercise queues.
 	useEffect(() => {
-		failedQueue.current = [];
-		successQueue.current = [];
-		resetSessionStats();
-		initializationPromise.current = initializeQueues().then(() => {
-			setSessionTotalCount(
-				failedQueue.current.length + successQueue.current.length,
-			);
-		});
-	}, [initializeQueues, resetSessionStats]);
+		hydrateQueues(currentTrainingId);
+	}, [currentTrainingId, hydrateQueues, lastSyncTime]);
 
 	// Clear queues and re-initialize when switching training sessions
 	const setCurrentTrainingId = useCallback(
 		(trainingId: string | null) => {
 			logger.debug("ExerciseContext: setCurrentTrainingId", { trainingId }, "general");
-			failedQueue.current = [];
-			successQueue.current = [];
-			resetSessionStats();
 			setCurrentTrainingIdState(trainingId);
-			initializationPromise.current = initializeQueues(trainingId).then(() => {
-				const total = failedQueue.current.length + successQueue.current.length;
-				const alreadySucceeded = successQueue.current.map((p) => p.word.remoteId);
-				logger.debug("ExerciseContext: queue initialized", { total, succeeded: alreadySucceeded.length, trainingId }, "general");
-				succeededWordIds.current = new Set(alreadySucceeded);
-				setSessionTotalCount(total);
-				setSessionSuccessCount(alreadySucceeded.length);
+			hydrateQueues(trainingId).then(() => {
+				logger.debug(
+					"ExerciseContext: queue initialized",
+					{
+						total: failedQueue.current.length + successQueue.current.length,
+						succeeded: successQueue.current.length,
+						trainingId,
+					},
+					"general",
+				);
 			});
 		},
-		[initializeQueues, resetSessionStats],
+		[hydrateQueues],
 	);
 
 	const loadData = useCallback(
@@ -329,6 +377,30 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				}
 
 				lastServedWordId.current = item?.word.remoteId ?? null;
+
+				if (!item) {
+					const fallbackWords = await wordsRepository.getRandomWords(
+						user?.language_learn ?? "en",
+						1,
+						[],
+						currentCatalogs.length > 0 ? currentCatalogs : undefined,
+						currentTopics.length > 0 ? currentTopics : undefined,
+						user?.userId,
+						currentTrainingId ?? undefined,
+					);
+					const fallbackTranslations = await translationsRepository.getByWordIds(
+						user?.language_speak ?? "en",
+						fallbackWords.map((word) => word.remoteId),
+					);
+					item = fallbackWords
+						.map((word) => ({
+							word,
+							translation: fallbackTranslations.find(
+								(t) => t.word === word.remoteId,
+							),
+						}))
+						.find((pair): pair is SessionPair => pair.translation !== undefined);
+				}
 
 				pairs = item ? [item] : [];
 			}

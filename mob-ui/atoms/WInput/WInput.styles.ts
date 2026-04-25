@@ -21,7 +21,8 @@ export const styles = StyleSheet.create({
 		borderColor: Colors.greys.grey8,
 		borderWidth: 1,
 		borderRadius: 16,
-		paddingHorizontal: 18,
+		paddingLeft: 18,
+		paddingRight: 10,
 		paddingVertical: 0,
 		overflow: "hidden",
 		shadowOffset: { width: 0, height: 0 },
@@ -69,7 +70,7 @@ export const styles = StyleSheet.create({
 	},
 
 	actionButton: {
-		paddingHorizontal: 8,
+		width: 32,
 		paddingVertical: 0,
 		justifyContent: "center",
 		alignItems: "center",

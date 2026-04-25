@@ -3,7 +3,9 @@ import { AudioStatus, useAudioPlayer } from "expo-audio";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
+import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { Colors } from "@/mob-ui/brand/colors";
+import { resolveLocalAudioPath } from "@/utils/audio";
 import { logger } from "@/utils/logger";
 import { styles } from "./PlayWordButton.styles";
 
@@ -15,7 +17,11 @@ export type PlayWordButtonProps = {
 export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [hasError, setHasError] = useState(false);
+	const [isAudioAvailable, setIsAudioAvailable] = useState(false);
 	const pendingAutoplay = useRef(false);
+	const audioDownloadCompleted = useVocabularyStore(
+		(state) => state.audioDownloadCompleted,
+	);
 
 	const scaleAnim = useRef(new Animated.Value(1)).current;
 	const colorAnim = useRef(new Animated.Value(0)).current;
@@ -25,23 +31,41 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		outputRange: [Colors.greys.grey10, Colors.backgrounds.green],
 	});
 
-	// Safely get audio path
-	const audioPath = (() => {
-		if (!audio || !FileSystem.documentDirectory) {
-			return null;
-		}
-		const filename = audio.split("/").pop();
-		if (!filename) {
-			return null;
-		}
-		return `${FileSystem.documentDirectory}assets/audio/${filename}`;
-	})();
+	const audioPath = resolveLocalAudioPath(audio);
 
-	const player = useAudioPlayer(audioPath ?? "");
+	const player = useAudioPlayer(isAudioAvailable ? (audioPath ?? "") : "");
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: audioDownloadCompleted is a refresh trigger for local file availability.
+	useEffect(() => {
+		let cancelled = false;
+
+		if (!audioPath) {
+			setIsAudioAvailable(false);
+			return;
+		}
+
+		FileSystem.getInfoAsync(audioPath)
+			.then((fileInfo) => {
+				if (!cancelled) {
+					setIsAudioAvailable(fileInfo.exists);
+				}
+			})
+			.catch(() => {
+				if (!cancelled) {
+					setIsAudioAvailable(false);
+				}
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [audioPath, audioDownloadCompleted]);
 
 	useEffect(() => {
-		if (!audioPath) {
-			setHasError(true);
+		if (!audioPath || !isAudioAvailable) {
+			pendingAutoplay.current = false;
+			setIsPlaying(false);
+			setHasError(false);
 			return;
 		}
 
@@ -86,10 +110,10 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 				// ignore cleanup errors
 			}
 		};
-	}, [player, autoplay, audioPath]);
+	}, [player, autoplay, audioPath, isAudioAvailable]);
 
 	const onPlayPressed = useCallback(() => {
-		if (!audioPath || hasError) {
+		if (!audioPath || !isAudioAvailable || hasError) {
 			return;
 		}
 		try {
@@ -98,7 +122,7 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 			logger.error("Error playing audio:", error, "audio");
 			setHasError(true);
 		}
-	}, [player, audioPath, hasError]);
+	}, [player, audioPath, isAudioAvailable, hasError]);
 
 	useEffect(() => {
 		if (isPlaying) {
@@ -135,21 +159,31 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		}
 	}, [isPlaying, scaleAnim, colorAnim]);
 
-	if (!audio || !audioPath || hasError) {
+	if (!audio || !audioPath) {
 		return null;
 	}
 
+	const disabled = !isAudioAvailable || hasError;
+
 	return (
-		<Pressable onPress={onPlayPressed} disabled={hasError}>
+		<Pressable
+			onPress={onPlayPressed}
+			disabled={disabled}
+			accessibilityState={{ disabled }}
+		>
 			<Animated.View
 				style={[
 					styles.button,
 					{ transform: [{ scale: scaleAnim }] },
 					{ backgroundColor },
-					hasError && { opacity: 0.5 },
+					disabled && styles.buttonDisabled,
 				]}
 			>
-				<AntDesign name="sound" size={24} color={Colors.greys.white} />
+				<AntDesign
+					name="sound"
+					size={24}
+					color={disabled ? Colors.greys.grey5 : Colors.greys.white}
+				/>
 			</Animated.View>
 		</Pressable>
 	);

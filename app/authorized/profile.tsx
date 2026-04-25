@@ -10,6 +10,7 @@ import SelectLanguageISpeakModal from "@/components/Modals/SelectLanguageISpeakM
 import SelectLanguageToLearnModal from "@/components/Modals/SelectLanguageToLearnModal";
 import { SelectLanguageButton } from "@/components/SelectLanguageButton";
 import { LanguageItem } from "@/constants/languages";
+import { useAuthContext } from "@/context/AuthContext";
 import { useSessionUser } from "@/hooks/useSession";
 import { useVocabularySync } from "@/hooks/useVocabularySync";
 import { WAlert, WButton, WInput, WText } from "@/mob-ui";
@@ -21,6 +22,7 @@ export default function Profile() {
 	const database = useDatabase();
 	const currentUser = useSessionUser();
 	const user = currentUser?.user;
+	const { logout } = useAuthContext();
 	const { syncVocabulary } = useVocabularySync();
 
 	const [name, setName] = useState("");
@@ -40,6 +42,7 @@ export default function Profile() {
 	] = useState(false);
 
 	const [isSaving, setIsSaving] = useState(false);
+	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const [error, setError] = useState<string>();
 	const [success, setSuccess] = useState(false);
 
@@ -67,6 +70,7 @@ export default function Profile() {
 				language_speak: languageISpeak,
 				language_learn: languageToLearn,
 				email_verified: user.email_verified ?? false,
+				onboarded: user.onboarded ?? false,
 			});
 
 			if (response.status === "error") {
@@ -90,7 +94,10 @@ export default function Profile() {
 				i18n.changeLanguage(languageISpeak);
 			}
 
-			if (languageToLearn !== prevLanguageLearn || languageISpeak !== prevLanguageSpeak) {
+			if (
+				languageToLearn !== prevLanguageLearn ||
+				languageISpeak !== prevLanguageSpeak
+			) {
 				syncVocabulary(languageToLearn as LanguageItem["isoCode"]);
 			}
 
@@ -116,6 +123,19 @@ export default function Profile() {
 			});
 		} catch (e) {
 			setError((e as Error).message);
+		}
+	};
+
+	const handleLogout = async () => {
+		setIsLoggingOut(true);
+		setError(undefined);
+		setSuccess(false);
+
+		try {
+			await logout();
+		} catch (e) {
+			setError((e as Error).message);
+			setIsLoggingOut(false);
 		}
 	};
 
@@ -187,14 +207,24 @@ export default function Profile() {
 					/>
 				</View>
 
-				<WButton
-					mode="primary"
-					fullWidth
-					onPress={handleSave}
-					disabled={isSaving}
-				>
-					<Text>{t("profile_save_button")}</Text>
-				</WButton>
+				<View style={profileStyles.actions}>
+					<WButton
+						mode="primary"
+						fullWidth
+						onPress={handleSave}
+						disabled={isSaving}
+					>
+						<Text>{t("profile_save_button")}</Text>
+					</WButton>
+					<WButton
+						mode="dark"
+						fullWidth
+						onPress={handleLogout}
+						disabled={isLoggingOut}
+					>
+						<Text>{t("profile_logout_button")}</Text>
+					</WButton>
+				</View>
 			</ScrollView>
 
 			<SelectLanguageISpeakModal
@@ -237,5 +267,9 @@ const profileStyles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
+	},
+	actions: {
+		gap: 12,
+		width: "100%",
 	},
 });

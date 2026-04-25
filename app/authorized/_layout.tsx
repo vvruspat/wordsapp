@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AudioDownloadProgressBar } from "@/components/AudioDownloadProgressBar";
 import { SyncProgressBar } from "@/components/SyncProgressBar";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
@@ -32,7 +33,7 @@ export default function RootLayout() {
 		return () => i18n.off("languageChanged", handler);
 	}, []);
 
-	const { syncVocabulary } = useVocabularySync();
+	const { syncVocabulary, downloadMissingAudio } = useVocabularySync();
 	const { user } = useSessionUser();
 
 	useEffect(() => {
@@ -40,7 +41,7 @@ export default function RootLayout() {
 			router.replace("/onboarding");
 		}
 	}, [user, router]);
-	const { isSyncing } = useVocabularyStore();
+	const { isSyncing, isAudioDownloading } = useVocabularyStore();
 	const {
 		setCurrentCatalogs,
 		setCurrentTopics,
@@ -101,8 +102,11 @@ export default function RootLayout() {
 				setCurrentCatalogs(JSON.parse(savedCatalogs));
 			}
 			if (savedTopics) {
-				setCurrentTopics(JSON.parse(savedTopics));
-				setTopicsInitialized(true);
+				const parsedTopics = JSON.parse(savedTopics);
+				setCurrentTopics(parsedTopics);
+				setTopicsInitialized(
+					Array.isArray(parsedTopics) && parsedTopics.length > 0,
+				);
 			}
 
 			setHasHydrated(true);
@@ -163,6 +167,26 @@ export default function RootLayout() {
 		};
 	}, [syncVocabulary, user, isSyncing]);
 
+	useEffect(() => {
+		if (
+			!user?.email_verified ||
+			!user.language_learn ||
+			isSyncing ||
+			isAudioDownloading ||
+			lastSyncedLanguageRef.current !== user.language_learn
+		) {
+			return;
+		}
+
+		void downloadMissingAudio(user.language_learn as Language);
+	}, [
+		downloadMissingAudio,
+		isAudioDownloading,
+		isSyncing,
+		user?.email_verified,
+		user?.language_learn,
+	]);
+
 	const insets = useSafeAreaInsets();
 	const androidBottomInset = Platform.OS === "android" ? 12 : 0;
 	const extraTabBarPaddingBottom = Platform.OS === "android" ? 8 : 0;
@@ -221,6 +245,7 @@ export default function RootLayout() {
 					}}
 				/>
 			</Tabs>
+			<AudioDownloadProgressBar bottomOffset={49 + tabBarBottomInset} />
 			<SyncProgressBar />
 		</View>
 	);
@@ -229,5 +254,6 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
+		position: "relative",
 	},
 });
