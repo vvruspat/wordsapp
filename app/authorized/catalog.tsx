@@ -101,7 +101,10 @@ export default function Catalog() {
 
 		return (
 			filteredTopics.find(
-				(topic) => (topicStats.get(topic.remoteId)?.learned ?? 0) === 0,
+				(topic) => {
+					const stats = topicStats.get(topic.remoteId);
+					return !stats || stats.total === 0 || stats.learned < stats.total;
+				},
 			) ?? filteredTopics[0]
 		);
 	}, [filteredTopics, topicStats]);
@@ -127,7 +130,7 @@ export default function Catalog() {
 		topicProgressReady,
 	]);
 
-	// On first launch or after a language reset, auto-select the first unlearned filtered topic.
+	// On first launch or after a language reset, auto-select the first incomplete filtered topic.
 	useEffect(() => {
 		if (!_hasHydrated || topicsInitialized || filteredTopics.length === 0)
 			return;
