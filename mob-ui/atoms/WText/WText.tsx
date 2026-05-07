@@ -1,5 +1,5 @@
-import { typography } from "@/mob-ui/brand/typography";
 import { StyleSheet, Text, TextProps } from "react-native";
+import { typography } from "@/mob-ui/brand/typography";
 import { styles } from "./WText.styles";
 
 export type WTextProps = TextProps & {
@@ -25,6 +25,7 @@ export const WText = ({
 	return (
 		<Text
 			{...rest}
+			allowFontScaling={false}
 			style={StyleSheet.compose(
 				[
 					styles.text,

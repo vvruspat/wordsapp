@@ -3,8 +3,16 @@ import { typography } from "@/mob-ui/brand/typography";
 
 const INPUT_ROW_SIZE = 56;
 const INPUT_ROW_SMALL_SIZE = 32;
-const INPUT_TEXT_VERTICAL_INSET = 4;
-const INPUT_TEXT_SMALL_VERTICAL_INSET = 2;
+export const inputCellMetrics = {
+	default: {
+		fontSize: 32,
+		lineHeight: 38,
+	},
+	small: {
+		fontSize: 17,
+		lineHeight: 20,
+	},
+} as const;
 
 export const styles = StyleSheet.create({
 	input: {
@@ -17,6 +25,8 @@ export const styles = StyleSheet.create({
 	inputRow: {
 		width: INPUT_ROW_SIZE,
 		paddingHorizontal: 0,
+		paddingLeft: 0,
+		paddingRight: 0,
 		alignItems: "center",
 		justifyContent: "center",
 	},
@@ -25,17 +35,22 @@ export const styles = StyleSheet.create({
 		height: INPUT_ROW_SMALL_SIZE,
 		borderRadius: 8,
 	},
-	inputText: {
-		height: INPUT_ROW_SIZE - INPUT_TEXT_VERTICAL_INSET * 2,
-		lineHeight: INPUT_ROW_SIZE - INPUT_TEXT_VERTICAL_INSET * 2,
+	inputTextBase: {
+		color: "white",
 		textAlign: "center",
 		includeFontPadding: false,
+		fontFamily: typography.fontFamily.heading,
+		fontWeight: "700",
+	},
+	inputText: {
+		lineHeight: inputCellMetrics.default.lineHeight,
+		fontSize: inputCellMetrics.default.fontSize,
 	},
 	inputTextSmall: {
-		height: INPUT_ROW_SMALL_SIZE - INPUT_TEXT_SMALL_VERTICAL_INSET * 2,
-		lineHeight: INPUT_ROW_SMALL_SIZE - INPUT_TEXT_SMALL_VERTICAL_INSET * 2,
-		textAlign: "center",
-		includeFontPadding: false,
-		fontSize: typography.fontSize.xl,
+		lineHeight: inputCellMetrics.small.lineHeight,
+		fontSize: inputCellMetrics.small.fontSize,
+	},
+	inputTextUppercase: {
+		textTransform: "uppercase",
 	},
 });
