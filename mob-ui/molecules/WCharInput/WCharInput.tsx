@@ -3,14 +3,15 @@ import {
 	Animated,
 	Easing,
 	Pressable,
+	Text,
 	TextInput,
 	TextInputProps,
 	View,
 } from "react-native";
 import { ExerciseContext } from "@/context/ExerciseContext";
-import { WInputProps, WText } from "@/mob-ui/atoms";
+import { WInputProps } from "@/mob-ui/atoms";
 import { styles as wInputStyles } from "../../atoms/WInput/WInput.styles";
-import { styles } from "./WCharInput.styles";
+import { inputCellMetrics, styles } from "./WCharInput.styles";
 
 const MAX_CELLS = 20;
 const TYPEWRITER_DELAY = 80;
@@ -106,7 +107,11 @@ export const WCharInput = ({
 		setVal(text.slice(0, length));
 	};
 
-	const cellTextStyle = length >= 6 ? styles.inputTextSmall : styles.inputText;
+	const isCompact = length >= 6;
+	const cellTextStyle = isCompact ? styles.inputTextSmall : styles.inputText;
+	const cellTextSize = isCompact
+		? inputCellMetrics.small.fontSize
+		: inputCellMetrics.default.fontSize;
 
 	return (
 		<View
@@ -134,22 +139,25 @@ export const WCharInput = ({
 						style={[
 							wInputStyles.inputRow,
 							styles.inputRow,
-							length >= 6 && styles.inputRowSmall,
+							isCompact && styles.inputRowSmall,
 							val[index] !== undefined
 								? wInputStyles.inputRowSuccess
 								: wInputStyles.inputRowDefault,
 							status === "error" && wInputStyles.inputRowError,
 						]}
 					>
-						<WText
-							size={length >= 6 ? "xl" : "4xl"}
-							weight="bold"
-							mode="primary"
-							uppercase={displayUppercase}
-							style={cellTextStyle}
+						<Text
+							allowFontScaling={false}
+							numberOfLines={1}
+							style={[
+								styles.inputTextBase,
+								cellTextStyle,
+								{ fontSize: cellTextSize },
+								displayUppercase && styles.inputTextUppercase,
+							]}
 						>
 							{secureTextEntry ? "•" : (val[index] ?? "")}
-						</WText>
+						</Text>
 					</Pressable>
 				</Animated.View>
 			))}

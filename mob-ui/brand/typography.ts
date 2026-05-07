@@ -1,4 +1,11 @@
+import { Platform } from "react-native";
+
 const baseSize = 17;
+const appFontFamily = Platform.select({
+	ios: "System",
+	android: "sans-serif",
+	default: "Arial",
+});
 
 const sizes = {
 	xs: baseSize * 0.75,
@@ -15,8 +22,8 @@ const sizes = {
 
 export const typography = {
 	fontFamily: {
-		heading: "SFProText_700Bold",
-		body: "SFProText_400Regular",
+		heading: appFontFamily,
+		body: appFontFamily,
 	},
 	fontSize: {
 		xs: sizes.xs,
