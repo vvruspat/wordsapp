@@ -5,7 +5,7 @@ export default ({ config }) => {
 		...config,
 		expo: {
 			name: "ParaNoun",
-			slug: "paranoun",
+			slug: "wordsapp",
 			version: "1.0.0",
 			orientation: "portrait",
 			icon: "./assets/images/icon.png",
@@ -46,12 +46,12 @@ export default ({ config }) => {
 				],
 				"expo-router",
 				[
-				"expo-splash-screen",
-				{
-					image: "./assets/images/paranoun-splash-logo.png",
-					imageWidth: 300,
-					resizeMode: "contain",
-					backgroundColor: "#0d1f0d",
+					"expo-splash-screen",
+					{
+						image: "./assets/images/paranoun-splash-logo.png",
+						imageWidth: 300,
+						resizeMode: "contain",
+						backgroundColor: "#0d1f0d",
 					},
 				],
 			],
