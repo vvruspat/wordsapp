@@ -17,14 +17,11 @@ export const resolveLocalAudioPath = (audio: string | null | undefined) => {
 	}
 
 	const urlWithoutQuery = audio.split("?")[0];
-	const rawFilename = urlWithoutQuery.split("/").pop();
+	const filename = urlWithoutQuery.split("/").pop();
 
-	if (!rawFilename) {
+	if (!filename) {
 		return null;
 	}
-
-	// Mirror the extension logic in downloadAudioFile: add .mp3 if no extension
-	const filename = rawFilename.includes(".") ? rawFilename : `${rawFilename}.mp3`;
 
 	return `${FileSystem.documentDirectory}assets/audio/${filename}`;
 };
