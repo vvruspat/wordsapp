@@ -196,9 +196,12 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					}))
 					.filter((p): p is SessionPair => p.translation !== undefined);
 
+				// Read from store at call time to avoid stale closures when
+				// setChunkWordIds is called just before navigation.
+				const activeChunkWordIds = useExcerciseStore.getState().chunkWordIds;
 				const pairsToUse =
-					chunkWordIds != null && chunkWordIds.length > 0
-						? allPairs.filter((p) => chunkWordIds.includes(p.word.remoteId))
+					activeChunkWordIds != null && activeChunkWordIds.length > 0
+						? allPairs.filter((p) => activeChunkWordIds.includes(p.word.remoteId))
 						: allPairs;
 
 				if (user?.userId) {
@@ -335,6 +338,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 
 			if (numberOfPairs > 1) {
 				// Multi-pair exercises (e.g. match words) always fetch directly from DB
+				const multiChunkWordIds = useExcerciseStore.getState().chunkWordIds;
 				const words = await wordsRepository.getRandomWords(
 					user?.language_learn ?? "en",
 					numberOfPairs * 4,
@@ -344,11 +348,15 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					user?.userId,
 					currentTrainingId ?? undefined,
 				);
+				const filteredWords =
+					multiChunkWordIds != null && multiChunkWordIds.length > 0
+						? words.filter((w) => multiChunkWordIds.includes(w.remoteId))
+						: words;
 				const translations = await translationsRepository.getByWordIds(
 					user?.language_speak ?? "en",
-					words.map((word) => word.remoteId),
+					filteredWords.map((word) => word.remoteId),
 				);
-				pairs = words
+				pairs = filteredWords
 					.map((word) => ({
 						word,
 						translation: translations.find((t) => t.word === word.remoteId),
