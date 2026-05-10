@@ -172,8 +172,7 @@ export default function RootLayout() {
 			!user?.email_verified ||
 			!user.language_learn ||
 			isSyncing ||
-			isAudioDownloading ||
-			lastSyncedLanguageRef.current !== user.language_learn
+			isAudioDownloading
 		) {
 			return;
 		}
