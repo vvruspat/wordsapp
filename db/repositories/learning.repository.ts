@@ -54,11 +54,14 @@ export const learningRepository = {
 		if (result === "failure") {
 			if (existing.length > 0) {
 				await database.write(async () => {
-					await existing[0].destroyPermanently();
+					await existing[0].update((r) => {
+						r.score = 0;
+						r.lastReview = now;
+					});
 				});
-				logger.debug("learning_progress: deleted (failure)", { userId, wordId, trainingId }, "db");
+				logger.debug("learning_progress: reset to 0 (failure)", { userId, wordId, trainingId }, "db");
 			} else {
-				logger.debug("learning_progress: failure but no record to delete", { userId, wordId, trainingId }, "db");
+				logger.debug("learning_progress: failure but no record to reset", { userId, wordId, trainingId }, "db");
 			}
 			return null;
 		}
@@ -193,6 +196,50 @@ export const learningRepository = {
 			.get<LearningProgress>("learning_progress")
 			.query(Q.where("user_id", userId))
 			.observe();
+	},
+
+	async recordIntro(params: { userId: number; wordId: number; translationId?: number }): Promise<void> {
+		const { userId, wordId, translationId } = params;
+		const now = new Date().toISOString();
+
+		const existing = await database
+			.get<LearningProgress>("learning_progress")
+			.query(
+				Q.where("user_id", userId),
+				Q.where("word_id", wordId),
+				Q.where("training", "intro"),
+			)
+			.fetch();
+
+		if (existing.length > 0) return;
+
+		await database.write(async () => {
+			await database
+				.get<LearningProgress>("learning_progress")
+				.create((r) => {
+					r.userId = userId;
+					r.wordId = wordId;
+					r.score = 1;
+					r.lastReview = now;
+					r.createdAtRemote = now;
+					r.training = "intro";
+					if (translationId !== undefined) r.translation = translationId;
+				});
+		});
+		logger.debug("learning_progress: intro recorded", { userId, wordId }, "db");
+	},
+
+	async getIntroducedWordIds(userId: number, wordIds: number[]): Promise<number[]> {
+		if (wordIds.length === 0) return [];
+		const records = await database
+			.get<LearningProgress>("learning_progress")
+			.query(
+				Q.where("user_id", userId),
+				Q.where("training", "intro"),
+				Q.where("word_id", Q.oneOf(wordIds)),
+			)
+			.fetch();
+		return records.map((r) => r.wordId);
 	},
 
 	async getTopicScores(

@@ -123,5 +123,13 @@
 	"topic_mastered_title": "This topic is completed",
 	"topic_mastered_description": "You can keep practicing here or move on to {{topic}}.",
 	"topic_mastered_stay": "Stay on this topic",
-	"topic_mastered_next": "Next topic"
+	"topic_mastered_next": "Next topic",
+	"daily_proposal_title": "Today I suggest learning {{count}} new words",
+	"daily_proposal_description": "Start by getting familiar with the words, then practice with exercises.",
+	"daily_proposal_learn": "Learn new words",
+	"daily_proposal_train_chunk": "Train introduced words",
+	"daily_proposal_train_all": "Train all words in topic",
+	"word_intro_next": "Next word",
+	"word_intro_done": "Start training",
+	"word_intro_type_hint": "Try typing the word to memorize it"
 }

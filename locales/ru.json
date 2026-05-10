@@ -123,5 +123,13 @@
 	"topic_mastered_title": "Тема полностью пройдена",
 	"topic_mastered_description": "Можно остаться на этой теме или перейти к следующей: {{topic}}.",
 	"topic_mastered_stay": "Остаться на теме",
-	"topic_mastered_next": "Следующая тема"
+	"topic_mastered_next": "Следующая тема",
+	"daily_proposal_title": "Сегодня предлагаю изучить {{count}} новых слов",
+	"daily_proposal_description": "Сначала познакомьтесь со словами, затем закрепите упражнениями.",
+	"daily_proposal_learn": "Изучить новые слова",
+	"daily_proposal_train_chunk": "Тренировать изученные слова",
+	"daily_proposal_train_all": "Тренировать все слова темы",
+	"word_intro_next": "Следующее слово",
+	"word_intro_done": "Начать тренировку",
+	"word_intro_type_hint": "Попробуйте напечатать слово для запоминания"
 }

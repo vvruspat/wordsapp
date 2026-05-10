@@ -201,6 +201,38 @@ export const wordsRepository = {
     return new Set(words.map((word) => word.topic));
   },
 
+  async getOrderedUntrainedWords(
+    language: string,
+    count: number,
+    userId: number,
+    topics?: number[],
+    catalogs?: number[],
+  ): Promise<Word[]> {
+    const queryConditions = [Q.where("language", language)];
+    if (catalogs && catalogs.length > 0) {
+      queryConditions.push(Q.where("catalog", Q.oneOf(catalogs)));
+    }
+    if (topics && topics.length > 0) {
+      queryConditions.push(Q.where("topic", Q.oneOf(topics)));
+    }
+
+    const allWords = await database
+      .get<Word>("words")
+      .query(...queryConditions, Q.sortBy("remote_id", Q.asc))
+      .fetch();
+
+    const progressRecords = await database
+      .get<LearningProgress>("learning_progress")
+      .query(Q.where("user_id", userId))
+      .fetch();
+
+    const wordIdsWithProgress = new Set(progressRecords.map((r) => r.wordId));
+
+    return allWords
+      .filter((word) => !wordIdsWithProgress.has(word.remoteId))
+      .slice(0, count);
+  },
+
   async getByRemoteIds(remoteIds: number[], language: string): Promise<Word[]> {
     if (remoteIds.length === 0) return [];
     return database

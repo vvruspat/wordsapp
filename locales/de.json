@@ -123,5 +123,13 @@
 	"topic_mastered_title": "Dieses Thema ist abgeschlossen",
 	"topic_mastered_description": "Du kannst hier bleiben oder mit {{topic}} weitermachen.",
 	"topic_mastered_stay": "Bei diesem Thema bleiben",
-	"topic_mastered_next": "Nächstes Thema"
+	"topic_mastered_next": "Nächstes Thema",
+	"daily_proposal_title": "Heute schlage ich vor, {{count}} neue Wörter zu lernen",
+	"daily_proposal_description": "Lerne zunächst die Wörter kennen, dann übe mit Aufgaben.",
+	"daily_proposal_learn": "Neue Wörter lernen",
+	"daily_proposal_train_chunk": "Gelernte Wörter üben",
+	"daily_proposal_train_all": "Alle Wörter des Themas üben",
+	"word_intro_next": "Nächstes Wort",
+	"word_intro_done": "Training starten",
+	"word_intro_type_hint": "Versuche, das Wort einzutippen, um es zu merken"
 }
