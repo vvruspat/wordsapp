@@ -124,12 +124,12 @@
 	"topic_mastered_description": "Puedes seguir aquí o pasar al siguiente tema: {{topic}}.",
 	"topic_mastered_stay": "Quedarme en este tema",
 	"topic_mastered_next": "Siguiente tema",
-	"daily_proposal_title": "Today I suggest learning {{count}} new words",
-	"daily_proposal_description": "Start by getting familiar with the words, then practice with exercises.",
-	"daily_proposal_learn": "Learn new words",
-	"daily_proposal_train_chunk": "Train introduced words",
-	"daily_proposal_train_all": "Train all words in topic",
-	"word_intro_next": "Next word",
-	"word_intro_done": "Start training",
-	"word_intro_type_hint": "Try typing the word to memorize it"
+	"daily_proposal_title": "Hoy te sugiero aprender {{count}} palabras nuevas",
+	"daily_proposal_description": "Empieza familiarizándote con las palabras y luego practica con ejercicios.",
+	"daily_proposal_learn": "Aprender palabras nuevas",
+	"daily_proposal_train_chunk": "Entrenar palabras introducidas",
+	"daily_proposal_train_all": "Entrenar todas las palabras del tema",
+	"word_intro_next": "Siguiente palabra",
+	"word_intro_done": "Empezar entrenamiento",
+	"word_intro_type_hint": "Intenta escribir la palabra para memorizarla"
 }

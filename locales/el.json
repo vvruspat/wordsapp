@@ -124,12 +124,12 @@
 	"topic_mastered_description": "Μπορείτε να μείνετε εδώ ή να προχωρήσετε στην επόμενη θεματική: {{topic}}.",
 	"topic_mastered_stay": "Μείνετε σε αυτή τη θεματική",
 	"topic_mastered_next": "Επόμενη θεματική",
-	"daily_proposal_title": "Today I suggest learning {{count}} new words",
-	"daily_proposal_description": "Start by getting familiar with the words, then practice with exercises.",
-	"daily_proposal_learn": "Learn new words",
-	"daily_proposal_train_chunk": "Train introduced words",
-	"daily_proposal_train_all": "Train all words in topic",
-	"word_intro_next": "Next word",
-	"word_intro_done": "Start training",
-	"word_intro_type_hint": "Try typing the word to memorize it"
+	"daily_proposal_title": "Σήμερα προτείνω να μάθεις {{count}} νέες λέξεις",
+	"daily_proposal_description": "Ξεκίνα με εξοικείωση στις λέξεις, έπειτα εξάσκησε με ασκήσεις.",
+	"daily_proposal_learn": "Μάθε νέες λέξεις",
+	"daily_proposal_train_chunk": "Εξάσκηση στις εισαγμένες λέξεις",
+	"daily_proposal_train_all": "Εξάσκηση σε όλες τις λέξεις του θέματος",
+	"word_intro_next": "Επόμενη λέξη",
+	"word_intro_done": "Έναρξη εκπαίδευσης",
+	"word_intro_type_hint": "Δοκίμασε να πληκτρολογήσεις τη λέξη για να την αποστηθίσεις"
 }

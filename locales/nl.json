@@ -124,12 +124,12 @@
 	"topic_mastered_description": "Je kunt hier blijven of doorgaan naar {{topic}}.",
 	"topic_mastered_stay": "Blijf bij dit onderwerp",
 	"topic_mastered_next": "Volgend onderwerp",
-	"daily_proposal_title": "Today I suggest learning {{count}} new words",
-	"daily_proposal_description": "Start by getting familiar with the words, then practice with exercises.",
-	"daily_proposal_learn": "Learn new words",
-	"daily_proposal_train_chunk": "Train introduced words",
-	"daily_proposal_train_all": "Train all words in topic",
-	"word_intro_next": "Next word",
-	"word_intro_done": "Start training",
-	"word_intro_type_hint": "Try typing the word to memorize it"
+	"daily_proposal_title": "Vandaag stel ik voor om {{count}} nieuwe woorden te leren",
+	"daily_proposal_description": "Begin met het verkennen van de woorden, oefen daarna met oefeningen.",
+	"daily_proposal_learn": "Nieuwe woorden leren",
+	"daily_proposal_train_chunk": "Geïntroduceerde woorden oefenen",
+	"daily_proposal_train_all": "Alle woorden van het onderwerp oefenen",
+	"word_intro_next": "Volgend woord",
+	"word_intro_done": "Training starten",
+	"word_intro_type_hint": "Probeer het woord te typen om het te onthouden"
 }
