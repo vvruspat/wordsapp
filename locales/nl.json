@@ -123,5 +123,13 @@
 	"topic_mastered_title": "Dit onderwerp is voltooid",
 	"topic_mastered_description": "Je kunt hier blijven of doorgaan naar {{topic}}.",
 	"topic_mastered_stay": "Blijf bij dit onderwerp",
-	"topic_mastered_next": "Volgend onderwerp"
+	"topic_mastered_next": "Volgend onderwerp",
+	"daily_proposal_title": "Today I suggest learning {{count}} new words",
+	"daily_proposal_description": "Start by getting familiar with the words, then practice with exercises.",
+	"daily_proposal_learn": "Learn new words",
+	"daily_proposal_train_chunk": "Train introduced words",
+	"daily_proposal_train_all": "Train all words in topic",
+	"word_intro_next": "Next word",
+	"word_intro_done": "Start training",
+	"word_intro_type_hint": "Try typing the word to memorize it"
 }

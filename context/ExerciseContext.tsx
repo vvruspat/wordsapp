@@ -129,6 +129,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		setCurrentPairs,
 		setCurrentRandomWords,
 		setCurrentRandomTranslations,
+		chunkWordIds,
 	} = useExcerciseStore();
 
 	const addCompleteListener = useCallback((listener: () => void) => {
@@ -195,6 +196,11 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					}))
 					.filter((p): p is SessionPair => p.translation !== undefined);
 
+				const pairsToUse =
+					chunkWordIds != null && chunkWordIds.length > 0
+						? allPairs.filter((p) => chunkWordIds.includes(p.word.remoteId))
+						: allPairs;
+
 				if (user?.userId) {
 					const progressRecords =
 						trainingId != null
@@ -204,13 +210,15 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						progressRecords.map((r) => [r.wordId, r]),
 					);
 					const succeededWordIds = new Set(
-						progressRecords.map((r) => r.wordId),
+						progressRecords
+							.filter((r) => r.score > 0 && r.training !== "intro")
+							.map((r) => r.wordId),
 					);
 
 					const failed: SessionPair[] = [];
 					const succeeded: SessionPair[] = [];
 
-					for (const pair of allPairs) {
+					for (const pair of pairsToUse) {
 						if (succeededWordIds.has(pair.word.remoteId)) {
 							succeeded.push(pair);
 						} else {
@@ -233,7 +241,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				}
 
 				return {
-					failed: allPairs.sort(() => Math.random() - 0.5),
+					failed: pairsToUse.sort(() => Math.random() - 0.5),
 					succeeded: [],
 				};
 			} catch (error) {
@@ -244,7 +252,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				};
 			}
 		},
-		[currentCatalogs, currentTopics, user],
+		[currentCatalogs, currentTopics, user, chunkWordIds],
 	);
 
 	const resetSessionStats = useCallback(() => {
