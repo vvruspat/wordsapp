@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	KeyboardAvoidingView,
@@ -25,6 +25,14 @@ type WordPair = {
 	translation: WatermelonWordTranslation;
 };
 
+function parseWordIds(raw: string | undefined): number[] {
+	if (!raw) return [];
+	return raw
+		.split(",")
+		.map(Number)
+		.filter((n) => !Number.isNaN(n));
+}
+
 export default function WordIntro() {
 	const { t } = useTranslation();
 	const { wordIds } = useLocalSearchParams<{ wordIds: string }>();
@@ -36,15 +44,11 @@ export default function WordIntro() {
 	const [typed, setTyped] = useState("");
 	const [loading, setLoading] = useState(true);
 
-	const ids = wordIds
-		? wordIds
-				.split(",")
-				.map(Number)
-				.filter((n) => !Number.isNaN(n))
-		: [];
-
+	// Parse IDs inside the effect so wordIds (stable string) is the only dep
 	useEffect(() => {
+		const ids = parseWordIds(wordIds);
 		if (!ids.length || !user?.language_speak) return;
+		setLoading(true);
 		wordsRepository
 			.getByRemoteIds(ids, user.language_learn ?? "en")
 			.then(async (fetchedWords) => {
@@ -58,13 +62,12 @@ export default function WordIntro() {
 				const loadedPairs = ordered
 					.map((word) => ({
 						word,
-						translation: translations.find((t) => t.word === word.remoteId),
+						translation: translations.find((tr) => tr.word === word.remoteId),
 					}))
 					.filter((p): p is WordPair => p.translation !== undefined);
 				setPairs(loadedPairs);
 			})
 			.finally(() => setLoading(false));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [wordIds, user?.language_speak, user?.language_learn]);
 
 	const handleNext = useCallback(async () => {
@@ -92,9 +95,10 @@ export default function WordIntro() {
 			.filter((r) => r.training === "intro")
 			.map((r) => r.wordId);
 
-		setChunkWordIds(allIntroducedIds.length > 0 ? allIntroducedIds : ids);
+		const fallbackIds = parseWordIds(wordIds);
+		setChunkWordIds(allIntroducedIds.length > 0 ? allIntroducedIds : fallbackIds);
 		router.replace("/authorized/learning/mix-training");
-	}, [pairs, currentIndex, user, ids, setChunkWordIds]);
+	}, [pairs, currentIndex, user, wordIds, setChunkWordIds]);
 
 	if (loading) {
 		return (
@@ -135,12 +139,7 @@ export default function WordIntro() {
 
 						<View style={styles.divider} />
 
-						<WText
-							mode="primary"
-							size="xl"
-							wrap
-							style={styles.translation}
-						>
+						<WText mode="primary" size="xl" wrap style={styles.translation}>
 							{pair.translation.translation}
 						</WText>
 
