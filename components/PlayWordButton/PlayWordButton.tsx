@@ -1,11 +1,11 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { AudioStatus, useAudioPlayer } from "expo-audio";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { Colors } from "@/mob-ui/brand/colors";
-import { resolveLocalAudioPath } from "@/utils/audio";
+import { isRemoteAudioPath, resolveLocalAudioPath } from "@/utils/audio";
 import { logger } from "@/utils/logger";
 import { styles } from "./PlayWordButton.styles";
 
@@ -17,7 +17,7 @@ export type PlayWordButtonProps = {
 export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [hasError, setHasError] = useState(false);
-	const [isAudioAvailable, setIsAudioAvailable] = useState(false);
+	const [audioSource, setAudioSource] = useState<string | null>(null);
 	const pendingAutoplay = useRef(false);
 	const audioDownloadCompleted = useVocabularyStore(
 		(state) => state.audioDownloadCompleted,
@@ -31,38 +31,42 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		outputRange: [Colors.greys.grey10, Colors.backgrounds.green],
 	});
 
-	const audioPath = resolveLocalAudioPath(audio);
+	const localAudioPath = resolveLocalAudioPath(audio);
+	const remoteAudioSource = isRemoteAudioPath(audio) ? (audio ?? null) : null;
 
-	const player = useAudioPlayer(isAudioAvailable ? (audioPath ?? "") : "");
+	const player = useAudioPlayer(audioSource);
+	const status = useAudioPlayerStatus(player);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: audioDownloadCompleted is a refresh trigger for local file availability.
 	useEffect(() => {
 		let cancelled = false;
 
-		if (!audioPath) {
-			setIsAudioAvailable(false);
+		if (!localAudioPath) {
+			setAudioSource(remoteAudioSource);
 			return;
 		}
 
-		FileSystem.getInfoAsync(audioPath)
+		FileSystem.getInfoAsync(localAudioPath)
 			.then((fileInfo) => {
 				if (!cancelled) {
-					setIsAudioAvailable(fileInfo.exists);
+					setAudioSource(
+						fileInfo.exists ? localAudioPath : remoteAudioSource,
+					);
 				}
 			})
 			.catch(() => {
 				if (!cancelled) {
-					setIsAudioAvailable(false);
+					setAudioSource(remoteAudioSource);
 				}
 			});
 
 		return () => {
 			cancelled = true;
 		};
-	}, [audioPath, audioDownloadCompleted]);
+	}, [localAudioPath, remoteAudioSource, audioDownloadCompleted]);
 
 	useEffect(() => {
-		if (!audioPath || !isAudioAvailable) {
+		if (!audioSource) {
 			pendingAutoplay.current = false;
 			setIsPlaying(false);
 			setHasError(false);
@@ -73,34 +77,7 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		player.loop = false;
 		pendingAutoplay.current = !!autoplay;
 
-		const listener = (status: AudioStatus) => {
-			setIsPlaying(status.playing);
-
-			// Autoplay only after the audio is fully loaded into the player
-			if (pendingAutoplay.current && status.isLoaded && !status.playing) {
-				pendingAutoplay.current = false;
-				try {
-					player.play();
-				} catch (error) {
-					logger.error("Error playing audio:", error, "audio");
-					setHasError(true);
-				}
-			}
-
-			if (status.didJustFinish) {
-				try {
-					player.pause();
-					player.seekTo(0);
-				} catch (error) {
-					logger.error("Error stopping audio:", error, "audio");
-				}
-			}
-		};
-
-		player.addListener("playbackStatusUpdate", listener);
-
 		return () => {
-			player.removeListener("playbackStatusUpdate", listener);
 			// Stop previous word's audio immediately when audio source changes
 			pendingAutoplay.current = false;
 			try {
@@ -110,19 +87,56 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 				// ignore cleanup errors
 			}
 		};
-	}, [player, autoplay, audioPath, isAudioAvailable]);
+	}, [player, autoplay, audioSource]);
+
+	useEffect(() => {
+		setIsPlaying(status.playing);
+
+		if (
+			pendingAutoplay.current &&
+			status.isLoaded &&
+			!status.isBuffering &&
+			!status.playing
+		) {
+			pendingAutoplay.current = false;
+
+			try {
+				player.seekTo(0);
+				player.play();
+			} catch (error) {
+				logger.error("Error playing audio:", error, "audio");
+				setHasError(true);
+			}
+		}
+
+		if (status.didJustFinish) {
+			try {
+				player.pause();
+				player.seekTo(0);
+			} catch (error) {
+				logger.error("Error stopping audio:", error, "audio");
+			}
+		}
+	}, [player, status]);
 
 	const onPlayPressed = useCallback(() => {
-		if (!audioPath || !isAudioAvailable || hasError) {
+		if (!audioSource || hasError) {
 			return;
 		}
+
+		if (!status.isLoaded || status.isBuffering) {
+			pendingAutoplay.current = true;
+			return;
+		}
+
 		try {
+			player.seekTo(0);
 			player.play();
 		} catch (error) {
 			logger.error("Error playing audio:", error, "audio");
 			setHasError(true);
 		}
-	}, [player, audioPath, isAudioAvailable, hasError]);
+	}, [player, audioSource, hasError, status.isBuffering, status.isLoaded]);
 
 	useEffect(() => {
 		if (isPlaying) {
@@ -159,11 +173,11 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		}
 	}, [isPlaying, scaleAnim, colorAnim]);
 
-	if (!audio || !audioPath) {
+	if (!audio || (!localAudioPath && !remoteAudioSource)) {
 		return null;
 	}
 
-	const disabled = !isAudioAvailable || hasError;
+	const disabled = !audioSource || hasError;
 
 	return (
 		<Pressable
