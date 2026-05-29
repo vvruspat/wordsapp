@@ -16,9 +16,7 @@
 			"!!**/coverage",
 			"!!**/build",
 			"!!**/.expo",
-			"!!**/.rnstorybook",
 			"!!**/.scripts",
-			"!!**/.storybook",
 			"!!**/.vscode"
 		]
 	},

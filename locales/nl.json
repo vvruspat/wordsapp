@@ -131,5 +131,12 @@
 	"daily_proposal_train_all": "Alle woorden van het onderwerp oefenen",
 	"word_intro_next": "Volgend woord",
 	"word_intro_done": "Training starten",
-	"word_intro_type_hint": "Probeer het woord te typen om het te onthouden"
+	"word_intro_type_hint": "Probeer het woord te typen om het te onthouden",
+	"chunk_trained_title": "Deze woorden zijn geoefend",
+	"chunk_trained_description": "Je kunt nu nog {{count}} nieuwe woorden leren.",
+	"chunk_trained_stay": "Blijf trainen",
+	"chunk_trained_learn_next": "Leer volgende woorden",
+	"topic_ready_review_title": "Alle nieuwe woorden zijn geïntroduceerd",
+	"topic_ready_review_description": "Controleer het hele onderwerp met mixtraining.",
+	"topic_ready_review_start": "Herhaal heel onderwerp"
 }

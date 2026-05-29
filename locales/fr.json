@@ -131,5 +131,12 @@
 	"daily_proposal_train_all": "Entraîner tous les mots du thème",
 	"word_intro_next": "Mot suivant",
 	"word_intro_done": "Commencer l'entraînement",
-	"word_intro_type_hint": "Essaie de taper le mot pour le mémoriser"
+	"word_intro_type_hint": "Essaie de taper le mot pour le mémoriser",
+	"chunk_trained_title": "Ces mots sont entraînés",
+	"chunk_trained_description": "Tu peux apprendre {{count}} nouveaux mots de plus.",
+	"chunk_trained_stay": "Continuer ici",
+	"chunk_trained_learn_next": "Apprendre les mots suivants",
+	"topic_ready_review_title": "Tous les nouveaux mots sont introduits",
+	"topic_ready_review_description": "Vérifie tout le thème avec l'entraînement mixte.",
+	"topic_ready_review_start": "Réviser tout le thème"
 }

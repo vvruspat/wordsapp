@@ -131,5 +131,12 @@
 	"daily_proposal_train_all": "Alle Wörter des Themas üben",
 	"word_intro_next": "Nächstes Wort",
 	"word_intro_done": "Training starten",
-	"word_intro_type_hint": "Versuche, das Wort einzutippen, um es zu merken"
+	"word_intro_type_hint": "Versuche, das Wort einzutippen, um es zu merken",
+	"chunk_trained_title": "Diese Wörter sind trainiert",
+	"chunk_trained_description": "Du kannst jetzt {{count}} weitere neue Wörter lernen.",
+	"chunk_trained_stay": "Weiter trainieren",
+	"chunk_trained_learn_next": "Nächste Wörter lernen",
+	"topic_ready_review_title": "Alle neuen Wörter wurden eingeführt",
+	"topic_ready_review_description": "Prüfe das ganze Thema im Mixtraining.",
+	"topic_ready_review_start": "Ganzes Thema wiederholen"
 }

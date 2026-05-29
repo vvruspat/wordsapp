@@ -1,3 +1,19 @@
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { Link, router } from "expo-router";
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
+import { useTranslation } from "react-i18next";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
+import {
+	SafeAreaView,
+	SafeAreaViewProps,
+} from "react-native-safe-area-context";
 import { BackgroundContext } from "@/context/BackgroundContext";
 import { ExerciseContext } from "@/context/ExerciseContext";
 import { learningRepository } from "@/db/repositories/learning.repository";
@@ -5,21 +21,13 @@ import { topicsRepository } from "@/db/repositories/topics.repository";
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { styles } from "@/general.styles";
 import { useAudioReadiness } from "@/hooks/useAudioReadiness";
+import { CHUNK_SIZE } from "@/hooks/useChunkManagement";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
-import { buildTopicProgressStats } from "@/utils/topicProgress";
 import { shuffleArray } from "@/utils";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import { Link, router } from "expo-router";
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, View } from "react-native";
-import {
-	SafeAreaView,
-	SafeAreaViewProps,
-} from "react-native-safe-area-context";
+import { buildTopicProgressStats } from "@/utils/topicProgress";
 import { LearningTrainingName } from "../LearningCatalog";
 import EXERCISES_APPS from "../LearningCatalog/types";
 import {
@@ -55,18 +63,21 @@ export const TrainingAppWrapper = ({
 	const [progressFlashTrigger, setProgressFlashTrigger] = useState(0);
 	const [showMasteredPrompt, setShowMasteredPrompt] = useState(false);
 	const [showNextTopicPrompt, setShowNextTopicPrompt] = useState(false);
+	const [showChunkCompletePrompt, setShowChunkCompletePrompt] = useState(false);
+	const [nextChunkWordIds, setNextChunkWordIds] = useState<number[]>([]);
 	const [nextTopicTitle, setNextTopicTitle] = useState<string | null>(null);
 	const [nextTopicId, setNextTopicId] = useState<number | null>(null);
 	const [isCurrentTopicComplete, setIsCurrentTopicComplete] = useState(false);
 	const masteredPromptTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
-	const nextTopicPromptTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-		null,
-	);
+	const nextTopicPromptTimeoutRef = useRef<ReturnType<
+		typeof setTimeout
+	> | null>(null);
 	const previousMasteredRef = useRef<boolean | null>(null);
 	const previousTopicCompleteRef = useRef<boolean | null>(null);
 	const hasShownInitialTopicPromptRef = useRef(false);
+	const hasShownChunkCompletePromptRef = useRef(false);
 	const {
 		addCompleteListener,
 		removeCompleteListener,
@@ -75,9 +86,18 @@ export const TrainingAppWrapper = ({
 	} = useContext(ExerciseContext);
 	const { setColor, setOpacity } = useContext(BackgroundContext);
 	const { user } = useSessionUser();
-	const { currentCatalogs, currentTopics, setCurrentTopics } = useExcerciseStore();
+	const {
+		currentCatalogs,
+		currentTopics,
+		chunkWordIds,
+		setChunkWordIds,
+		setCurrentTopics,
+	} = useExcerciseStore();
 	const { isAudioReady, isAudioReadinessLoading } = useAudioReadiness();
 	const selectedTopicId = currentTopics.length === 1 ? currentTopics[0] : null;
+	const isChunkMixTraining =
+		!exercise && chunkWordIds != null && chunkWordIds.length > 0;
+	const chunkWordIdsKey = chunkWordIds?.join(",") ?? "";
 	const isListeningAudioUnavailable =
 		exercise === "listening_practice" &&
 		!isAudioReadinessLoading &&
@@ -112,7 +132,9 @@ export const TrainingAppWrapper = ({
 			return null;
 		}
 
-		return orderedTrainingIds[(currentIndex + 1) % orderedTrainingIds.length] ?? null;
+		return (
+			orderedTrainingIds[(currentIndex + 1) % orderedTrainingIds.length] ?? null
+		);
 	}, [currentExercise, orderedTrainingIds]);
 
 	useEffect(() => {
@@ -216,12 +238,13 @@ export const TrainingAppWrapper = ({
 			};
 		}
 
-		const [topics, words, progressRecords, availableTopicIds] = await Promise.all([
-			topicsRepository.getByLanguage(user.language_learn),
-			wordsRepository.getByTopicIds(currentTopics, currentCatalogs),
-			learningRepository.getByUser(user.userId),
-			wordsRepository.getTopicsByCatalogs(currentCatalogs),
-		]);
+		const [topics, words, progressRecords, availableTopicIds] =
+			await Promise.all([
+				topicsRepository.getByLanguage(user.language_learn),
+				wordsRepository.getByTopicIds(currentTopics, currentCatalogs),
+				learningRepository.getByUser(user.userId),
+				wordsRepository.getTopicsByCatalogs(currentCatalogs),
+			]);
 
 		const sortedTopics = topics.sort((a, b) => a.title.localeCompare(b.title));
 		const filteredTopics = sortedTopics.filter((topic) =>
@@ -230,13 +253,16 @@ export const TrainingAppWrapper = ({
 		const currentTopicIndex = filteredTopics.findIndex(
 			(topic) => topic.remoteId === selectedTopicId,
 		);
-		const nextTopic = currentTopicIndex >= 0 ? filteredTopics[currentTopicIndex + 1] : null;
+		const nextTopic =
+			currentTopicIndex >= 0 ? filteredTopics[currentTopicIndex + 1] : null;
 		const stats = buildTopicProgressStats(words, progressRecords);
 		const topicStats = stats.get(selectedTopicId);
 
 		return {
 			isComplete: Boolean(
-				topicStats && topicStats.total > 0 && topicStats.learned >= topicStats.total,
+				topicStats &&
+					topicStats.total > 0 &&
+					topicStats.learned >= topicStats.total,
 			),
 			nextTopicId: nextTopic?.remoteId ?? null,
 			nextTopicTitle: nextTopic?.title ?? null,
@@ -248,6 +274,72 @@ export const TrainingAppWrapper = ({
 		user?.language_learn,
 		user?.userId,
 	]);
+
+	const checkChunkCompletion = useCallback(async () => {
+		if (
+			!isChunkMixTraining ||
+			!user?.userId ||
+			!user.language_learn ||
+			!chunkWordIds ||
+			chunkWordIds.length === 0
+		) {
+			return {
+				isComplete: false,
+				nextWordIds: [],
+			};
+		}
+
+		const progressRecords = await learningRepository.getByUser(user.userId);
+		const chunkWordIdSet = new Set(chunkWordIds);
+		const trainedChunkWordIds = new Set(
+			progressRecords
+				.filter(
+					(record) =>
+						record.training !== "intro" &&
+						record.score > 0 &&
+						chunkWordIdSet.has(record.wordId),
+				)
+				.map((record) => record.wordId),
+		);
+
+		const isComplete = chunkWordIds.every((wordId) =>
+			trainedChunkWordIds.has(wordId),
+		);
+
+		if (!isComplete) {
+			return {
+				isComplete: false,
+				nextWordIds: [],
+			};
+		}
+
+		const nextWords = await wordsRepository.getOrderedUntrainedWords(
+			user.language_learn,
+			CHUNK_SIZE,
+			user.userId,
+			currentTopics.length > 0 ? currentTopics : undefined,
+			currentCatalogs.length > 0 ? currentCatalogs : undefined,
+		);
+
+		return {
+			isComplete: true,
+			nextWordIds: nextWords.map((word) => word.remoteId),
+		};
+	}, [
+		chunkWordIds,
+		currentCatalogs,
+		currentTopics,
+		isChunkMixTraining,
+		user?.language_learn,
+		user?.userId,
+	]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: chunkWordIdsKey is a stable reset trigger for scoped mix chunks.
+	useEffect(() => {
+		hasShownChunkCompletePromptRef.current = false;
+		setShowChunkCompletePrompt(false);
+		setNextChunkWordIds([]);
+	}, [chunkWordIdsKey]);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -313,6 +405,44 @@ export const TrainingAppWrapper = ({
 		user?.language_learn,
 		user?.userId,
 	]);
+
+	useEffect(() => {
+		let isMounted = true;
+
+		if (!isChunkMixTraining || !user?.userId) {
+			setShowChunkCompletePrompt(false);
+			setNextChunkWordIds([]);
+			return;
+		}
+
+		const syncChunkCompletion = async () => {
+			const result = await checkChunkCompletion();
+
+			if (!isMounted) {
+				return;
+			}
+
+			if (result.isComplete && !hasShownChunkCompletePromptRef.current) {
+				hasShownChunkCompletePromptRef.current = true;
+				setProgressFlashTrigger((value) => value + 1);
+				setNextChunkWordIds(result.nextWordIds);
+				setShowChunkCompletePrompt(true);
+			}
+		};
+
+		syncChunkCompletion().catch(() => {});
+
+		const subscription = learningRepository
+			.observeByUser(user.userId)
+			.subscribe(() => {
+				syncChunkCompletion().catch(() => {});
+			});
+
+		return () => {
+			isMounted = false;
+			subscription.unsubscribe();
+		};
+	}, [checkChunkCompletion, isChunkMixTraining, user?.userId]);
 
 	useEffect(() => {
 		if (!exercise) {
@@ -422,7 +552,13 @@ export const TrainingAppWrapper = ({
 		}
 
 		previousTopicCompleteRef.current = isCurrentTopicComplete;
-	}, [isCurrentTopicComplete, nextTopicId, selectedTopicId, showNextTopicPrompt, successEventCount]);
+	}, [
+		isCurrentTopicComplete,
+		nextTopicId,
+		selectedTopicId,
+		showNextTopicPrompt,
+		successEventCount,
+	]);
 
 	useEffect(() => {
 		if (
@@ -489,12 +625,37 @@ export const TrainingAppWrapper = ({
 		setCurrentExercise(orderedTrainingIds[0] ?? null);
 	}, [nextTopicId, orderedTrainingIds, setCurrentTopics]);
 
+	const handleStayInChunkTraining = useCallback(() => {
+		setShowChunkCompletePrompt(false);
+	}, []);
+
+	const handleLearnNextChunk = useCallback(() => {
+		if (nextChunkWordIds.length === 0) {
+			return;
+		}
+
+		setShowChunkCompletePrompt(false);
+		setChunkWordIds(nextChunkWordIds);
+		router.replace({
+			pathname: "/authorized/learning/word-intro" as never,
+			params: { wordIds: nextChunkWordIds.join(",") },
+		});
+	}, [nextChunkWordIds, setChunkWordIds]);
+
+	const handleReviewFullTopic = useCallback(() => {
+		setShowChunkCompletePrompt(false);
+		setChunkWordIds(null);
+		router.replace({
+			pathname: "/authorized/learning/mix-training",
+		});
+	}, [setChunkWordIds]);
+
 	return (
 		<KeyboardAvoidingView
 			behavior={Platform.OS === "ios" ? "padding" : "height"}
 			style={{ flex: 1 }}
 		>
-		<SafeAreaView
+			<SafeAreaView
 				mode="padding"
 				style={[styles.page, style]}
 				{...restViewProps}
@@ -542,6 +703,57 @@ export const TrainingAppWrapper = ({
 				{currentExercise === "type_word" && <TypeWordExercise />}
 				{currentExercise === "cards" && <CardsExercise />}
 
+				{showChunkCompletePrompt && !showNextTopicPrompt && (
+					<View style={trainingAppWrapperStyles.masteredPromptOverlay}>
+						<WCard style={trainingAppWrapperStyles.masteredPromptCard}>
+							<WText
+								mode="primary"
+								size="xl"
+								style={trainingAppWrapperStyles.masteredPromptTitle}
+							>
+								{nextChunkWordIds.length > 0
+									? t("chunk_trained_title")
+									: t("topic_ready_review_title")}
+							</WText>
+							<WText
+								mode="secondary"
+								size="md"
+								style={trainingAppWrapperStyles.masteredPromptDescription}
+							>
+								{nextChunkWordIds.length > 0
+									? t("chunk_trained_description", {
+											count: nextChunkWordIds.length,
+										})
+									: t("topic_ready_review_description")}
+							</WText>
+							<View style={trainingAppWrapperStyles.masteredPromptActions}>
+								<WButton
+									mode="dark"
+									fullWidth
+									onPress={handleStayInChunkTraining}
+								>
+									<WText>{t("chunk_trained_stay")}</WText>
+								</WButton>
+								<WButton
+									mode="primary"
+									fullWidth
+									onPress={
+										nextChunkWordIds.length > 0
+											? handleLearnNextChunk
+											: handleReviewFullTopic
+									}
+								>
+									<WText mode="inverted">
+										{nextChunkWordIds.length > 0
+											? t("chunk_trained_learn_next")
+											: t("topic_ready_review_start")}
+									</WText>
+								</WButton>
+							</View>
+						</WCard>
+					</View>
+				)}
+
 				{showNextTopicPrompt && nextTopicId != null && (
 					<View style={trainingAppWrapperStyles.masteredPromptOverlay}>
 						<WCard style={trainingAppWrapperStyles.masteredPromptCard}>
@@ -562,7 +774,11 @@ export const TrainingAppWrapper = ({
 								})}
 							</WText>
 							<View style={trainingAppWrapperStyles.masteredPromptActions}>
-								<WButton mode="dark" fullWidth onPress={handleStayOnCurrentTopic}>
+								<WButton
+									mode="dark"
+									fullWidth
+									onPress={handleStayOnCurrentTopic}
+								>
 									<WText>{t("topic_mastered_stay")}</WText>
 								</WButton>
 								<WButton mode="primary" fullWidth onPress={handleOpenNextTopic}>
@@ -591,7 +807,11 @@ export const TrainingAppWrapper = ({
 								{t("training_mastered_description")}
 							</WText>
 							<View style={trainingAppWrapperStyles.masteredPromptActions}>
-								<WButton mode="dark" fullWidth onPress={handleContinueCurrentTraining}>
+								<WButton
+									mode="dark"
+									fullWidth
+									onPress={handleContinueCurrentTraining}
+								>
 									<WText>{t("training_mastered_stay")}</WText>
 								</WButton>
 								<WButton

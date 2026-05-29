@@ -131,5 +131,12 @@
 	"daily_proposal_train_all": "Εξάσκηση σε όλες τις λέξεις του θέματος",
 	"word_intro_next": "Επόμενη λέξη",
 	"word_intro_done": "Έναρξη εκπαίδευσης",
-	"word_intro_type_hint": "Δοκίμασε να πληκτρολογήσεις τη λέξη για να την αποστηθίσεις"
+	"word_intro_type_hint": "Δοκίμασε να πληκτρολογήσεις τη λέξη για να την αποστηθίσεις",
+	"chunk_trained_title": "Αυτές οι λέξεις εξασκήθηκαν",
+	"chunk_trained_description": "Μπορείς να μάθεις ακόμα {{count}} νέες λέξεις.",
+	"chunk_trained_stay": "Συνέχεια εδώ",
+	"chunk_trained_learn_next": "Μάθε τις επόμενες λέξεις",
+	"topic_ready_review_title": "Όλες οι νέες λέξεις παρουσιάστηκαν",
+	"topic_ready_review_description": "Έλεγξε όλο το θέμα με μικτή εξάσκηση.",
+	"topic_ready_review_start": "Επανάληψη όλου του θέματος"
 }

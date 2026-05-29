@@ -202,9 +202,14 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						: allPairs;
 
 				if (user?.userId) {
+					const shouldUseAllProgress =
+						chunkWordIds != null && chunkWordIds.length > 0;
 					const progressRecords =
-						trainingId != null
-							? await learningRepository.getByUserAndTraining(user.userId, trainingId)
+						trainingId != null && !shouldUseAllProgress
+							? await learningRepository.getByUserAndTraining(
+									user.userId,
+									trainingId,
+								)
 							: await learningRepository.getByUser(user.userId);
 					const progressByWordId = new Map(
 						progressRecords.map((r) => [r.wordId, r]),
@@ -308,7 +313,11 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	// Clear queues and re-initialize when switching training sessions
 	const setCurrentTrainingId = useCallback(
 		(trainingId: string | null) => {
-			logger.debug("ExerciseContext: setCurrentTrainingId", { trainingId }, "general");
+			logger.debug(
+				"ExerciseContext: setCurrentTrainingId",
+				{ trainingId },
+				"general",
+			);
 			setCurrentTrainingIdState(trainingId);
 			hydrateQueues(trainingId).then(() => {
 				logger.debug(
@@ -334,27 +343,60 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			let pairs: SessionPair[];
 
 			if (numberOfPairs > 1) {
-				// Multi-pair exercises (e.g. match words) always fetch directly from DB
-				const words = await wordsRepository.getRandomWords(
-					user?.language_learn ?? "en",
-					numberOfPairs * 4,
-					[],
-					currentCatalogs.length > 0 ? currentCatalogs : undefined,
-					currentTopics.length > 0 ? currentTopics : undefined,
-					user?.userId,
-					currentTrainingId ?? undefined,
-				);
-				const translations = await translationsRepository.getByWordIds(
-					user?.language_speak ?? "en",
-					words.map((word) => word.remoteId),
-				);
-				pairs = words
-					.map((word) => ({
-						word,
-						translation: translations.find((t) => t.word === word.remoteId),
-					}))
-					.filter((p): p is SessionPair => p.translation !== undefined)
-					.slice(0, numberOfPairs);
+				if (chunkWordIds != null && chunkWordIds.length > 0) {
+					if (initializationPromise.current) {
+						await initializationPromise.current;
+					}
+
+					const selected: SessionPair[] = [];
+					const usedWordIds = new Set<number>();
+					const fillFromQueue = (queue: SessionPair[]) => {
+						while (selected.length < numberOfPairs) {
+							const index = queue.findIndex(
+								(pair) => !usedWordIds.has(pair.word.remoteId),
+							);
+
+							if (index === -1) {
+								return;
+							}
+
+							const [pair] = queue.splice(index, 1);
+							if (!pair) {
+								return;
+							}
+
+							selected.push(pair);
+							usedWordIds.add(pair.word.remoteId);
+						}
+					};
+
+					fillFromQueue(failedQueue.current);
+					fillFromQueue(successQueue.current);
+
+					pairs = selected;
+				} else {
+					// Multi-pair exercises (e.g. match words) fetch directly from DB.
+					const words = await wordsRepository.getRandomWords(
+						user?.language_learn ?? "en",
+						numberOfPairs * 4,
+						[],
+						currentCatalogs.length > 0 ? currentCatalogs : undefined,
+						currentTopics.length > 0 ? currentTopics : undefined,
+						user?.userId,
+						currentTrainingId ?? undefined,
+					);
+					const translations = await translationsRepository.getByWordIds(
+						user?.language_speak ?? "en",
+						words.map((word) => word.remoteId),
+					);
+					pairs = words
+						.map((word) => ({
+							word,
+							translation: translations.find((t) => t.word === word.remoteId),
+						}))
+						.filter((p): p is SessionPair => p.translation !== undefined)
+						.slice(0, numberOfPairs);
+				}
 			} else {
 				// Wait for queue initialization to complete before serving
 				if (initializationPromise.current) {
@@ -396,10 +438,11 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						user?.userId,
 						currentTrainingId ?? undefined,
 					);
-					const fallbackTranslations = await translationsRepository.getByWordIds(
-						user?.language_speak ?? "en",
-						fallbackWords.map((word) => word.remoteId),
-					);
+					const fallbackTranslations =
+						await translationsRepository.getByWordIds(
+							user?.language_speak ?? "en",
+							fallbackWords.map((word) => word.remoteId),
+						);
 					item = fallbackWords
 						.map((word) => ({
 							word,
@@ -407,7 +450,9 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 								(t) => t.word === word.remoteId,
 							),
 						}))
-						.find((pair): pair is SessionPair => pair.translation !== undefined);
+						.find(
+							(pair): pair is SessionPair => pair.translation !== undefined,
+						);
 				}
 
 				pairs = item ? [item] : [];
@@ -415,22 +460,65 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 
 			setCurrentPairs(pairs);
 
-			const randomWords = await wordsRepository.getRandomWords(
-				user?.language_learn ?? "en",
-				numberOfRandomWords,
-				pairs.map((p) => p.word.remoteId),
-				currentCatalogs.length > 0 ? currentCatalogs : undefined,
-				currentTopics.length > 0 ? currentTopics : undefined,
+			const scopedChunkWordIds =
+				chunkWordIds != null && chunkWordIds.length > 0 ? chunkWordIds : null;
+			const excludedWordIds = new Set(pairs.map((p) => p.word.remoteId));
+			const excludedTranslationIds = new Set(
+				pairs
+					.map((p) => p.translation?.remoteId)
+					.filter((id): id is number => id !== undefined),
 			);
 
-			const randomTranslations =
-				await translationsRepository.getRandomTranslations(
-					user?.language_speak ?? "en",
-					numberOfRandomTranslations,
-					pairs.map((p) => p.translation.remoteId),
-					currentTopics.length > 0 ? currentTopics : undefined,
-					currentCatalogs.length > 0 ? currentCatalogs : undefined,
-				);
+			let randomWords: WatermelonWord[] = [];
+			if (numberOfRandomWords > 0) {
+				if (scopedChunkWordIds) {
+					const candidateWordIds = scopedChunkWordIds.filter(
+						(wordId) => !excludedWordIds.has(wordId),
+					);
+					const scopedRandomWords = await wordsRepository.getByRemoteIds(
+						candidateWordIds,
+						user?.language_learn ?? "en",
+					);
+					randomWords = scopedRandomWords
+						.sort(() => Math.random() - 0.5)
+						.slice(0, numberOfRandomWords);
+				} else {
+					randomWords = await wordsRepository.getRandomWords(
+						user?.language_learn ?? "en",
+						numberOfRandomWords,
+						pairs.map((p) => p.word.remoteId),
+						currentCatalogs.length > 0 ? currentCatalogs : undefined,
+						currentTopics.length > 0 ? currentTopics : undefined,
+					);
+				}
+			}
+
+			let randomTranslations: WatermelonWordTranslation[] = [];
+			if (numberOfRandomTranslations > 0) {
+				if (scopedChunkWordIds) {
+					const scopedTranslations = await translationsRepository.getByWordIds(
+						user?.language_speak ?? "en",
+						scopedChunkWordIds,
+					);
+					randomTranslations = scopedTranslations
+						.filter(
+							(translation) =>
+								!excludedTranslationIds.has(translation.remoteId) &&
+								!excludedWordIds.has(translation.word),
+						)
+						.sort(() => Math.random() - 0.5)
+						.slice(0, numberOfRandomTranslations);
+				} else {
+					randomTranslations =
+						await translationsRepository.getRandomTranslations(
+							user?.language_speak ?? "en",
+							numberOfRandomTranslations,
+							pairs.map((p) => p.translation.remoteId),
+							currentTopics.length > 0 ? currentTopics : undefined,
+							currentCatalogs.length > 0 ? currentCatalogs : undefined,
+						);
+				}
+			}
 
 			setCurrentRandomWords(randomWords);
 			setCurrentRandomTranslations(randomTranslations);
@@ -438,6 +526,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		[
 			currentCatalogs,
 			currentTopics,
+			chunkWordIds,
 			setCurrentPairs,
 			setCurrentRandomWords,
 			setCurrentRandomTranslations,

@@ -131,5 +131,12 @@
 	"daily_proposal_train_all": "Тренировать все слова темы",
 	"word_intro_next": "Следующее слово",
 	"word_intro_done": "Начать тренировку",
-	"word_intro_type_hint": "Попробуйте напечатать слово для запоминания"
+	"word_intro_type_hint": "Попробуйте напечатать слово для запоминания",
+	"chunk_trained_title": "Эти слова потренированы",
+	"chunk_trained_description": "Можно изучить ещё {{count}} новых слов.",
+	"chunk_trained_stay": "Продолжить здесь",
+	"chunk_trained_learn_next": "Изучить следующие слова",
+	"topic_ready_review_title": "Все новые слова изучены",
+	"topic_ready_review_description": "Проверьте знания в смешанной тренировке по всей теме.",
+	"topic_ready_review_start": "Проверить всю тему"
 }

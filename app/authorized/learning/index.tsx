@@ -1,17 +1,17 @@
-import { LearningCatalog } from "@/components/LearningCatalog";
-import { learningRepository } from "@/db/repositories/learning.repository";
-import { wordsRepository } from "@/db/repositories/words.repository";
-import { BackgroundContext } from "@/context/BackgroundContext";
-import { useChunkManagement, CHUNK_SIZE } from "@/hooks/useChunkManagement";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSessionUser } from "@/hooks/useSession";
-import { WButton, WCard, WText } from "@/mob-ui";
-import { Colors } from "@/mob-ui/brand/colors";
 import { router } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LearningCatalog } from "@/components/LearningCatalog";
+import { BackgroundContext } from "@/context/BackgroundContext";
+import { learningRepository } from "@/db/repositories/learning.repository";
+import { wordsRepository } from "@/db/repositories/words.repository";
+import { CHUNK_SIZE, useChunkManagement } from "@/hooks/useChunkManagement";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { useSessionUser } from "@/hooks/useSession";
+import { WButton, WCard, WText } from "@/mob-ui";
+import { Colors } from "@/mob-ui/brand/colors";
 import { styles } from "../../../general.styles";
 
 export default function Learning() {
@@ -22,8 +22,11 @@ export default function Learning() {
 		useExcerciseStore();
 
 	const userId = user?.userId != null ? String(user.userId) : undefined;
-	const { shouldShowProposal, loading: chunkLoading, markProposed } =
-		useChunkManagement(userId, currentTopics, currentCatalogs);
+	const {
+		shouldShowProposal,
+		loading: chunkLoading,
+		markProposed,
+	} = useChunkManagement(userId, currentTopics, currentCatalogs);
 
 	const [untrainedWords, setUntrainedWords] = useState<{ remoteId: number }[]>(
 		[],
@@ -62,21 +65,42 @@ export default function Learning() {
 		await markProposed();
 		const wordIds = untrainedWords.map((w) => w.remoteId).join(",");
 		router.push({
-			pathname: "/authorized/learning/word-intro",
+			pathname: "/authorized/learning/word-intro" as never,
 			params: { wordIds },
 		});
 	}, [markProposed, untrainedWords]);
 
 	const handleTrainChunk = useCallback(async () => {
 		await markProposed();
-		if (!user?.userId) return;
+		if (!user?.userId || !user.language_learn) return;
 		const allRecords = await learningRepository.getByUser(user.userId);
+		const scopedWords = await wordsRepository.getRandomWords(
+			user.language_learn,
+			999999,
+			[],
+			currentCatalogs.length > 0 ? currentCatalogs : undefined,
+			currentTopics.length > 0 ? currentTopics : undefined,
+		);
+		const scopedWordIds = new Set(scopedWords.map((w) => w.remoteId));
 		const introducedIds = allRecords
-			.filter((r) => r.training === "intro")
+			.filter((r) => r.training === "intro" && scopedWordIds.has(r.wordId))
 			.map((r) => r.wordId);
 		setChunkWordIds(introducedIds.length > 0 ? introducedIds : null);
-		router.push({ pathname: "/authorized/learning/mix-training" });
-	}, [markProposed, user?.userId, setChunkWordIds]);
+		router.push({
+			pathname: "/authorized/learning/mix-training",
+			params:
+				introducedIds.length > 0
+					? { wordIds: introducedIds.join(",") }
+					: undefined,
+		});
+	}, [
+		currentCatalogs,
+		currentTopics,
+		markProposed,
+		user?.language_learn,
+		user?.userId,
+		setChunkWordIds,
+	]);
 
 	const handleTrainAll = useCallback(async () => {
 		await markProposed();
@@ -148,19 +172,21 @@ export default function Learning() {
 				</WText>
 
 				<LearningCatalog
-					onTrainingPress={(trainingId) =>
+					onTrainingPress={(trainingId) => {
+						setChunkWordIds(null);
 						router.push({
 							pathname: `/authorized/learning/${trainingId}`,
-						})
-					}
+						});
+					}}
 				/>
 
 				<WButton
 					mode="primary"
 					fullWidth
-					onPress={() =>
-						router.push({ pathname: "/authorized/learning/mix-training" })
-					}
+					onPress={() => {
+						setChunkWordIds(null);
+						router.push({ pathname: "/authorized/learning/mix-training" });
+					}}
 				>
 					<WText mode="inverted">{t("mix_training_button")}</WText>
 				</WButton>
