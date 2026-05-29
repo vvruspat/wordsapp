@@ -1,22 +1,27 @@
 import * as FileSystem from "expo-file-system/legacy";
 
 export const isRemoteAudioPath = (audio: string | null | undefined) =>
-	Boolean(audio?.startsWith("http"));
+	Boolean(audio?.startsWith("http://") || audio?.startsWith("https://"));
 
 export const resolveLocalAudioPath = (audio: string | null | undefined) => {
 	if (!audio) {
 		return null;
 	}
 
-	if (audio.startsWith("file://") || !audio.startsWith("http")) {
+	if (audio.startsWith("file://")) {
 		return audio;
 	}
 
 	if (!FileSystem.documentDirectory) {
-		return null;
+		return isRemoteAudioPath(audio) ? null : audio.split("?")[0];
 	}
 
 	const urlWithoutQuery = audio.split("?")[0];
+
+	if (urlWithoutQuery.startsWith(FileSystem.documentDirectory)) {
+		return urlWithoutQuery;
+	}
+
 	const filename = urlWithoutQuery.split("/").pop();
 
 	if (!filename) {

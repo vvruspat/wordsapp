@@ -1,6 +1,7 @@
 import { Q } from "@nozbe/watermelondb";
 import { useDatabase } from "@nozbe/watermelondb/hooks";
 import NetInfo from "@react-native-community/netinfo";
+import * as Sentry from "@sentry/react-native";
 import { components, Language } from "@vvruspat/words-types";
 import * as FileSystem from "expo-file-system/legacy";
 import { useCallback } from "react";
@@ -29,6 +30,51 @@ type TopicDto = components["schemas"]["TopicDto"];
 type TopicTranslationDto = components["schemas"]["TopicTranslationDto"];
 
 let activeAudioDownloadId = 0;
+
+type FailedAudioDownload = {
+	wordId: number;
+	audioUrl: string;
+};
+
+const sanitizeAudioUrl = (audioUrl: string) => audioUrl.split("?")[0];
+
+const notifyBackgroundAudioDownloadFailure = ({
+	error,
+	targetLanguage,
+	audioCount,
+	audioCompleted,
+	failures,
+}: {
+	error?: unknown;
+	targetLanguage: Language;
+	audioCount: number;
+	audioCompleted: number;
+	failures?: FailedAudioDownload[];
+}) => {
+	Sentry.withScope((scope) => {
+		scope.setTag("area", "audio");
+		scope.setTag("operation", "background_audio_download");
+		scope.setContext("audio_download", {
+			targetLanguage,
+			audioCount,
+			audioCompleted,
+			failedCount: failures?.length ?? 0,
+			failures: failures?.slice(0, 20).map((failure) => ({
+				wordId: failure.wordId,
+				audioUrl: sanitizeAudioUrl(failure.audioUrl),
+			})),
+		});
+
+		if (error) {
+			Sentry.captureException(error);
+			return;
+		}
+
+		Sentry.captureMessage("Background audio download left remote audio files", {
+			level: "warning",
+		});
+	});
+};
 
 /**
  * Downloads an audio file from a URL to the local assets/audio directory if it doesn't exist.
@@ -168,6 +214,7 @@ export const useVocabularySync = () => {
 			const AUDIO_CONCURRENCY = 5;
 			let audioCompleted = 0;
 			let wordIndex = 0;
+			const failedDownloads: FailedAudioDownload[] = [];
 			const isActiveDownload = () => activeAudioDownloadId === audioDownloadId;
 
 			const markAudioCompleted = () => {
@@ -188,7 +235,12 @@ export const useVocabularySync = () => {
 					const word = remoteAudioWords[wordIndex++];
 					const localAudioPath = await downloadAudioFile(word.audio, word.remoteId);
 
-					if (!isRemoteAudioPath(localAudioPath) && isActiveDownload()) {
+					if (isRemoteAudioPath(localAudioPath)) {
+						failedDownloads.push({
+							wordId: word.remoteId,
+							audioUrl: word.audio,
+						});
+					} else if (isActiveDownload()) {
 						await database.write(async () => {
 							await word.update((w) => {
 								w.audio = localAudioPath;
@@ -218,6 +270,15 @@ export const useVocabularySync = () => {
 					return;
 				}
 
+				if (failedDownloads.length > 0) {
+					notifyBackgroundAudioDownloadFailure({
+						targetLanguage,
+						audioCount,
+						audioCompleted,
+						failures: failedDownloads,
+					});
+				}
+
 				setAudioDownloadState({
 					isAudioDownloading: false,
 					audioDownloadProgress: 1,
@@ -233,6 +294,13 @@ export const useVocabularySync = () => {
 				const errorMessage =
 					error instanceof Error ? error.message : "Unknown error occurred";
 
+				notifyBackgroundAudioDownloadFailure({
+					error,
+					targetLanguage,
+					audioCount,
+					audioCompleted,
+					failures: failedDownloads,
+				});
 				logger.warn("Failed to download audio in background:", error, "audio");
 				setAudioDownloadState({
 					isAudioDownloading: false,
