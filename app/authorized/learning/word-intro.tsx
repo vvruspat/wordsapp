@@ -10,11 +10,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PlayWordButton } from "@/components/PlayWordButton";
+import WatermelonWord from "@/db/models/Word";
+import WatermelonWordTranslation from "@/db/models/WordTranslation";
 import { learningRepository } from "@/db/repositories/learning.repository";
 import { translationsRepository } from "@/db/repositories/translations.repository";
 import { wordsRepository } from "@/db/repositories/words.repository";
-import WatermelonWord from "@/db/models/Word";
-import WatermelonWordTranslation from "@/db/models/WordTranslation";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WCard, WText } from "@/mob-ui";
@@ -88,15 +88,9 @@ export default function WordIntro() {
 			return;
 		}
 
-		// All words introduced — collect ALL introduced word IDs for this user.
-		// ExerciseContext will intersect these with the current topic/catalog scope.
-		const allRecords = await learningRepository.getByUser(user.userId);
-		const allIntroducedIds = allRecords
-			.filter((r) => r.training === "intro")
-			.map((r) => r.wordId);
-
 		const fallbackIds = parseWordIds(wordIds);
-		setChunkWordIds(allIntroducedIds.length > 0 ? allIntroducedIds : fallbackIds);
+		const introducedIds = pairs.map((p) => p.word.remoteId);
+		setChunkWordIds(introducedIds.length > 0 ? introducedIds : fallbackIds);
 		router.replace("/authorized/learning/mix-training");
 	}, [pairs, currentIndex, user, wordIds, setChunkWordIds]);
 
@@ -127,7 +121,13 @@ export default function WordIntro() {
 
 				<WCard style={styles.card}>
 					<View style={styles.cardContent}>
-						<WText mode="primary" weight="bold" size="2xl" wrap style={styles.word}>
+						<WText
+							mode="primary"
+							weight="bold"
+							size="2xl"
+							wrap
+							style={styles.word}
+						>
 							{pair.word.word}
 						</WText>
 
