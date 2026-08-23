@@ -8,6 +8,23 @@ import {
 export default schemaMigrations({
 	migrations: [
 		{
+			toVersion: 9,
+			steps: [
+				createTable({
+					name: "dialogue_cache",
+					columns: [
+						{ name: "session_id", type: "string", isIndexed: true },
+						{ name: "user_id", type: "number", isIndexed: true },
+						{ name: "status", type: "string", isIndexed: true },
+						{ name: "title", type: "string" },
+						{ name: "updated_at", type: "number", isIndexed: true },
+						{ name: "payload", type: "string" },
+						{ name: "draft", type: "string" },
+					],
+				}),
+			],
+		},
+		{
 			toVersion: 8,
 			steps: [
 				// SQLite uses dynamic typing — TEXT can be stored in the existing INTEGER-affinity

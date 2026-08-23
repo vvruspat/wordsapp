@@ -8,7 +8,7 @@ export const createLearning = (body: {
 	created_at: string;
 	training: string;
 	translation: number;
-}) => $fetch("/learning", "post", { body });
+}) => $fetch("/learning", "post", { body: body as never });
 
 export const updateLearning = (body: {
 	id: number;
@@ -16,7 +16,7 @@ export const updateLearning = (body: {
 	last_review: string;
 	training: string;
 	translation: number;
-}) => $fetch("/learning", "put", { body });
+}) => $fetch("/learning", "put", { body: body as never });
 
 export const getLearning = (query: {
 	user?: number;

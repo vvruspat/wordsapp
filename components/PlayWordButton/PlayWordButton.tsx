@@ -34,8 +34,23 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 	const localAudioPath = resolveLocalAudioPath(audio);
 	const remoteAudioSource = isRemoteAudioPath(audio) ? (audio ?? null) : null;
 
-	const player = useAudioPlayer(audioSource);
+	const player = useAudioPlayer(audioSource, {
+		downloadFirst: true,
+		keepAudioSessionActive: true,
+	});
 	const status = useAudioPlayerStatus(player);
+
+	const playFromStart = useCallback(async () => {
+		try {
+			if (player.currentTime > 0.05) {
+				await player.seekTo(0);
+			}
+			player.play();
+		} catch (error) {
+			logger.error("Error playing audio:", error, "audio");
+			setHasError(true);
+		}
+	}, [player]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: audioDownloadCompleted is a refresh trigger for local file availability.
 	useEffect(() => {
@@ -49,9 +64,7 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		FileSystem.getInfoAsync(localAudioPath)
 			.then((fileInfo) => {
 				if (!cancelled) {
-					setAudioSource(
-						fileInfo.exists ? localAudioPath : remoteAudioSource,
-					);
+					setAudioSource(fileInfo.exists ? localAudioPath : remoteAudioSource);
 				}
 			})
 			.catch(() => {
@@ -82,7 +95,7 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 			pendingAutoplay.current = false;
 			try {
 				player.pause();
-				player.seekTo(0);
+				void player.seekTo(0).catch(() => {});
 			} catch {
 				// ignore cleanup errors
 			}
@@ -99,25 +112,20 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 			!status.playing
 		) {
 			pendingAutoplay.current = false;
-
-			try {
-				player.seekTo(0);
-				player.play();
-			} catch (error) {
-				logger.error("Error playing audio:", error, "audio");
-				setHasError(true);
-			}
+			void playFromStart();
 		}
 
 		if (status.didJustFinish) {
 			try {
 				player.pause();
-				player.seekTo(0);
+				void player.seekTo(0).catch((error) => {
+					logger.error("Error rewinding audio:", error, "audio");
+				});
 			} catch (error) {
 				logger.error("Error stopping audio:", error, "audio");
 			}
 		}
-	}, [player, status]);
+	}, [player, playFromStart, status]);
 
 	const onPlayPressed = useCallback(() => {
 		if (!audioSource || hasError) {
@@ -129,14 +137,14 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 			return;
 		}
 
-		try {
-			player.seekTo(0);
-			player.play();
-		} catch (error) {
-			logger.error("Error playing audio:", error, "audio");
-			setHasError(true);
-		}
-	}, [player, audioSource, hasError, status.isBuffering, status.isLoaded]);
+		void playFromStart();
+	}, [
+		audioSource,
+		hasError,
+		playFromStart,
+		status.isBuffering,
+		status.isLoaded,
+	]);
 
 	useEffect(() => {
 		if (isPlaying) {

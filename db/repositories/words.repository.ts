@@ -19,6 +19,9 @@ export const wordsRepository = {
         if (wordData.topic) {
           word.topic = wordData.topic;
         }
+		if (wordData.word) {
+			word.word = wordData.word;
+		}
         if (wordData.created_at) {
           word.remoteCreatedAt = wordData.created_at;
         }

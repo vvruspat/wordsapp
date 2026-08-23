@@ -115,7 +115,11 @@ export const learningRepository = {
 
 		const existing = await database
 			.get<LearningProgress>("learning_progress")
-			.query(Q.where("user_id", userId), Q.where("word_id", wordId))
+			.query(
+				Q.where("user_id", userId),
+				Q.where("word_id", wordId),
+				...(trainingId != null ? [Q.where("training", trainingId)] : []),
+			)
 			.fetch();
 
 		if (existing.length > 0) {

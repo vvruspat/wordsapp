@@ -1,0 +1,21 @@
+diff --git a/node_modules/expo-audio/ios/AudioPlayer.swift b/node_modules/expo-audio/ios/AudioPlayer.swift
+index 6d7cc7b..bcb52e3 100644
+--- a/node_modules/expo-audio/ios/AudioPlayer.swift
++++ b/node_modules/expo-audio/ios/AudioPlayer.swift
+@@ -212,0 +213,4 @@ public class AudioPlayer: SharedRef<AVPlayer> {
++    // Keep local files from entering AVPlayer's network-oriented buffering
++    // wait when a source is replaced after an async download.
++    ref.automaticallyWaitsToMinimizeStalling = source.uri?.isFileURL != true
++
+diff --git a/node_modules/expo-audio/ios/AudioUtils.swift b/node_modules/expo-audio/ios/AudioUtils.swift
+index 66916fb..2abdb3f 100644
+--- a/node_modules/expo-audio/ios/AudioUtils.swift
++++ b/node_modules/expo-audio/ios/AudioUtils.swift
+@@ -89 +89,6 @@ struct AudioUtils {
+-      return AVPlayer(playerItem: item)
++      let player = AVPlayer(playerItem: item)
++      // Short local speech clips are already fully available. On iOS, allowing
++      // AVPlayer to wait for stalling minimization can leave these files stuck
++      // forever in `evaluatingBufferingRate` without ever starting playback.
++      player.automaticallyWaitsToMinimizeStalling = source?.uri?.isFileURL != true
++      return player

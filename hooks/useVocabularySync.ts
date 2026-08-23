@@ -437,7 +437,7 @@ export const useVocabularySync = () => {
 						words: words.map((w) => w.id).join(","),
 						offset: 0,
 						limit: 100000,
-						language: user.language_speak,
+					language: user.language_speak as Language,
 					});
 
 					if (

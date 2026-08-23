@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
+    "postinstall": "patch-package",
     "dev": "expo start -c",
     "dev:ios": "expo run:ios --device",
     "build:ios": "eas build --platform ios",
@@ -15,6 +16,8 @@
     "format": "biome check . --write --unsafe"
   },
   "dependencies": {
+    "@assistant-ui/metro": "^0.0.10",
+    "@assistant-ui/react-native": "^0.1.38",
     "@expo/vector-icons": "^15.1.1",
     "@lovesworking/watermelondb-expo-plugin-sdk-52-plus": "^1.0.3",
     "@nozbe/watermelondb": "^0.28.0",
@@ -25,6 +28,7 @@
     "@sentry/react-native": "^8.4.0",
     "@storybook/react-native": "^10.2.3",
     "@vvruspat/words-types": "^1.1.0",
+    "assistant-cloud": "^0.1.41",
     "dotenv": "^17.3.1",
     "expo": "^55.0.8",
     "expo-asset": "~55.0.10",

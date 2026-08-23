@@ -4,6 +4,12 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 ## Get started
 
+The dialogue tutor is available in the Dialogues tab. Set
+`EXPO_PUBLIC_DIALOGUES_ENABLED=false` to hide it in a public build. It uses
+`EXPO_PUBLIC_API_URL` and the existing access token. Dialogue history and
+drafts are cached in WatermelonDB; sending and word additions remain disabled
+while offline.
+
 1. Install dependencies
 
    ```bash

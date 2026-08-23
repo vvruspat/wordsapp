@@ -7,7 +7,7 @@ export default function TypeTranslation() {
 	return (
 		<TrainingAppWrapper
 			title={t("app_type_translation_header")}
-			exercise="type_translation"
+			exercise={"type_translation" as never}
 		/>
 	);
 }

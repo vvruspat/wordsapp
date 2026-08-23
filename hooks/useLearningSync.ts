@@ -67,7 +67,7 @@ export const useLearningSync = () => {
 				wordId: item.word,
 				score: item.score,
 				translationId: item.translation,
-				trainingId: item.training,
+				trainingId: String(item.training),
 				remoteId: item.id,
 				createdAt: item.created_at,
 			});
