@@ -288,49 +288,40 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				succeededWordIds.current = new Set(alreadySucceeded);
 				setSessionTotalCount(total);
 				setSessionSuccessCount(alreadySucceeded.length);
-
-				if (
-					total > 0 &&
-					useExcerciseStore.getState().currentPairs.length === 0
-				) {
-					notifyCompleteListeners();
-				}
 			});
 			initializationPromise.current = promise;
 			return promise;
 		},
-		[initializeQueues, notifyCompleteListeners, resetSessionStats],
+		[initializeQueues, resetSessionStats],
 	);
 
 	// Re-initialize queues when language, filters, training, or synced vocabulary changes.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: lastSyncTime is a sync completion trigger for rebuilding exercise queues.
 	useEffect(() => {
-		hydrateQueues(currentTrainingId);
-	}, [currentTrainingId, hydrateQueues, lastSyncTime]);
-
-	// Clear queues and re-initialize when switching training sessions
-	const setCurrentTrainingId = useCallback(
-		(trainingId: string | null) => {
+		hydrateQueues(currentTrainingId).then(() => {
 			logger.debug(
-				"ExerciseContext: setCurrentTrainingId",
-				{ trainingId },
+				"ExerciseContext: queue initialized",
+				{
+					total: failedQueue.current.length + successQueue.current.length,
+					succeeded: successQueue.current.length,
+					trainingId: currentTrainingId,
+				},
 				"general",
 			);
-			setCurrentTrainingIdState(trainingId);
-			hydrateQueues(trainingId).then(() => {
-				logger.debug(
-					"ExerciseContext: queue initialized",
-					{
-						total: failedQueue.current.length + successQueue.current.length,
-						succeeded: successQueue.current.length,
-						trainingId,
-					},
-					"general",
-				);
-			});
-		},
-		[hydrateQueues],
-	);
+		});
+	}, [currentTrainingId, hydrateQueues, lastSyncTime]);
+
+	// Selecting a different training id triggers the hydration effect above.
+	const setCurrentTrainingId = useCallback((trainingId: string | null) => {
+		logger.debug(
+			"ExerciseContext: setCurrentTrainingId",
+			{ trainingId },
+			"general",
+		);
+		setCurrentTrainingIdState((current) =>
+			current === trainingId ? current : trainingId,
+		);
+	}, []);
 
 	const loadData = useCallback(
 		async (

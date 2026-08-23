@@ -8,15 +8,11 @@ export const resolveLocalAudioPath = (audio: string | null | undefined) => {
 		return null;
 	}
 
-	if (audio.startsWith("file://")) {
-		return audio;
-	}
+	const urlWithoutQuery = audio.split("?")[0];
 
 	if (!FileSystem.documentDirectory) {
-		return isRemoteAudioPath(audio) ? null : audio.split("?")[0];
+		return isRemoteAudioPath(audio) ? null : urlWithoutQuery;
 	}
-
-	const urlWithoutQuery = audio.split("?")[0];
 
 	if (urlWithoutQuery.startsWith(FileSystem.documentDirectory)) {
 		return urlWithoutQuery;

@@ -39,10 +39,12 @@ type TrainingAppWrapperProps = SafeAreaViewProps & {
 	excludedExercises?: LearningTrainingName[];
 };
 
+const DEFAULT_EXCLUDED_EXERCISES: LearningTrainingName[] = [];
+
 export const TrainingAppWrapper = ({
 	title = "",
 	exercise,
-	excludedExercises = [],
+	excludedExercises = DEFAULT_EXCLUDED_EXERCISES,
 	children,
 	style,
 	...restViewProps
@@ -118,11 +120,14 @@ export const TrainingAppWrapper = ({
 	useEffect(() => {
 		if (!currentExercise) return;
 		setCurrentTrainingId(currentExercise);
-
-		return () => {
-			setCurrentTrainingId(null);
-		};
 	}, [currentExercise, setCurrentTrainingId]);
+
+	useEffect(
+		() => () => {
+			setCurrentTrainingId(null);
+		},
+		[setCurrentTrainingId],
+	);
 
 	const setRandomExercise = useCallback(() => {
 		const availableTrainings = Object.values(EXERCISES_APPS).filter(
@@ -147,8 +152,10 @@ export const TrainingAppWrapper = ({
 	}, [setRandomExercise, exercise]);
 
 	useEffect(() => {
-		onExerciseComplete();
-	}, [onExerciseComplete]);
+		if (!exercise && !currentExercise) {
+			setRandomExercise();
+		}
+	}, [currentExercise, exercise, setRandomExercise]);
 
 	useEffect(() => {
 		addCompleteListener(onExerciseComplete);

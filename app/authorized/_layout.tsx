@@ -21,6 +21,7 @@ import { Colors } from "@/mob-ui/brand/colors";
 
 export default function RootLayout() {
 	const { t } = useTranslation();
+	const dialoguesEnabled = process.env.EXPO_PUBLIC_DIALOGUES_ENABLED !== "false";
 	const router = useRouter();
 
 	// react-i18next v16 + React 19: useSyncExternalStore subscription can be
@@ -209,6 +210,20 @@ export default function RootLayout() {
 					sceneStyle: { backgroundColor: "transparent" },
 				}}
 			>
+				<Tabs.Screen
+					name="dialogues"
+					options={{
+						title: t("dialogue_tab"),
+						href: dialoguesEnabled ? undefined : null,
+						headerShown: false,
+						tabBarIcon: ({ color }) => (
+							<FontAwesome5 name="comments" size={24} color={color} />
+						),
+					}}
+					listeners={{
+						tabPress: () => router.navigate("/authorized/dialogues"),
+					}}
+				/>
 				<Tabs.Screen
 					name="learning"
 					options={{

@@ -2,6 +2,7 @@ import { Database } from "@nozbe/watermelondb";
 import SQLiteAdapter from "@nozbe/watermelondb/adapters/sqlite";
 import migrations from "./migrations/migrations";
 import Category from "./models/Category";
+import DialogueCache from "./models/DialogueCache";
 import LearningProgress from "./models/LearningProgress";
 import Topic from "./models/Topic";
 import Translation from "./models/Translation";
@@ -39,6 +40,7 @@ const database = new Database({
 		Topic,
 		LearningProgress,
 		Category,
+		DialogueCache,
 	],
 });
 
