@@ -11,7 +11,14 @@ import NetInfo from "@react-native-community/netinfo";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import {
+	ActivityIndicator,
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	StyleSheet,
+	View,
+} from "react-native";
 import type {
 	DialogueCorrection,
 	DialogueDetail,
@@ -82,6 +89,7 @@ const initialMessages = (detail: DialogueDetail): ThreadMessageLike[] => {
 						hints: message.metadata.hints ?? [],
 						corrections,
 						correctionSource,
+						correctedAnswer: message.metadata.correctedAnswer,
 					},
 				},
 			};
@@ -119,6 +127,7 @@ const DialogueMessageBubble = ({
 		),
 	);
 	const correctionSource = custom.correctionSource as string | undefined;
+	const correctedAnswer = custom.correctedAnswer as string | undefined;
 	const serverMessageId = custom.serverMessageId as string | undefined;
 	const content = textOf(message);
 	const isUser = message.role === "user";
@@ -215,6 +224,7 @@ const DialogueMessageBubble = ({
 				<CorrectionCard
 					corrections={corrections}
 					originalText={correctionSource}
+					correctedText={correctedAnswer}
 					onOpenBranch={onOpenBranch}
 				/>
 			) : null}
@@ -360,6 +370,7 @@ export const DialogueChat = ({
 							hints: result.assistantMessage.metadata.hints ?? [],
 							corrections: result.corrections,
 							correctionSource: result.userMessage.content,
+							correctedAnswer: result.assistantMessage.metadata.correctedAnswer,
 						},
 					},
 				};
@@ -420,70 +431,79 @@ export const DialogueChat = ({
 
 	return (
 		<AssistantRuntimeProvider runtime={runtime}>
-			<ThreadPrimitive.Root style={styles.root}>
-				{!online ? (
-					<View style={styles.offlineBanner}>
-						<FontAwesome5 name="wifi" color={Colors.accents.orange} size={12} />
-						<WText size="xs" style={{ color: Colors.accents.orange }}>
-							{t("dialogue_offline_draft")}
-						</WText>
-					</View>
-				) : null}
-				<ThreadPrimitive.MessagesFlatList
-					style={{ flex: 1 }}
-					contentContainerStyle={styles.messages}
-					keyboardShouldPersistTaps="handled"
-					ListFooterComponent={<SummaryCard detail={detail} />}
-				>
-					{({ message }) => (
-						<DialogueMessageBubble
-							message={message}
-							sessionId={detail.session.id}
-							onOpenBranch={(correctionId) =>
-								router.push({
-									pathname: "/authorized/dialogues/branch/[correctionId]",
-									params: { correctionId },
-								})
-							}
-							onWordPress={addWord}
+			<KeyboardAvoidingView
+				behavior={Platform.OS === "ios" ? "padding" : "height"}
+				style={styles.root}
+			>
+				<ThreadPrimitive.Root style={styles.root}>
+					{!online ? (
+						<View style={styles.offlineBanner}>
+							<FontAwesome5
+								name="wifi"
+								color={Colors.accents.orange}
+								size={12}
+							/>
+							<WText size="xs" style={{ color: Colors.accents.orange }}>
+								{t("dialogue_offline_draft")}
+							</WText>
+						</View>
+					) : null}
+					<ThreadPrimitive.MessagesFlatList
+						style={{ flex: 1 }}
+						contentContainerStyle={styles.messages}
+						keyboardShouldPersistTaps="handled"
+						ListFooterComponent={<SummaryCard detail={detail} />}
+					>
+						{({ message }) => (
+							<DialogueMessageBubble
+								message={message}
+								sessionId={detail.session.id}
+								onOpenBranch={(correctionId) =>
+									router.push({
+										pathname: "/authorized/dialogues/branch/[correctionId]",
+										params: { correctionId },
+									})
+								}
+								onWordPress={addWord}
+							/>
+						)}
+					</ThreadPrimitive.MessagesFlatList>
+					{wordNotice ? (
+						<VocabularyResultCard
+							result={wordNotice.result}
+							message={wordNotice.message}
+							onClose={() => setWordNotice(null)}
 						/>
-					)}
-				</ThreadPrimitive.MessagesFlatList>
-				{wordNotice ? (
-					<VocabularyResultCard
-						result={wordNotice.result}
-						message={wordNotice.message}
-						onClose={() => setWordNotice(null)}
-					/>
-				) : null}
-				{detail.session.status === "active" ? (
-					<ComposerPrimitive.Root style={styles.composer}>
-						<ComposerPrimitive.Input
-							placeholder={
-								online
-									? t("dialogue_reply_placeholder")
-									: t("dialogue_draft_placeholder")
-							}
-							placeholderTextColor={Colors.greys.grey6}
-							multiline
-							style={styles.input}
-						/>
-						<ComposerPrimitive.Send style={styles.send} disabled={!online}>
-							{({ pressed }) =>
-								pressed ? (
-									<ActivityIndicator color={Colors.greys.grey10} />
-								) : (
-									<FontAwesome5
-										name="arrow-up"
-										size={16}
-										color={Colors.greys.grey10}
-									/>
-								)
-							}
-						</ComposerPrimitive.Send>
-					</ComposerPrimitive.Root>
-				) : null}
-			</ThreadPrimitive.Root>
+					) : null}
+					{detail.session.status === "active" ? (
+						<ComposerPrimitive.Root style={styles.composer}>
+							<ComposerPrimitive.Input
+								placeholder={
+									online
+										? t("dialogue_reply_placeholder")
+										: t("dialogue_draft_placeholder")
+								}
+								placeholderTextColor={Colors.greys.grey6}
+								multiline
+								style={styles.input}
+							/>
+							<ComposerPrimitive.Send style={styles.send} disabled={!online}>
+								{({ pressed }) =>
+									pressed ? (
+										<ActivityIndicator color={Colors.greys.grey10} />
+									) : (
+										<FontAwesome5
+											name="arrow-up"
+											size={16}
+											color={Colors.greys.grey10}
+										/>
+									)
+								}
+							</ComposerPrimitive.Send>
+						</ComposerPrimitive.Root>
+					) : null}
+				</ThreadPrimitive.Root>
+			</KeyboardAvoidingView>
 		</AssistantRuntimeProvider>
 	);
 };

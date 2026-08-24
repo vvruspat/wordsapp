@@ -83,6 +83,95 @@ const phraseSegments = (
 	return segments;
 };
 
+const positionedTokens = (text: string) =>
+	[...text.matchAll(/\p{L}+(?:[-'’]\p{L}+)*|\p{N}+|[^\p{L}\p{N}\s]+/gu)].map(
+		(match) => ({
+			value: match[0],
+			normalized: match[0].toLocaleLowerCase(),
+			start: match.index,
+			end: match.index + match[0].length,
+		}),
+	);
+
+const correctedPhraseSegments = (
+	originalText: string,
+	correctedText: string,
+	corrections: DialogueCorrection[],
+) => {
+	const original = positionedTokens(originalText);
+	const corrected = positionedTokens(correctedText);
+	if (corrected.length === 0) {
+		return [{ key: "corrected-empty", text: correctedText }];
+	}
+
+	const lengths = Array.from(
+		{ length: original.length + 1 },
+		() => new Uint16Array(corrected.length + 1),
+	);
+	for (let left = original.length - 1; left >= 0; left -= 1) {
+		for (let right = corrected.length - 1; right >= 0; right -= 1) {
+			lengths[left][right] =
+				original[left].normalized === corrected[right].normalized
+					? lengths[left + 1][right + 1] + 1
+					: Math.max(lengths[left + 1][right], lengths[left][right + 1]);
+		}
+	}
+
+	const unchanged = new Set<number>();
+	let left = 0;
+	let right = 0;
+	while (left < original.length && right < corrected.length) {
+		if (original[left].normalized === corrected[right].normalized) {
+			unchanged.add(right);
+			left += 1;
+			right += 1;
+		} else if (lengths[left + 1][right] >= lengths[left][right + 1]) {
+			left += 1;
+		} else {
+			right += 1;
+		}
+	}
+
+	const changedRuns: Array<{ start: number; end: number }> = [];
+	for (let index = 0; index < corrected.length; index += 1) {
+		if (unchanged.has(index)) continue;
+		const start = index;
+		while (index + 1 < corrected.length && !unchanged.has(index + 1)) {
+			index += 1;
+		}
+		changedRuns.push({ start, end: index });
+	}
+	if (changedRuns.length === 0) {
+		return [{ key: "corrected-plain", text: correctedText }];
+	}
+
+	const segments: PhraseSegment[] = [];
+	let cursor = 0;
+	for (const [index, run] of changedRuns.entries()) {
+		const start = corrected[run.start].start;
+		const end = corrected[run.end].end;
+		if (start > cursor) {
+			segments.push({
+				key: `corrected-plain-${cursor}`,
+				text: correctedText.slice(cursor, start),
+			});
+		}
+		segments.push({
+			key: `corrected-change-${start}`,
+			text: correctedText.slice(start, end),
+			correction: corrections[Math.min(index, corrections.length - 1)],
+		});
+		cursor = end;
+	}
+	if (cursor < correctedText.length) {
+		segments.push({
+			key: `corrected-plain-${cursor}`,
+			text: correctedText.slice(cursor),
+		});
+	}
+	return segments;
+};
+
 const PhraseLine = ({
 	segments,
 	corrected,
@@ -123,10 +212,12 @@ const PhraseLine = ({
 export const CorrectionCard = ({
 	corrections,
 	originalText,
+	correctedText,
 	onOpenBranch,
 }: {
 	corrections: DialogueCorrection[];
 	originalText: string;
+	correctedText?: string;
 	onOpenBranch: (id: string) => void;
 }) => {
 	const [expanded, setExpanded] = useState(false);
@@ -144,8 +235,15 @@ export const CorrectionCard = ({
 		[originalText, ranges],
 	);
 	const correctedSegments = useMemo(
-		() => phraseSegments(originalText, ranges, true),
-		[originalText, ranges],
+		() =>
+			correctedText
+				? correctedPhraseSegments(
+						originalText,
+						correctedText,
+						renderableCorrections,
+					)
+				: phraseSegments(originalText, ranges, true),
+		[correctedText, originalText, ranges, renderableCorrections],
 	);
 	const typeLabels = [
 		...new Set(
