@@ -86,7 +86,9 @@ const initialMessages = (detail: DialogueDetail): ThreadMessageLike[] => {
 					custom: {
 						serverMessageId: message.id,
 						translation: message.translation,
+						teacherNote: message.metadata.teacherNote,
 						hints: message.metadata.hints ?? [],
+						focusWords: message.metadata.focusWords ?? [],
 						corrections,
 						correctionSource,
 						correctedAnswer: message.metadata.correctedAnswer,
@@ -114,7 +116,15 @@ const DialogueMessageBubble = ({
 	const hintsRecorded = useRef(false);
 	const custom = message.metadata.custom ?? {};
 	const translation = custom.translation as string | null | undefined;
+	const teacherNote =
+		typeof custom.teacherNote === "string" ? custom.teacherNote : "";
 	const hints = (custom.hints as string[] | undefined) ?? [];
+	const focusWords = (
+		(custom.focusWords as unknown[] | undefined) ?? []
+	).filter(
+		(word): word is string =>
+			typeof word === "string" && word.trim().length > 0,
+	);
 	const corrections = (
 		(custom.corrections as
 			| Array<DialogueCorrection | null | undefined>
@@ -150,13 +160,8 @@ const DialogueMessageBubble = ({
 
 	return (
 		<View style={[styles.messageRow, isUser && styles.messageRowUser]}>
-			<View
-				style={[
-					styles.bubble,
-					isUser ? styles.userBubble : styles.teacherBubble,
-				]}
-			>
-				{!isUser ? (
+			{!isUser && teacherNote ? (
+				<View style={[styles.bubble, styles.teacherBubble]}>
 					<WText
 						size="xs"
 						weight="semibold"
@@ -164,69 +169,104 @@ const DialogueMessageBubble = ({
 					>
 						{t("dialogue_teacher").toUpperCase()}
 					</WText>
-				) : null}
-				<TappableText
-					text={content}
-					align={isUser ? "right" : "left"}
-					onWordPress={
-						isUser
-							? undefined
-							: (word) => onWordPress(word, content, serverMessageId)
-					}
-				/>
-				{!content && message.status?.type === "running" ? (
-					<ActivityIndicator color={Colors.primary.base} size="small" />
-				) : null}
-				{!isUser && translation ? (
-					<View style={styles.revealBlock}>
-						<Pressable style={styles.inlineAction} onPress={toggleTranslation}>
-							<FontAwesome5
-								name="language"
-								size={13}
-								color={Colors.greys.grey5}
-							/>
-							<WText size="xs" mode="secondary">
-								{showTranslation
-									? t("dialogue_hide_translation")
-									: t("dialogue_show_translation")}
-							</WText>
-						</Pressable>
-						{showTranslation ? (
-							<WText size="sm" mode="secondary" wrap>
-								{translation}
-							</WText>
-						) : null}
-					</View>
-				) : null}
-				{!isUser && hints.length > 0 ? (
-					<View style={styles.revealBlock}>
-						<Pressable style={styles.inlineAction} onPress={toggleHints}>
-							<FontAwesome5
-								name="lightbulb"
-								size={13}
-								color={Colors.accents.orange}
-							/>
-							<WText size="xs" style={{ color: Colors.accents.orange }}>
-								{showHints ? t("dialogue_hide_hint") : t("dialogue_hint")}
-							</WText>
-						</Pressable>
-						{showHints
-							? hints.map((hint) => (
-									<WText key={hint} size="sm" mode="secondary" wrap>
-										• {hint}
-									</WText>
-								))
-							: null}
-					</View>
-				) : null}
-			</View>
-			{corrections.length > 0 && correctionSource ? (
+					<WText wrap>{teacherNote}</WText>
+				</View>
+			) : null}
+			{!isUser && corrections.length > 0 && correctionSource ? (
 				<CorrectionCard
 					corrections={corrections}
 					originalText={correctionSource}
 					correctedText={correctedAnswer}
 					onOpenBranch={onOpenBranch}
 				/>
+			) : null}
+			{content || !teacherNote ? (
+				<View
+					style={[
+						styles.bubble,
+						isUser ? styles.userBubble : styles.teacherBubble,
+					]}
+				>
+					{!isUser && !teacherNote ? (
+						<WText
+							size="xs"
+							weight="semibold"
+							style={{ color: Colors.primary.base }}
+						>
+							{t("dialogue_teacher").toUpperCase()}
+						</WText>
+					) : null}
+					<TappableText
+						text={content}
+						align={isUser ? "right" : "left"}
+						highlightedWords={isUser ? [] : focusWords}
+						onWordPress={
+							isUser
+								? undefined
+								: (word) => onWordPress(word, content, serverMessageId)
+						}
+					/>
+					{!content && message.status?.type === "running" ? (
+						<ActivityIndicator color={Colors.primary.base} size="small" />
+					) : null}
+					{!isUser && translation ? (
+						<View style={styles.revealBlock}>
+							<Pressable
+								accessibilityRole="button"
+								hitSlop={6}
+								style={({ pressed }) => [
+									styles.translationAction,
+									pressed && styles.translationActionPressed,
+								]}
+								onPress={toggleTranslation}
+							>
+								<View style={styles.translationActionLabel}>
+									<FontAwesome5
+										name="language"
+										size={16}
+										color={Colors.greys.grey5}
+									/>
+									<WText size="sm" mode="secondary">
+										{showTranslation
+											? t("dialogue_hide_translation")
+											: t("dialogue_show_translation")}
+									</WText>
+								</View>
+								<FontAwesome5
+									name={showTranslation ? "chevron-up" : "chevron-down"}
+									size={12}
+									color={Colors.greys.grey5}
+								/>
+							</Pressable>
+							{showTranslation ? (
+								<WText size="sm" mode="secondary" wrap>
+									{translation}
+								</WText>
+							) : null}
+						</View>
+					) : null}
+					{!isUser && hints.length > 0 ? (
+						<View style={styles.revealBlock}>
+							<Pressable style={styles.inlineAction} onPress={toggleHints}>
+								<FontAwesome5
+									name="lightbulb"
+									size={13}
+									color={Colors.accents.orange}
+								/>
+								<WText size="xs" style={{ color: Colors.accents.orange }}>
+									{showHints ? t("dialogue_hide_hint") : t("dialogue_hint")}
+								</WText>
+							</Pressable>
+							{showHints
+								? hints.map((hint) => (
+										<WText key={hint} size="sm" mode="secondary" wrap>
+											• {hint}
+										</WText>
+									))
+								: null}
+						</View>
+					) : null}
+				</View>
 			) : null}
 		</View>
 	);
@@ -341,10 +381,10 @@ export const DialogueChat = ({
 					id(),
 				);
 				const addedWords = await acceptVocabulary(result.addedWords);
-				const nativeInsertion = addedWords.find(
-					(item) => item.source === "native_insert",
-				);
-				if (nativeInsertion) setWordNotice({ result: nativeInsertion });
+				const savedWord =
+					addedWords.find((item) => item.source === "native_insert") ??
+					addedWords[0];
+				if (savedWord) setWordNotice({ result: savedWord });
 				const previous = detailRef.current;
 				const next: DialogueDetail = {
 					...previous,
@@ -367,7 +407,9 @@ export const DialogueChat = ({
 						custom: {
 							serverMessageId: result.assistantMessage.id,
 							translation: result.assistantMessage.translation,
+							teacherNote: result.assistantMessage.metadata.teacherNote,
 							hints: result.assistantMessage.metadata.hints ?? [],
+							focusWords: result.assistantMessage.metadata.focusWords ?? [],
 							corrections: result.corrections,
 							correctionSource: result.userMessage.content,
 							correctedAnswer: result.assistantMessage.metadata.correctedAnswer,
@@ -519,7 +561,7 @@ const styles = StyleSheet.create({
 		backgroundColor: Colors.dark.dark2,
 	},
 	messages: { paddingHorizontal: 16, paddingVertical: 18, gap: 16 },
-	messageRow: { maxWidth: "88%", alignSelf: "flex-start" },
+	messageRow: { maxWidth: "88%", alignSelf: "flex-start", gap: 10 },
 	messageRowUser: { alignSelf: "flex-end", alignItems: "flex-end" },
 	bubble: {
 		borderRadius: 20,
@@ -534,6 +576,20 @@ const styles = StyleSheet.create({
 		borderTopWidth: 1,
 		paddingTop: 8,
 		gap: 6,
+	},
+	translationAction: {
+		minHeight: 44,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		paddingHorizontal: 4,
+		borderRadius: 10,
+	},
+	translationActionPressed: { backgroundColor: Colors.dark.dark3 },
+	translationActionLabel: {
+		flexDirection: "row",
+		gap: 9,
+		alignItems: "center",
 	},
 	inlineAction: { flexDirection: "row", gap: 7, alignItems: "center" },
 	composer: {

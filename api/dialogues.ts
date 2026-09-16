@@ -41,7 +41,9 @@ export type DialogueMessage = {
 	status: "pending" | "complete" | "error";
 	model_id?: string | null;
 	metadata: {
+		teacherNote?: string;
 		hints?: string[];
+		focusWords?: string[];
 		shouldWrapUp?: boolean;
 		shouldComplete?: boolean;
 		respondingTo?: string;
@@ -198,11 +200,11 @@ const request = async <T>(
 	// create a phantom active dialogue on first use).
 	const data = text ? (JSON.parse(text) as unknown) : null;
 	if (!response.ok) {
-		const error = (data && typeof data === "object"
-			? (data as Record<string, unknown>).error
-			: undefined) as
-			| { message?: string; details?: Record<string, unknown> }
-			| undefined;
+		const error = (
+			data && typeof data === "object"
+				? (data as Record<string, unknown>).error
+				: undefined
+		) as { message?: string; details?: Record<string, unknown> } | undefined;
 		throw new DialogueApiError(
 			error?.message || response.statusText || "Request failed",
 			response.status,
@@ -289,6 +291,7 @@ export const sendBranchMessage = (
 	request<{
 		userMessage: DialogueMessage;
 		assistantMessage: DialogueMessage;
+		addedWords?: VocabularyResult[];
 	}>(`/dialogues/threads/${threadId}/messages`, {
 		method: "POST",
 		body: JSON.stringify({ content, clientMessageId }),

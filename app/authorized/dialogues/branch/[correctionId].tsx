@@ -78,6 +78,10 @@ function BranchThread({
 				if (!last || last.role !== "user") throw new Error("User message is missing");
 				const content = last.content.map((part) => (part.type === "text" ? part.text : "")).join("");
 				const response = await sendBranchMessage(branch.thread.id, content, makeId());
+				if (response.addedWords?.length) {
+					await dialogueVocabularyRepository.integrate(userId, response.addedWords);
+					setNotice({ result: response.addedWords[0] });
+				}
 				const next = {
 					...branchRef.current,
 					messages: [...branchRef.current.messages, response.userMessage, response.assistantMessage],
