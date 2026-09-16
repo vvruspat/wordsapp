@@ -161,7 +161,7 @@ export default function DialoguesScreen() {
 					<WText size="lg" weight="semibold">{t("dialogue_choose_scenario")}</WText>
 				</View>
 
-				{loadingScenarios && scenarios.length === 0 ? (
+				{loadingScenarios && scenarios.length === 0 && !refreshing ? (
 					<View
 						accessible
 						accessibilityRole="text"
