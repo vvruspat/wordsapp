@@ -87,6 +87,7 @@ const initialMessages = (detail: DialogueDetail): ThreadMessageLike[] => {
 						serverMessageId: message.id,
 						translation: message.translation,
 						hints: message.metadata.hints ?? [],
+						focusWords: message.metadata.focusWords ?? [],
 						corrections,
 						correctionSource,
 						correctedAnswer: message.metadata.correctedAnswer,
@@ -115,6 +116,12 @@ const DialogueMessageBubble = ({
 	const custom = message.metadata.custom ?? {};
 	const translation = custom.translation as string | null | undefined;
 	const hints = (custom.hints as string[] | undefined) ?? [];
+	const focusWords = (
+		(custom.focusWords as unknown[] | undefined) ?? []
+	).filter(
+		(word): word is string =>
+			typeof word === "string" && word.trim().length > 0,
+	);
 	const corrections = (
 		(custom.corrections as
 			| Array<DialogueCorrection | null | undefined>
@@ -168,6 +175,7 @@ const DialogueMessageBubble = ({
 				<TappableText
 					text={content}
 					align={isUser ? "right" : "left"}
+					highlightedWords={isUser ? [] : focusWords}
 					onWordPress={
 						isUser
 							? undefined
@@ -179,17 +187,32 @@ const DialogueMessageBubble = ({
 				) : null}
 				{!isUser && translation ? (
 					<View style={styles.revealBlock}>
-						<Pressable style={styles.inlineAction} onPress={toggleTranslation}>
+						<Pressable
+							accessibilityRole="button"
+							hitSlop={6}
+							style={({ pressed }) => [
+								styles.translationAction,
+								pressed && styles.translationActionPressed,
+							]}
+							onPress={toggleTranslation}
+						>
+							<View style={styles.translationActionLabel}>
+								<FontAwesome5
+									name="language"
+									size={16}
+									color={Colors.greys.grey5}
+								/>
+								<WText size="sm" mode="secondary">
+									{showTranslation
+										? t("dialogue_hide_translation")
+										: t("dialogue_show_translation")}
+								</WText>
+							</View>
 							<FontAwesome5
-								name="language"
-								size={13}
+								name={showTranslation ? "chevron-up" : "chevron-down"}
+								size={12}
 								color={Colors.greys.grey5}
 							/>
-							<WText size="xs" mode="secondary">
-								{showTranslation
-									? t("dialogue_hide_translation")
-									: t("dialogue_show_translation")}
-							</WText>
 						</Pressable>
 						{showTranslation ? (
 							<WText size="sm" mode="secondary" wrap>
@@ -368,6 +391,7 @@ export const DialogueChat = ({
 							serverMessageId: result.assistantMessage.id,
 							translation: result.assistantMessage.translation,
 							hints: result.assistantMessage.metadata.hints ?? [],
+							focusWords: result.assistantMessage.metadata.focusWords ?? [],
 							corrections: result.corrections,
 							correctionSource: result.userMessage.content,
 							correctedAnswer: result.assistantMessage.metadata.correctedAnswer,
@@ -534,6 +558,20 @@ const styles = StyleSheet.create({
 		borderTopWidth: 1,
 		paddingTop: 8,
 		gap: 6,
+	},
+	translationAction: {
+		minHeight: 44,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		paddingHorizontal: 4,
+		borderRadius: 10,
+	},
+	translationActionPressed: { backgroundColor: Colors.dark.dark3 },
+	translationActionLabel: {
+		flexDirection: "row",
+		gap: 9,
+		alignItems: "center",
 	},
 	inlineAction: { flexDirection: "row", gap: 7, alignItems: "center" },
 	composer: {

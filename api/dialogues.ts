@@ -42,6 +42,7 @@ export type DialogueMessage = {
 	model_id?: string | null;
 	metadata: {
 		hints?: string[];
+		focusWords?: string[];
 		shouldWrapUp?: boolean;
 		shouldComplete?: boolean;
 		respondingTo?: string;
@@ -198,11 +199,11 @@ const request = async <T>(
 	// create a phantom active dialogue on first use).
 	const data = text ? (JSON.parse(text) as unknown) : null;
 	if (!response.ok) {
-		const error = (data && typeof data === "object"
-			? (data as Record<string, unknown>).error
-			: undefined) as
-			| { message?: string; details?: Record<string, unknown> }
-			| undefined;
+		const error = (
+			data && typeof data === "object"
+				? (data as Record<string, unknown>).error
+				: undefined
+		) as { message?: string; details?: Record<string, unknown> } | undefined;
 		throw new DialogueApiError(
 			error?.message || response.statusText || "Request failed",
 			response.status,
