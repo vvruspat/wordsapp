@@ -147,6 +147,8 @@
 	"dialogue_active": "Actieve dialoog",
 	"dialogue_turns": "{{count}} van ~{{target}} beurten",
 	"dialogue_choose_scenario": "Kies een situatie",
+	"dialogue_loading_scenarios": "Je docent bereidt situaties voor…",
+	"dialogue_loading_scenarios_hint": "Dit duurt meestal maar een paar seconden",
 	"dialogue_minutes": "~{{count}} min",
 	"dialogue_custom_topic": "Eigen onderwerp",
 	"dialogue_custom_placeholder": "Bijvoorbeeld: een favoriete film bespreken",

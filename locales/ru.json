@@ -147,6 +147,8 @@
 	"dialogue_active": "Активный диалог",
 	"dialogue_turns": "{{count}} из ~{{target}} реплик",
 	"dialogue_choose_scenario": "Выберите ситуацию",
+	"dialogue_loading_scenarios": "Преподаватель подбирает ситуации…",
+	"dialogue_loading_scenarios_hint": "Обычно это занимает несколько секунд",
 	"dialogue_minutes": "~{{count}} мин.",
 	"dialogue_custom_topic": "Своя тема",
 	"dialogue_custom_placeholder": "Например: обсудить любимый фильм",

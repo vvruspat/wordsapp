@@ -147,6 +147,8 @@
 	"dialogue_active": "Dialogo attivo",
 	"dialogue_turns": "{{count}} di ~{{target}} turni",
 	"dialogue_choose_scenario": "Scegli una situazione",
+	"dialogue_loading_scenarios": "Il tuo insegnante sta preparando le situazioni…",
+	"dialogue_loading_scenarios_hint": "Di solito bastano pochi secondi",
 	"dialogue_minutes": "~{{count}} min",
 	"dialogue_custom_topic": "Un tema a tua scelta",
 	"dialogue_custom_placeholder": "Per esempio: parlare di un film preferito",

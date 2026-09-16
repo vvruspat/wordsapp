@@ -147,6 +147,8 @@
 	"dialogue_active": "Ενεργός διάλογος",
 	"dialogue_turns": "{{count}} από ~{{target}} γύρους",
 	"dialogue_choose_scenario": "Επίλεξε μια κατάσταση",
+	"dialogue_loading_scenarios": "Ο καθηγητής σου ετοιμάζει καταστάσεις…",
+	"dialogue_loading_scenarios_hint": "Συνήθως χρειάζονται λίγα δευτερόλεπτα",
 	"dialogue_minutes": "~{{count}} λεπτά",
 	"dialogue_custom_topic": "Δικό σου θέμα",
 	"dialogue_custom_placeholder": "Για παράδειγμα: συζήτηση για μια αγαπημένη ταινία",

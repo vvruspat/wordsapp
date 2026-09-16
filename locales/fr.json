@@ -147,6 +147,8 @@
 	"dialogue_active": "Dialogue actif",
 	"dialogue_turns": "{{count}} sur ~{{target}} tours",
 	"dialogue_choose_scenario": "Choisis une situation",
+	"dialogue_loading_scenarios": "Votre professeur prépare des situations…",
+	"dialogue_loading_scenarios_hint": "Cela prend généralement quelques secondes",
 	"dialogue_minutes": "~{{count}} min",
 	"dialogue_custom_topic": "Ton propre sujet",
 	"dialogue_custom_placeholder": "Par exemple : parler d'un film préféré",
