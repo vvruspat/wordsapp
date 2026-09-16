@@ -41,6 +41,7 @@ export type DialogueMessage = {
 	status: "pending" | "complete" | "error";
 	model_id?: string | null;
 	metadata: {
+		teacherNote?: string;
 		hints?: string[];
 		focusWords?: string[];
 		shouldWrapUp?: boolean;
@@ -290,6 +291,7 @@ export const sendBranchMessage = (
 	request<{
 		userMessage: DialogueMessage;
 		assistantMessage: DialogueMessage;
+		addedWords?: VocabularyResult[];
 	}>(`/dialogues/threads/${threadId}/messages`, {
 		method: "POST",
 		body: JSON.stringify({ content, clientMessageId }),
