@@ -2,7 +2,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import NetInfo from "@react-native-community/netinfo";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	ActivityIndicator,
@@ -34,39 +34,55 @@ export default function DialoguesScreen() {
 	const [history, setHistory] = useState<DialogueSession[]>([]);
 	const [scenarios, setScenarios] = useState<DialogueScenario[]>([]);
 	const [customTopic, setCustomTopic] = useState("");
-	const [loading, setLoading] = useState(true);
+	const [loadingScenarios, setLoadingScenarios] = useState(false);
+	const [refreshing, setRefreshing] = useState(false);
 	const [starting, setStarting] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const loadingRef = useRef(false);
 
 	useEffect(() => NetInfo.addEventListener((state) => setOnline(Boolean(state.isConnected))), []);
 
-	const load = useCallback(async () => {
-		if (!user?.userId) return;
-		setLoading(true);
+	const load = useCallback(async (showRefreshControl = false) => {
+		if (!user?.userId || loadingRef.current) return;
+		loadingRef.current = true;
+		if (showRefreshControl) setRefreshing(true);
 		setError(null);
 		const cached = await dialogueCacheRepository.list(user.userId);
+		const cachedActive =
+			cached.find((item) => item.session.status === "active")?.session ?? null;
 		setHistory(cached.map((item) => item.session));
-		setActive(cached.find((item) => item.session.status === "active")?.session ?? null);
+		setActive(cachedActive);
 		if (!online) {
-			setLoading(false);
+			setRefreshing(false);
+			loadingRef.current = false;
 			return;
 		}
+		if (!cachedActive) setLoadingScenarios(true);
 		try {
-			const [remoteActive, remoteHistory] = await Promise.all([
-				getActiveDialogue(),
-				getDialogueHistory(),
+			const activeRequest = getActiveDialogue();
+			const historyRequest = getDialogueHistory();
+			const recommendationsRequest = activeRequest.then((remoteActive) =>
+				remoteActive ? null : getDialogueRecommendations(),
+			);
+			const [remoteActive, remoteHistory, recommendations] = await Promise.all([
+				activeRequest,
+				historyRequest,
+				recommendationsRequest,
 			]);
 			setActive(remoteActive);
 			setHistory(remoteHistory);
 			await dialogueCacheRepository.mergeSessions(user.userId, remoteHistory);
 			if (!remoteActive) {
-				const recommendations = await getDialogueRecommendations();
-				setScenarios(recommendations.scenarios);
+				setScenarios(recommendations?.scenarios ?? []);
+			} else {
+				setScenarios([]);
 			}
 		} catch (loadError) {
 			setError(loadError instanceof Error ? loadError.message : t("dialogue_load_error"));
 		} finally {
-			setLoading(false);
+			setLoadingScenarios(false);
+			setRefreshing(false);
+			loadingRef.current = false;
 		}
 	}, [online, t, user?.userId]);
 
@@ -97,7 +113,13 @@ export default function DialoguesScreen() {
 		<View style={styles.page}>
 			<ScrollView
 				contentContainerStyle={styles.content}
-				refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={Colors.primary.base} />}
+				refreshControl={
+					<RefreshControl
+						refreshing={refreshing}
+						onRefresh={() => void load(true)}
+						tintColor={Colors.primary.base}
+					/>
+				}
 				keyboardShouldPersistTaps="handled"
 			>
 				<View style={styles.heading}>
@@ -137,8 +159,28 @@ export default function DialoguesScreen() {
 
 				<View style={styles.sectionTitle}>
 					<WText size="lg" weight="semibold">{t("dialogue_choose_scenario")}</WText>
-					{loading && scenarios.length === 0 ? <ActivityIndicator color={Colors.primary.base} /> : null}
 				</View>
+
+				{loadingScenarios && scenarios.length === 0 && !refreshing ? (
+					<View
+						accessible
+						accessibilityRole="text"
+						accessibilityLabel={t("dialogue_loading_scenarios")}
+						style={styles.loadingCard}
+					>
+						<View style={styles.loadingIcon}>
+							<FontAwesome5 name="magic" color={Colors.primary.base} size={15} />
+						</View>
+						<View style={{ flex: 1, gap: 4 }}>
+							<WText size="sm" weight="medium" wrap>
+								{t("dialogue_loading_scenarios")}
+							</WText>
+							<WText size="xs" mode="tertiary" wrap>
+								{t("dialogue_loading_scenarios_hint")}
+							</WText>
+						</View>
+					</View>
+				) : null}
 
 				{scenarios.map((scenario, index) => (
 					<Pressable
@@ -206,6 +248,8 @@ const styles = StyleSheet.create({
 	infoCard: { flexDirection: "row", gap: 10, padding: 13, borderRadius: 14, backgroundColor: Colors.dark.dark2, alignItems: "center" },
 	activeCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: Colors.dark.dark2, padding: 17, borderRadius: 20, borderColor: Colors.primary.disabled, borderWidth: 1 },
 	sectionTitle: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4 },
+	loadingCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 18, backgroundColor: Colors.dark.dark2 },
+	loadingIcon: { width: 38, height: 38, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: Colors.dark.dark3 },
 	scenarioCard: { flexDirection: "row", alignItems: "center", gap: 13, padding: 15, borderRadius: 18, backgroundColor: Colors.dark.dark2 },
 	icon: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center" },
 	customCard: { gap: 12, padding: 16, backgroundColor: Colors.dark.dark2, borderRadius: 18 },
