@@ -1,23 +1,31 @@
 import { memo, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Animated, StyleSheet, View } from "react-native";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { Colors } from "@/mob-ui/brand/colors";
 
-type AudioDownloadProgressBarProps = {
+type BackgroundProgressBarProps = {
 	bottomOffset: number;
 };
 
-export const AudioDownloadProgressBar = memo(
-	({ bottomOffset }: AudioDownloadProgressBarProps) => {
+export const BackgroundProgressBar = memo(
+	({ bottomOffset }: BackgroundProgressBarProps) => {
+		const { t } = useTranslation();
 		const {
 			isAudioDownloading,
 			audioDownloadProgress,
 			audioDownloadTotal,
+			isSyncing,
+			isBackgroundSync,
+			syncProgress,
+			syncStatus,
+			error,
 		} = useVocabularyStore();
 		const [shouldRender, setShouldRender] = useState(false);
 		const visibility = useRef(new Animated.Value(0)).current;
 		const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-		const visible = isAudioDownloading && audioDownloadTotal > 0;
+		const showSync = isBackgroundSync && (isSyncing || !!error);
+		const visible = showSync || (isAudioDownloading && audioDownloadTotal > 0);
 
 		useEffect(() => {
 			if (hideTimerRef.current) {
@@ -61,12 +69,31 @@ export const AudioDownloadProgressBar = memo(
 			return null;
 		}
 
-		const clamped = Math.min(1, Math.max(0, audioDownloadProgress || 0));
+		const progress = showSync
+			? error && !isSyncing
+				? 1
+				: syncProgress
+			: audioDownloadProgress;
+		const clamped = Math.min(1, Math.max(0, progress || 0));
 		const widthPercent: `${number}%` = `${Math.round(clamped * 100)}%`;
+		const accessibilityLabel = showSync
+			? error && !isSyncing
+				? t("sync_overlay_error")
+				: syncStatus
+					? t(syncStatus)
+					: t("sync_overlay_syncing")
+			: t("sync_status_audio");
 
 		return (
 			<Animated.View
 				pointerEvents="none"
+				accessible
+				accessibilityLabel={accessibilityLabel}
+				accessibilityValue={{
+					min: 0,
+					max: 100,
+					now: Math.round(clamped * 100),
+				}}
 				style={[
 					styles.container,
 					{
@@ -84,7 +111,13 @@ export const AudioDownloadProgressBar = memo(
 				]}
 			>
 				<View style={styles.track}>
-					<View style={[styles.bar, { width: widthPercent }]} />
+					<View
+						style={[
+							styles.bar,
+							{ width: widthPercent },
+							error && !isSyncing && showSync && styles.errorBar,
+						]}
+					/>
 				</View>
 			</Animated.View>
 		);
@@ -111,5 +144,8 @@ const styles = StyleSheet.create({
 	bar: {
 		height: "100%",
 		backgroundColor: Colors.primary.base,
+	},
+	errorBar: {
+		backgroundColor: Colors.accents.red,
 	},
 });

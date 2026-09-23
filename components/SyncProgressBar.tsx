@@ -6,9 +6,15 @@ import { Colors } from "@/mob-ui/brand/colors";
 
 export const SyncProgressBar = memo(() => {
 	const { t } = useTranslation();
-	const { isSyncing, syncProgress, syncStatus, error, clearError } =
-		useVocabularyStore();
-	const visible = isSyncing || !!error;
+	const {
+		isSyncing,
+		isBackgroundSync,
+		syncProgress,
+		syncStatus,
+		error,
+		clearError,
+	} = useVocabularyStore();
+	const visible = !isBackgroundSync && (isSyncing || !!error);
 	const [shouldRender, setShouldRender] = useState(visible);
 	const visibility = useRef(new Animated.Value(visible ? 1 : 0)).current;
 

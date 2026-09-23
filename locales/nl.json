@@ -68,6 +68,7 @@
 	"mix_training_instruction": "Selecteer de trainingen die je wilt combineren",
 	"mix_training_start": "Start mix",
 	"mix_training_button": "Mixtraining",
+	"mix_training_no_words": "Er zijn geen woorden met vertaling beschikbaar voor deze training.",
 	"app_cards_title": "Flashkaarten",
 	"app_cards_description": "Zie een woord en beslis of je het kent",
 	"app_cards_header": "Ken je dit woord?",
