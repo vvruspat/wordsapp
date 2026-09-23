@@ -1,4 +1,4 @@
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { WText, WTextProps } from "@/mob-ui/atoms";
 

@@ -14,7 +14,7 @@ import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { WText } from "@/mob-ui";
 import { buildTopicProgressStats } from "@/utils/topicProgress";
 import { logger } from "@/utils/logger";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlatList, ListRenderItemInfo, Pressable, View } from "react-native";

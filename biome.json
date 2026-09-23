@@ -19,7 +19,10 @@
 			"!!**/.rnstorybook",
 			"!!**/.scripts",
 			"!!**/.storybook",
-			"!!**/.vscode"
+			"!!**/.vscode",
+			"!!**/graphify-out",
+			"!!**/ios",
+			"!!**/android"
 		]
 	},
 	"formatter": {

@@ -26,7 +26,6 @@ export default ({ config }) => {
 					backgroundImage: "./assets/images/android-icon-background.png",
 					monochromeImage: "./assets/images/android-icon-monochrome.png",
 				},
-				edgeToEdgeEnabled: true,
 				predictiveBackGestureEnabled: false,
 				package: "digital.whitesquirrel.wordsapp",
 			},

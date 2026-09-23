@@ -64,7 +64,7 @@ export const styles = StyleSheet.create({
 	},
 
 	blur: {
-		...StyleSheet.absoluteFillObject,
+		...StyleSheet.absoluteFill,
 		borderRadius: 16,
 		backgroundColor: Colors.dark.black40,
 	},
