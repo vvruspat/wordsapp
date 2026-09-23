@@ -162,6 +162,7 @@ export const useVocabularySync = () => {
 		setTopicTranslations,
 		setLanguageLearn,
 		setSyncing,
+		setBackgroundSync,
 		setSyncProgress,
 		setSyncStatus,
 		setLastSyncTime,
@@ -172,7 +173,8 @@ export const useVocabularySync = () => {
 
 	const downloadMissingAudio = useCallback(
 		async (languageLearn?: Language) => {
-			const targetLanguage = languageLearn ?? (user?.language_learn as Language);
+			const targetLanguage =
+				languageLearn ?? (user?.language_learn as Language);
 
 			if (!targetLanguage) {
 				return;
@@ -233,7 +235,10 @@ export const useVocabularySync = () => {
 			async function processNextAudio(): Promise<void> {
 				while (wordIndex < remoteAudioWords.length && isActiveDownload()) {
 					const word = remoteAudioWords[wordIndex++];
-					const localAudioPath = await downloadAudioFile(word.audio, word.remoteId);
+					const localAudioPath = await downloadAudioFile(
+						word.audio,
+						word.remoteId,
+					);
 
 					if (isRemoteAudioPath(localAudioPath)) {
 						failedDownloads.push({
@@ -247,7 +252,9 @@ export const useVocabularySync = () => {
 							});
 						});
 
-						if (useVocabularyStore.getState().languageLearn === targetLanguage) {
+						if (
+							useVocabularyStore.getState().languageLearn === targetLanguage
+						) {
 							useVocabularyStore
 								.getState()
 								.setWordAudio(word.remoteId, localAudioPath);
@@ -340,13 +347,25 @@ export const useVocabularySync = () => {
 				return;
 			}
 
-			setSyncing(true);
-			setSyncProgress(0);
-			setSyncStatus("sync_status_catalogs");
-			clearError();
-			setLanguageLearn(targetLanguage);
-
 			try {
+				// Show the app while cached vocabulary is refreshed.
+				const [localWordCount, localCatalogCount] = await Promise.all([
+					database
+						.get<Word>("words")
+						.query(Q.where("language", targetLanguage))
+						.fetchCount(),
+					database
+						.get<VocabCatalog>("vocab_catalogs")
+						.query(Q.where("language", targetLanguage))
+						.fetchCount(),
+				]);
+				setBackgroundSync(localWordCount > 0 || localCatalogCount > 0);
+				setSyncing(true);
+				setSyncProgress(0);
+				setSyncStatus("sync_status_catalogs");
+				clearError();
+				setLanguageLearn(targetLanguage);
+
 				logger.debug("Fetching catalogs", undefined, "sync");
 				// Fetch catalogs filtered by language
 				const catalogsResponse = await getCatalogs({
@@ -437,7 +456,7 @@ export const useVocabularySync = () => {
 						words: words.map((w) => w.id).join(","),
 						offset: 0,
 						limit: 100000,
-					language: user.language_speak as Language,
+						language: user.language_speak as Language,
 					});
 
 					if (
@@ -687,6 +706,7 @@ export const useVocabularySync = () => {
 			setTopicTranslations,
 			setLanguageLearn,
 			setSyncing,
+			setBackgroundSync,
 			setSyncProgress,
 			setSyncStatus,
 			setLastSyncTime,

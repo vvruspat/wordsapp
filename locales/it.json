@@ -68,6 +68,7 @@
 	"mix_training_instruction": "Seleziona gli esercizi che vuoi combinare",
 	"mix_training_start": "Avvia mix",
 	"mix_training_button": "Allenamento misto",
+	"mix_training_no_words": "Non ci sono parole con traduzione disponibili per questo allenamento.",
 	"app_cards_title": "Carte",
 	"app_cards_description": "Vedi una parola e decidi se la conosci",
 	"app_cards_header": "Conosci questa parola?",

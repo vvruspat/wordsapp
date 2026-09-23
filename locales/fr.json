@@ -68,6 +68,7 @@
 	"mix_training_instruction": "Sélectionnez les exercices à combiner",
 	"mix_training_start": "Démarrer le mix",
 	"mix_training_button": "Entraînement mixte",
+	"mix_training_no_words": "Aucun mot avec traduction n’est disponible pour cet entraînement.",
 	"app_cards_title": "Cartes",
 	"app_cards_description": "Voyez un mot et décidez si vous le connaissez",
 	"app_cards_header": "Connaissez-vous ce mot ?",

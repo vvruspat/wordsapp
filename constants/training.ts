@@ -1,0 +1,1 @@
+export const MIX_TRAINING_WORD_LIMIT = 20;

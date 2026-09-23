@@ -1,17 +1,17 @@
-import { LearningCatalog } from "@/components/LearningCatalog";
-import { learningRepository } from "@/db/repositories/learning.repository";
-import { wordsRepository } from "@/db/repositories/words.repository";
-import { BackgroundContext } from "@/context/BackgroundContext";
-import { useChunkManagement, CHUNK_SIZE } from "@/hooks/useChunkManagement";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSessionUser } from "@/hooks/useSession";
-import { WButton, WCard, WText } from "@/mob-ui";
-import { Colors } from "@/mob-ui/brand/colors";
 import { router } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LearningCatalog } from "@/components/LearningCatalog";
+import { BackgroundContext } from "@/context/BackgroundContext";
+import { learningRepository } from "@/db/repositories/learning.repository";
+import { wordsRepository } from "@/db/repositories/words.repository";
+import { CHUNK_SIZE, useChunkManagement } from "@/hooks/useChunkManagement";
+import { useExcerciseStore } from "@/hooks/useExcerciseStore";
+import { useSessionUser } from "@/hooks/useSession";
+import { WButton, WCard, WText } from "@/mob-ui";
+import { Colors } from "@/mob-ui/brand/colors";
 import { styles } from "../../../general.styles";
 
 export default function Learning() {
@@ -22,8 +22,11 @@ export default function Learning() {
 		useExcerciseStore();
 
 	const userId = user?.userId != null ? String(user.userId) : undefined;
-	const { shouldShowProposal, loading: chunkLoading, markProposed } =
-		useChunkManagement(userId, currentTopics, currentCatalogs);
+	const {
+		shouldShowProposal,
+		loading: chunkLoading,
+		markProposed,
+	} = useChunkManagement(userId, currentTopics, currentCatalogs);
 
 	const [untrainedWords, setUntrainedWords] = useState<{ remoteId: number }[]>(
 		[],
@@ -158,9 +161,10 @@ export default function Learning() {
 				<WButton
 					mode="primary"
 					fullWidth
-					onPress={() =>
-						router.push({ pathname: "/authorized/learning/mix-training" })
-					}
+					onPress={() => {
+						setChunkWordIds(null);
+						router.push({ pathname: "/authorized/learning/mix-training" });
+					}}
 				>
 					<WText mode="inverted">{t("mix_training_button")}</WText>
 				</WButton>

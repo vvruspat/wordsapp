@@ -68,6 +68,7 @@
 	"mix_training_instruction": "Επιλέξτε τις ασκήσεις που θέλετε να συνδυάσετε",
 	"mix_training_start": "Έναρξη μίξης",
 	"mix_training_button": "Μικτή εξάσκηση",
+	"mix_training_no_words": "Δεν υπάρχουν λέξεις με μετάφραση για αυτή την εξάσκηση.",
 	"app_cards_title": "Κάρτες",
 	"app_cards_description": "Δείτε μια λέξη και αποφασίστε αν τη γνωρίζετε",
 	"app_cards_header": "Γνωρίζετε αυτή τη λέξη;",

@@ -29,6 +29,7 @@ import {
 	recordDialogueInteraction,
 	sendDialogueMessage,
 } from "@/api/dialogues";
+import { MIX_TRAINING_WORD_LIMIT } from "@/constants/training";
 import { dialogueCacheRepository } from "@/db/repositories/dialogueCache.repository";
 import { dialogueVocabularyRepository } from "@/db/repositories/dialogueVocabulary.repository";
 import { WText } from "@/mob-ui";
@@ -277,7 +278,10 @@ const SummaryCard = ({ detail }: { detail: DialogueDetail }) => {
 	const { t } = useTranslation();
 	const summary = detail.session.summary;
 	if (!summary) return null;
-	const wordIds = summary.newWords.map((word) => word.wordId).filter(Boolean);
+	const wordIds = summary.newWords
+		.map((word) => word.wordId)
+		.filter(Boolean)
+		.slice(0, MIX_TRAINING_WORD_LIMIT);
 
 	return (
 		<View style={styles.summaryCard}>

@@ -1,4 +1,5 @@
 import { Word } from "@vvruspat/words-types";
+import { usePathname } from "expo-router";
 import {
 	createContext,
 	type ReactNode,
@@ -12,6 +13,7 @@ import {
 	WordExcerciseFailureModal,
 	WordExcerciseSuccessModal,
 } from "@/components/Modals/WordExcerciseResult";
+import { MIX_TRAINING_WORD_LIMIT } from "@/constants/training";
 import WatermelonWord from "@/db/models/Word";
 import WatermelonWordTranslation from "@/db/models/WordTranslation";
 import { learningRepository } from "@/db/repositories/learning.repository";
@@ -106,6 +108,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const failedQueue = useRef<SessionPair[]>([]);
 	// Words previously answered correctly — reviewed occasionally for reinforcement
 	const successQueue = useRef<SessionPair[]>([]);
+	const sessionPairs = useRef<SessionPair[]>([]);
 	// Promise that resolves when queue initialization is complete
 	const initializationPromise = useRef<Promise<void> | null>(null);
 	const queueHydrationId = useRef(0);
@@ -121,6 +124,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const failedWordIds = useRef(new Set<number>());
 
 	const { user } = useSessionUser();
+	const isMixTraining = usePathname() === "/authorized/learning/mix-training";
 	const lastSyncTime = useVocabularyStore((state) => state.lastSyncTime);
 
 	const {
@@ -176,13 +180,24 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const initializeQueues = useCallback(
 		async (trainingId?: string | null): Promise<QueueSnapshot> => {
 			try {
-				const allWords = await wordsRepository.getRandomWords(
-					user?.language_learn ?? "en",
-					ALL_WORDS_COUNT,
-					[],
-					currentCatalogs.length > 0 ? currentCatalogs : undefined,
-					currentTopics.length > 0 ? currentTopics : undefined,
-				);
+				const scopedWordIds = isMixTraining
+					? [...new Set(chunkWordIds ?? [])].slice(0, MIX_TRAINING_WORD_LIMIT)
+					: null;
+				if (isMixTraining && scopedWordIds?.length === 0) {
+					return { failed: [], succeeded: [] };
+				}
+				const allWords = scopedWordIds
+					? await wordsRepository.getByRemoteIds(
+							scopedWordIds,
+							user?.language_learn ?? "en",
+						)
+					: await wordsRepository.getRandomWords(
+							user?.language_learn ?? "en",
+							ALL_WORDS_COUNT,
+							[],
+							currentCatalogs.length > 0 ? currentCatalogs : undefined,
+							currentTopics.length > 0 ? currentTopics : undefined,
+						);
 
 				const allTranslations = await translationsRepository.getByWordIds(
 					user?.language_speak ?? "en",
@@ -196,10 +211,11 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					}))
 					.filter((p): p is SessionPair => p.translation !== undefined);
 
-				const pairsToUse =
-					chunkWordIds != null && chunkWordIds.length > 0
-						? allPairs.filter((p) => chunkWordIds.includes(p.word.remoteId))
-						: allPairs;
+				const pairsToUse = scopedWordIds
+					? scopedWordIds
+							.map((id) => allPairs.find((pair) => pair.word.remoteId === id))
+							.filter((pair): pair is SessionPair => pair !== undefined)
+					: allPairs;
 
 				if (user?.userId) {
 					const progressRecords =
@@ -255,7 +271,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				};
 			}
 		},
-		[currentCatalogs, currentTopics, user, chunkWordIds],
+		[currentCatalogs, currentTopics, user, chunkWordIds, isMixTraining],
 	);
 
 	const resetSessionStats = useCallback(() => {
@@ -273,6 +289,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			queueHydrationId.current = hydrationId;
 			failedQueue.current = [];
 			successQueue.current = [];
+			sessionPairs.current = [];
 			resetSessionStats();
 			const promise = initializeQueues(trainingId).then((snapshot) => {
 				if (queueHydrationId.current !== hydrationId) {
@@ -281,6 +298,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 
 				failedQueue.current = snapshot.failed;
 				successQueue.current = snapshot.succeeded;
+				sessionPairs.current = [...snapshot.failed, ...snapshot.succeeded];
 				const total = failedQueue.current.length + successQueue.current.length;
 				const alreadySucceeded = successQueue.current.map(
 					(p) => p.word.remoteId,
@@ -332,7 +350,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			let pairs: SessionPair[];
 
 			if (numberOfPairs > 1) {
-				if (chunkWordIds != null && chunkWordIds.length > 0) {
+				if (isMixTraining) {
 					if (initializationPromise.current) {
 						await initializationPromise.current;
 					}
@@ -415,9 +433,14 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					}
 				}
 
-				lastServedWordId.current = item?.word.remoteId ?? null;
+				if (!item && isMixTraining) {
+					item =
+						sessionPairs.current.find(
+							(pair) => pair.word.remoteId !== lastServedWordId.current,
+						) ?? sessionPairs.current[0];
+				}
 
-				if (!item) {
+				if (!item && !isMixTraining) {
 					const fallbackWords = await wordsRepository.getRandomWords(
 						user?.language_learn ?? "en",
 						1,
@@ -444,6 +467,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						);
 				}
 
+				lastServedWordId.current = item?.word.remoteId ?? null;
 				pairs = item ? [item] : [];
 			}
 
@@ -472,7 +496,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		[
 			currentCatalogs,
 			currentTopics,
-			chunkWordIds,
+			isMixTraining,
 			setCurrentPairs,
 			setCurrentRandomWords,
 			setCurrentRandomTranslations,
