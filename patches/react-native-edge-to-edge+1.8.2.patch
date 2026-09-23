@@ -1,0 +1,38 @@
+diff --git a/node_modules/react-native-edge-to-edge/dist/commonjs/extras/expo.js b/node_modules/react-native-edge-to-edge/dist/commonjs/extras/expo.js
+index 2c6048e..58ce980 100644
+--- a/node_modules/react-native-edge-to-edge/dist/commonjs/extras/expo.js
++++ b/node_modules/react-native-edge-to-edge/dist/commonjs/extras/expo.js
+@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
+   value: true
+ });
+ exports.withEdgeToEdge = exports.default = void 0;
+-var _configPlugins = require("@expo/config-plugins");
++var _configPlugins = require("expo/config-plugins");
+ const plugin = (expoConfig, pluginConfig = {}) => {
+   const themes = {
+     Default: "Theme.EdgeToEdge",
+diff --git a/node_modules/react-native-edge-to-edge/dist/module/extras/expo.js b/node_modules/react-native-edge-to-edge/dist/module/extras/expo.js
+index 4c6e3ff..2351195 100644
+--- a/node_modules/react-native-edge-to-edge/dist/module/extras/expo.js
++++ b/node_modules/react-native-edge-to-edge/dist/module/extras/expo.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ 
+-import { createRunOncePlugin, withAndroidStyles } from "@expo/config-plugins";
++import { createRunOncePlugin, withAndroidStyles } from "expo/config-plugins";
+ const plugin = (expoConfig, pluginConfig = {}) => {
+   const themes = {
+     Default: "Theme.EdgeToEdge",
+diff --git a/node_modules/react-native-edge-to-edge/src/extras/expo.ts b/node_modules/react-native-edge-to-edge/src/extras/expo.ts
+index 1077b94..4dbfc0d 100644
+--- a/node_modules/react-native-edge-to-edge/src/extras/expo.ts
++++ b/node_modules/react-native-edge-to-edge/src/extras/expo.ts
+@@ -2,7 +2,7 @@ import {
+   type ConfigPlugin,
+   createRunOncePlugin,
+   withAndroidStyles,
+-} from "@expo/config-plugins";
++} from "expo/config-plugins";
+ 
+ type ParentTheme =
+   | "Default"

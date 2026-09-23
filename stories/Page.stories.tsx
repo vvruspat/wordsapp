@@ -1,15 +1,19 @@
-import type { Meta } from "@storybook/react-native-web-vite";
+import type { Meta, StoryObj } from "@storybook/react-native-web-vite";
 
 import { expect, userEvent, within } from "storybook/test";
 
 import { Page } from "./Page";
 
-export default {
+const meta = {
 	title: "Example/Page",
 	component: Page,
-} as Meta<typeof Page>;
+} satisfies Meta<typeof Page>;
 
-export const LoggedIn = {
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const LoggedIn: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const loginButton = canvas.getByRole("button", { name: /Log in/i });
@@ -22,4 +26,4 @@ export const LoggedIn = {
 	},
 };
 
-export const LoggedOut = {};
+export const LoggedOut: Story = {};

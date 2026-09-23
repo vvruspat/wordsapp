@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
 		overflow: "hidden",
 	},
 	translationContainer: {
-		...StyleSheet.absoluteFillObject,
+		...StyleSheet.absoluteFill,
 		padding: 24,
 		justifyContent: "center",
 		alignItems: "center",
