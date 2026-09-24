@@ -64,12 +64,12 @@ export function ListeningPracticeExercise() {
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
 	const options = useMemo(() => {
-		if (!translation || randomTranslations.length === 0) return [];
-		const opts = [
+		if (!translation) return [];
+		const opts = [...new Set([
 			translation.translation,
 			...randomTranslations.map((t) => t.translation),
-		];
-		return shuffleArray(Array.from(opts));
+		])];
+		return shuffleArray(opts);
 	}, [randomTranslations, translation]);
 
 	useEffect(() => {

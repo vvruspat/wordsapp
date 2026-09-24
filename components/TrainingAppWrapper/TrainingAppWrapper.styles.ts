@@ -63,4 +63,9 @@ export const trainingAppWrapperStyles = StyleSheet.create({
 		color: Colors.greys.white,
 		textAlign: "center",
 	},
+	loading: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+	},
 });

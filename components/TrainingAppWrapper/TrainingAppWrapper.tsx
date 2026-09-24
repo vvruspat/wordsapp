@@ -15,7 +15,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Platform, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, View } from "react-native";
 import {
 	SafeAreaView,
 	SafeAreaViewProps,
@@ -73,11 +73,14 @@ export const TrainingAppWrapper = ({
 		addCompleteListener,
 		removeCompleteListener,
 		setCurrentTrainingId,
+		currentTrainingId,
+		queueReady,
 		sessionStats: { successCount, totalCount, successEventCount },
 	} = useContext(ExerciseContext);
+	const isExerciseReady = queueReady && currentTrainingId === currentExercise;
 	const { setColor, setOpacity } = useContext(BackgroundContext);
 	const { user } = useSessionUser();
-	const { currentCatalogs, currentTopics, setCurrentTopics } = useExcerciseStore();
+	const { currentCatalogs, currentTopics, currentPairs, setCurrentTopics } = useExcerciseStore();
 	const { isAudioReady, isAudioReadinessLoading } = useAudioReadiness();
 	const selectedTopicId = currentTopics.length === 1 ? currentTopics[0] : null;
 	const isListeningAudioUnavailable =
@@ -526,10 +529,11 @@ export const TrainingAppWrapper = ({
 					<TrainingProgressBar flashTrigger={progressFlashTrigger} />
 				</View>
 
-				{currentExercise === "choose_translation" && (
-					<ChooseTranslationExercise />
-				)}
-				{isListeningAudioUnavailable ? (
+				{!isExerciseReady ? (
+					<View style={trainingAppWrapperStyles.loading}>
+						<ActivityIndicator color={Colors.primary.base} />
+					</View>
+				) : totalCount === 0 ? (
 					<View style={trainingAppWrapperStyles.audioUnavailable}>
 						<WCard style={trainingAppWrapperStyles.audioUnavailableCard}>
 							<WText
@@ -537,17 +541,39 @@ export const TrainingAppWrapper = ({
 								size="lg"
 								style={trainingAppWrapperStyles.audioUnavailableText}
 							>
-								{t("sync_status_audio")}
+								{t("mix_training_no_words")}
 							</WText>
 						</WCard>
 					</View>
-				) : currentExercise === "listening_practice" ? (
-					<ListeningPracticeExercise />
-				) : null}
-				{currentExercise === "match_words" && <MatchWordsExercise />}
-				{currentExercise === "true_or_false" && <TrueOrFalseExercise />}
-				{currentExercise === "type_word" && <TypeWordExercise />}
-				{currentExercise === "cards" && <CardsExercise />}
+				) : (
+					<>
+						{currentPairs.length === 0 && (
+							<View style={trainingAppWrapperStyles.loading}>
+								<ActivityIndicator color={Colors.primary.base} />
+							</View>
+						)}
+						{currentExercise === "choose_translation" && <ChooseTranslationExercise />}
+						{isListeningAudioUnavailable ? (
+							<View style={trainingAppWrapperStyles.audioUnavailable}>
+								<WCard style={trainingAppWrapperStyles.audioUnavailableCard}>
+									<WText
+										mode="primary"
+										size="lg"
+										style={trainingAppWrapperStyles.audioUnavailableText}
+									>
+										{t("sync_status_audio")}
+									</WText>
+								</WCard>
+							</View>
+						) : currentExercise === "listening_practice" ? (
+							<ListeningPracticeExercise />
+						) : null}
+						{currentExercise === "match_words" && <MatchWordsExercise />}
+						{currentExercise === "true_or_false" && <TrueOrFalseExercise />}
+						{currentExercise === "type_word" && <TypeWordExercise />}
+						{currentExercise === "cards" && <CardsExercise />}
+					</>
+				)}
 
 				{showNextTopicPrompt && nextTopicId != null && (
 					<View style={trainingAppWrapperStyles.masteredPromptOverlay}>

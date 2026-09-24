@@ -18,6 +18,11 @@ type ExcerciseState = {
 };
 
 type ExcerciseActions = {
+	setExerciseData: (
+		pairs: { word: Word; translation?: WordTranslation }[],
+		randomWords: Word[],
+		randomTranslations: WordTranslation[],
+	) => void;
 	setCurrentPairs: (
 		pairs: { word: Word; translation?: WordTranslation }[],
 	) => void;
@@ -45,6 +50,12 @@ const initialState: ExcerciseState = {
 export const useExcerciseStore = create<ExcerciseState & ExcerciseActions>()(
 	immer((set) => ({
 		...initialState,
+		setExerciseData: (pairs, randomWords, randomTranslations) =>
+			set((state) => {
+				state.currentPairs = pairs;
+				state.currentRandomWords = randomWords;
+				state.currentRandomTranslations = randomTranslations;
+			}),
 
 		setCurrentCatalogs: (catalogs: number[]) =>
 			set((state) => {

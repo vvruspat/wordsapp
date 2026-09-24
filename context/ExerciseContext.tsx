@@ -51,6 +51,8 @@ type ExerciseType = {
 	onFailure: (wordId: Word["id"], score: number, showModal?: boolean) => void;
 	onSuccess: (wordId: Word["id"], score: number, showModal?: boolean) => void;
 	setCurrentTrainingId: (trainingId: string | null) => void;
+	currentTrainingId: string | null;
+	queueReady: boolean;
 	triggerLike: () => void;
 	sessionStats: {
 		successCount: number;
@@ -70,6 +72,8 @@ const ExerciseContext = createContext<ExerciseType>({
 	onFailure: () => {},
 	onSuccess: () => {},
 	setCurrentTrainingId: () => {},
+	currentTrainingId: null,
+	queueReady: false,
 	triggerLike: () => {},
 	sessionStats: {
 		successCount: 0,
@@ -102,6 +106,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const [currentTrainingId, setCurrentTrainingIdState] = useState<
 		string | null
 	>(null);
+	const [hydratedQueueKey, setHydratedQueueKey] = useState<string | null>(null);
 
 	const completeListeners = useRef(new Set<() => void>());
 	// Words not yet mastered (untrained + previously failed) — primary training source
@@ -130,11 +135,20 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const {
 		currentCatalogs,
 		currentTopics,
-		setCurrentPairs,
-		setCurrentRandomWords,
-		setCurrentRandomTranslations,
+		setExerciseData,
 		chunkWordIds,
 	} = useExcerciseStore();
+	const queueKey = JSON.stringify([
+		currentTrainingId,
+		isMixTraining,
+		isMixTraining ? chunkWordIds : null,
+		user?.userId,
+		user?.language_learn,
+		user?.language_speak,
+		currentCatalogs,
+		currentTopics,
+		lastSyncTime,
+	]);
 
 	const addCompleteListener = useCallback((listener: () => void) => {
 		completeListeners.current.add(listener);
@@ -284,12 +298,15 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	}, []);
 
 	const hydrateQueues = useCallback(
-		(trainingId?: string | null) => {
+		(trainingId: string | null, key: string) => {
 			const hydrationId = queueHydrationId.current + 1;
 			queueHydrationId.current = hydrationId;
+			setHydratedQueueKey(null);
 			failedQueue.current = [];
 			successQueue.current = [];
 			sessionPairs.current = [];
+			lastServedWordId.current = null;
+			setExerciseData([], [], []);
 			resetSessionStats();
 			const promise = initializeQueues(trainingId).then((snapshot) => {
 				if (queueHydrationId.current !== hydrationId) {
@@ -306,17 +323,17 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				succeededWordIds.current = new Set(alreadySucceeded);
 				setSessionTotalCount(total);
 				setSessionSuccessCount(alreadySucceeded.length);
+				setHydratedQueueKey(key);
 			});
 			initializationPromise.current = promise;
 			return promise;
 		},
-		[initializeQueues, resetSessionStats],
+		[initializeQueues, resetSessionStats, setExerciseData],
 	);
 
 	// Re-initialize queues when language, filters, training, or synced vocabulary changes.
-	// biome-ignore lint/correctness/useExhaustiveDependencies: lastSyncTime is a sync completion trigger for rebuilding exercise queues.
 	useEffect(() => {
-		hydrateQueues(currentTrainingId).then(() => {
+		hydrateQueues(currentTrainingId, queueKey).then(() => {
 			logger.debug(
 				"ExerciseContext: queue initialized",
 				{
@@ -327,7 +344,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				"general",
 			);
 		});
-	}, [currentTrainingId, hydrateQueues, lastSyncTime]);
+	}, [currentTrainingId, hydrateQueues, queueKey]);
 
 	// Selecting a different training id triggers the hydration effect above.
 	const setCurrentTrainingId = useCallback((trainingId: string | null) => {
@@ -347,6 +364,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			numberOfRandomWords: number = 0,
 			numberOfRandomTranslations: number = 1,
 		) => {
+			const hydrationId = queueHydrationId.current;
 			let pairs: SessionPair[];
 
 			if (numberOfPairs > 1) {
@@ -354,6 +372,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 					if (initializationPromise.current) {
 						await initializationPromise.current;
 					}
+					if (queueHydrationId.current !== hydrationId) return;
 
 					const selected: SessionPair[] = [];
 					const usedWordIds = new Set<number>();
@@ -404,11 +423,17 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						.filter((p): p is SessionPair => p.translation !== undefined)
 						.slice(0, numberOfPairs);
 				}
+				if (pairs.length === 0 && sessionPairs.current.length > 0) {
+					pairs = [...sessionPairs.current]
+						.sort(() => Math.random() - 0.5)
+						.slice(0, numberOfPairs);
+				}
 			} else {
 				// Wait for queue initialization to complete before serving
 				if (initializationPromise.current) {
 					await initializationPromise.current;
 				}
+				if (queueHydrationId.current !== hydrationId) return;
 
 				// Review already-successful words only after the unfinished queue is exhausted.
 				const useSuccessQueue = failedQueue.current.length === 0;
@@ -471,35 +496,41 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				pairs = item ? [item] : [];
 			}
 
-			setCurrentPairs(pairs);
-
-			const randomWords = await wordsRepository.getRandomWords(
-				user?.language_learn ?? "en",
-				numberOfRandomWords,
-				pairs.map((p) => p.word.remoteId),
-				currentCatalogs.length > 0 ? currentCatalogs : undefined,
-				currentTopics.length > 0 ? currentTopics : undefined,
-			);
-
-			const randomTranslations =
-				await translationsRepository.getRandomTranslations(
+			if (queueHydrationId.current !== hydrationId) return;
+			const [randomWords, randomTranslations] = await Promise.all([
+				numberOfRandomWords > 0
+					? wordsRepository.getRandomWords(
+							user?.language_learn ?? "en",
+							numberOfRandomWords,
+							pairs.map((p) => p.word.remoteId),
+							currentCatalogs.length > 0 ? currentCatalogs : undefined,
+							currentTopics.length > 0 ? currentTopics : undefined,
+						).catch((error): WatermelonWord[] => {
+							logger.error("Failed to load random exercise words", error, "db");
+							return [];
+						})
+					: Promise.resolve<WatermelonWord[]>([]),
+				translationsRepository.getRandomTranslations(
 					user?.language_speak ?? "en",
 					numberOfRandomTranslations,
 					pairs.map((p) => p.translation.remoteId),
 					currentTopics.length > 0 ? currentTopics : undefined,
 					currentCatalogs.length > 0 ? currentCatalogs : undefined,
-				);
+					pairs.map((p) => p.word.remoteId),
+				).catch((error): WatermelonWordTranslation[] => {
+					logger.error("Failed to load random exercise translations", error, "db");
+					return [];
+				}),
+			]);
 
-			setCurrentRandomWords(randomWords);
-			setCurrentRandomTranslations(randomTranslations);
+			if (queueHydrationId.current !== hydrationId) return;
+			setExerciseData(pairs, randomWords, randomTranslations);
 		},
 		[
 			currentCatalogs,
 			currentTopics,
 			isMixTraining,
-			setCurrentPairs,
-			setCurrentRandomWords,
-			setCurrentRandomTranslations,
+			setExerciseData,
 			user?.language_speak,
 			user?.language_learn,
 			user?.userId,
@@ -629,6 +660,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		onFailure,
 		onSuccess,
 		setCurrentTrainingId,
+		currentTrainingId,
+		queueReady: hydratedQueueKey === queueKey,
 		triggerLike,
 		sessionStats: {
 			successCount: sessionSuccessCount,
