@@ -83,7 +83,7 @@ export function ChooseTranslationExercise() {
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
 	const options = useMemo(() => {
-		if (!translation || randomTranslations.length === 0) return [];
+		if (!translation) return [];
 		const correctText = translation.translation;
 		const distractors = [
 			...new Set(

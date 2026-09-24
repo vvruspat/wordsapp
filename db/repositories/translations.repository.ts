@@ -131,11 +131,18 @@ export const translationsRepository = {
 		exclude: WordTranslation["remoteId"][] = [],
 		topicIds?: number[],
 		catalogIds?: number[],
+		excludeWordIds: number[] = [],
 	): Promise<WordTranslation[]> {
+		if (count <= 0) return [];
+
 		const queryConditions = [Q.where("language", language)];
+		let isScoped = false;
 
 		if (exclude.length > 0) {
 			queryConditions.push(Q.where("remote_id", Q.notIn(exclude)));
+		}
+		if (excludeWordIds.length > 0) {
+			queryConditions.push(Q.where("word", Q.notIn(excludeWordIds)));
 		}
 
 		if ((topicIds && topicIds.length > 0) || (catalogIds && catalogIds.length > 0)) {
@@ -150,16 +157,44 @@ export const translationsRepository = {
 				.get<import("../models/Word").default>("words")
 				.query(...wordConditions)
 				.fetch();
-			const matchingWordIds = matchingWords.map((w) => w.remoteId);
+			const excludedWordIds = new Set(excludeWordIds);
+			const matchingWordIds = matchingWords
+				.map((word) => word.remoteId)
+				.filter((id) => !excludedWordIds.has(id));
 			if (matchingWordIds.length > 0) {
 				queryConditions.push(Q.where("word", Q.oneOf(matchingWordIds)));
+				isScoped = true;
 			}
 		}
 
-		const translations = await database
+		const scopedTranslations = await database
 			.get<WordTranslation>("word_translations")
 			.query(...queryConditions)
 			.fetch();
-		return translations.sort(() => Math.random() - 0.5).slice(0, count);
+		const selected = scopedTranslations
+			.sort(() => Math.random() - 0.5)
+			.slice(0, count);
+		if (!isScoped || selected.length >= count) return selected;
+
+		// A dialogue can add just one word to a topic. Fill missing distractors
+		// from the native-language vocabulary instead of leaving exercises blank.
+		const excludedIds = [...exclude, ...selected.map((item) => item.remoteId)];
+		const fallbackConditions = [Q.where("language", language)];
+		if (excludedIds.length > 0) {
+			fallbackConditions.push(Q.where("remote_id", Q.notIn(excludedIds)));
+		}
+		if (excludeWordIds.length > 0) {
+			fallbackConditions.push(Q.where("word", Q.notIn(excludeWordIds)));
+		}
+		const fallbackTranslations = await database
+			.get<WordTranslation>("word_translations")
+			.query(...fallbackConditions)
+			.fetch();
+		return [
+			...selected,
+			...fallbackTranslations
+				.sort(() => Math.random() - 0.5)
+				.slice(0, count - selected.length),
+		];
 	},
 };

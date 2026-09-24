@@ -86,19 +86,22 @@ export function TrueOrFalseExercise() {
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
 	const translationText = translation?.translation;
-	const firstRandomText = randomTranslations[0]?.translation;
-	const randomTranslationsCount = randomTranslations.length;
+	const alternativeText = randomTranslations.find(
+		(item) => item.translation !== translationText,
+	)?.translation;
 
 	const statement = useMemo(() => {
-		if (!translationText || randomTranslationsCount === 0 || firstRandomText == null) return "";
-		return Math.random() >= 0.5 ? translationText : firstRandomText;
-	}, [translationText, firstRandomText, randomTranslationsCount]);
+		if (!translationText) return "";
+		return alternativeText && Math.random() < 0.5
+			? alternativeText
+			: translationText;
+	}, [translationText, alternativeText]);
 
 	useEffect(() => {
-		if (word && randomTranslations.length > 0) {
+		if (word && translation) {
 			notifyContentChanged();
 		}
-	}, [word, randomTranslations, notifyContentChanged]);
+	}, [word, translation, notifyContentChanged]);
 
 	const handleAnswer = useCallback(
 		(choice: "yes" | "no") => {
@@ -134,7 +137,7 @@ export function TrueOrFalseExercise() {
 		complete();
 	}, [complete]);
 
-	if (!word || !translation || randomTranslations.length === 0) {
+	if (!word || !translation) {
 		return null;
 	}
 
