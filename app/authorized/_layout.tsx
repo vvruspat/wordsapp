@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BackgroundProgressBar } from "@/components/BackgroundProgressBar";
 import { SyncProgressBar } from "@/components/SyncProgressBar";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
+import { useDefaultCatalogSelection } from "@/hooks/useDefaultCatalogSelection";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
@@ -121,6 +122,8 @@ export default function RootLayout() {
 		setHasHydrated,
 		setTopicsInitialized,
 	]);
+
+	useDefaultCatalogSelection(user?.userId, user?.language_learn);
 
 	useEffect(() => {
 		if (!user || !user.email_verified) {
