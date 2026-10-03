@@ -94,6 +94,13 @@ export const vocabcatalogRepository = {
 		return results;
 	},
 
+	observeByLanguage(language: string) {
+		return database
+			.get<VocabCatalog>("vocab_catalogs")
+			.query(Q.where("language", language))
+			.observe();
+	},
+
 	async getByOwnerAndLanguage(
 		owner: number,
 		language: string,

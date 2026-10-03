@@ -149,20 +149,6 @@ export default function Catalog() {
 		topicProgressReady,
 	]);
 
-	// Persist catalog selection to DB after hydration
-	useEffect(() => {
-		if (!_hasHydrated || !user?.userId) return;
-		userSettingsRepository
-			.set(
-				user.userId.toString(),
-				"selected_catalogs",
-				JSON.stringify(currentCatalogs),
-			)
-			.catch((err) =>
-				logger.error("Failed to persist catalog selection", err, "db"),
-			);
-	}, [currentCatalogs, _hasHydrated, user?.userId]);
-
 	// Persist topic selection to DB after hydration
 	useEffect(() => {
 		if (!_hasHydrated || !user?.userId) return;
@@ -214,20 +200,6 @@ export default function Catalog() {
 		}
 		setTopicTranslations(map);
 	}, [user?.language_speak, user?.language_learn, topicTranslationsData]);
-
-	// Auto-select A1 + A2 by default only on first launch (nothing persisted)
-	// Also set the ref so that all topics for those catalogs are selected too (#31)
-	useEffect(() => {
-		if (_hasHydrated && catalogs.length > 0 && currentCatalogs.length === 0) {
-			catalogJustToggledRef.current = true;
-			const levelDefaults = catalogs
-				.filter((c) => c.title === "A1" || c.title === "A2")
-				.map((c) => c.remoteId);
-			const defaults =
-				levelDefaults.length > 0 ? levelDefaults : [catalogs[0].remoteId];
-			setCurrentCatalogs(defaults);
-		}
-	}, [_hasHydrated, catalogs, currentCatalogs, setCurrentCatalogs]);
 
 	const toggleCatalog = useCallback(
 		(id: number) => {
