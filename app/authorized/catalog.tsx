@@ -55,7 +55,12 @@ export default function Catalog() {
 	const [topicStats, setTopicStats] = useState<
 		Map<
 			number,
-			{ total: number; learned: number; greenScore: number; yellowScore: number }
+			{
+				total: number;
+				learned: number;
+				greenScore: number;
+				yellowScore: number;
+			}
 		>
 	>(new Map());
 
@@ -70,7 +75,9 @@ export default function Catalog() {
 				return;
 			}
 			const topicIds = filteredTopics.map((t) => t.remoteId);
-			wordsRepository.getByTopicIds(topicIds, currentCatalogs).then(setTopicWords);
+			wordsRepository
+				.getByTopicIds(topicIds, currentCatalogs)
+				.then(setTopicWords);
 		}, [filteredTopics, currentCatalogs, user?.userId]),
 	);
 
@@ -100,12 +107,10 @@ export default function Catalog() {
 		}
 
 		return (
-			filteredTopics.find(
-				(topic) => {
-					const stats = topicStats.get(topic.remoteId);
-					return !stats || stats.total === 0 || stats.learned < stats.total;
-				},
-			) ?? filteredTopics[0]
+			filteredTopics.find((topic) => {
+				const stats = topicStats.get(topic.remoteId);
+				return !stats || stats.total === 0 || stats.learned < stats.total;
+			}) ?? filteredTopics[0]
 		);
 	}, [filteredTopics, topicStats]);
 
@@ -171,13 +176,14 @@ export default function Catalog() {
 	}, []);
 
 	const fetchTopics = useCallback(async (language: string) => {
-		const topics = (await topicsRepository.getByLanguage(language)).sort((a, b) =>
-			a.title.localeCompare(b.title),
+		const topics = (await topicsRepository.getByLanguage(language)).sort(
+			(a, b) => a.title.localeCompare(b.title),
 		);
 		setTopics(topics);
 	}, []);
 
-	const { topicTranslations: topicTranslationsData, lastSyncTime } = useVocabularyStore();
+	const { topicTranslations: topicTranslationsData, lastSyncTime } =
+		useVocabularyStore();
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: lastSyncTime is a re-fetch trigger after sync completes
 	useEffect(() => {
@@ -308,17 +314,17 @@ export default function Catalog() {
 						gap: 12,
 					}}
 				>
-						<WText mode="primary" size="2xl">
-							{t("topics_title")}
-						</WText>
-						{filteredTopics.length > 0 && (
-							<Pressable onPress={selectAllTopics}>
-								<WText mode="secondary" size="md">
-									{t("select_all_topics")}
-								</WText>
-							</Pressable>
-						)}
-					</View>
+					<WText mode="primary" size="2xl">
+						{t("topics_title")}
+					</WText>
+					{filteredTopics.length > 0 && (
+						<Pressable onPress={selectAllTopics}>
+							<WText mode="secondary" size="md">
+								{t("select_all_topics")}
+							</WText>
+						</Pressable>
+					)}
+				</View>
 
 				<View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
 					<FlatList

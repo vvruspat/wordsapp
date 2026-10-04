@@ -31,9 +31,7 @@ export default schemaMigrations({
 				// "training" column without any DDL changes. We only bump the schema version so
 				// WatermelonDB accepts the updated schema declaration (type: "string").
 				// Clear any old numeric values so they don't linger as phantom integer IDs.
-				unsafeExecuteSql(
-					'UPDATE "learning_progress" SET "training" = NULL;',
-				),
+				unsafeExecuteSql('UPDATE "learning_progress" SET "training" = NULL;'),
 			],
 		},
 		{

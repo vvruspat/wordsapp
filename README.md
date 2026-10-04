@@ -31,6 +31,18 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+## Code quality
+
+`npm install` and `npm ci` install the Husky Git hooks automatically. Before
+each commit, `lint-staged` runs `biome format --write` followed by `biome lint`
+on staged files, using the existing `biome.json` configuration. Formatting
+changes are included in the commit; lint errors abort it. Unstaged changes
+in partially staged files are preserved.
+
+- `npm run format` formats the project without applying lint fixes.
+- `npm run lint` lints the whole project.
+- `npm run precommit` runs the staged-file checks manually.
+
 ## Get a fresh project
 
 When you're ready, run:

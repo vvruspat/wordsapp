@@ -132,12 +132,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const isMixTraining = usePathname() === "/authorized/learning/mix-training";
 	const lastSyncTime = useVocabularyStore((state) => state.lastSyncTime);
 
-	const {
-		currentCatalogs,
-		currentTopics,
-		setExerciseData,
-		chunkWordIds,
-	} = useExcerciseStore();
+	const { currentCatalogs, currentTopics, setExerciseData, chunkWordIds } =
+		useExcerciseStore();
 	const queueKey = JSON.stringify([
 		currentTrainingId,
 		isMixTraining,
@@ -499,28 +495,40 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			if (queueHydrationId.current !== hydrationId) return;
 			const [randomWords, randomTranslations] = await Promise.all([
 				numberOfRandomWords > 0
-					? wordsRepository.getRandomWords(
-							user?.language_learn ?? "en",
-							numberOfRandomWords,
-							pairs.map((p) => p.word.remoteId),
-							currentCatalogs.length > 0 ? currentCatalogs : undefined,
-							currentTopics.length > 0 ? currentTopics : undefined,
-						).catch((error): WatermelonWord[] => {
-							logger.error("Failed to load random exercise words", error, "db");
-							return [];
-						})
+					? wordsRepository
+							.getRandomWords(
+								user?.language_learn ?? "en",
+								numberOfRandomWords,
+								pairs.map((p) => p.word.remoteId),
+								currentCatalogs.length > 0 ? currentCatalogs : undefined,
+								currentTopics.length > 0 ? currentTopics : undefined,
+							)
+							.catch((error): WatermelonWord[] => {
+								logger.error(
+									"Failed to load random exercise words",
+									error,
+									"db",
+								);
+								return [];
+							})
 					: Promise.resolve<WatermelonWord[]>([]),
-				translationsRepository.getRandomTranslations(
-					user?.language_speak ?? "en",
-					numberOfRandomTranslations,
-					pairs.map((p) => p.translation.remoteId),
-					currentTopics.length > 0 ? currentTopics : undefined,
-					currentCatalogs.length > 0 ? currentCatalogs : undefined,
-					pairs.map((p) => p.word.remoteId),
-				).catch((error): WatermelonWordTranslation[] => {
-					logger.error("Failed to load random exercise translations", error, "db");
-					return [];
-				}),
+				translationsRepository
+					.getRandomTranslations(
+						user?.language_speak ?? "en",
+						numberOfRandomTranslations,
+						pairs.map((p) => p.translation.remoteId),
+						currentTopics.length > 0 ? currentTopics : undefined,
+						currentCatalogs.length > 0 ? currentCatalogs : undefined,
+						pairs.map((p) => p.word.remoteId),
+					)
+					.catch((error): WatermelonWordTranslation[] => {
+						logger.error(
+							"Failed to load random exercise translations",
+							error,
+							"db",
+						);
+						return [];
+					}),
 			]);
 
 			if (queueHydrationId.current !== hydrationId) return;

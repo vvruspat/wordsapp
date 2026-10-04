@@ -46,7 +46,8 @@ export function buildTopicProgressStats(
 		if (
 			!existing ||
 			record.score > existing.score ||
-			new Date(record.lastReview).getTime() > new Date(existing.lastReview).getTime()
+			new Date(record.lastReview).getTime() >
+				new Date(existing.lastReview).getTime()
 		) {
 			bestProgressByWordTraining.set(key, {
 				score: record.score,
@@ -63,7 +64,9 @@ export function buildTopicProgressStats(
 		let wordYellowScore = 0;
 
 		for (const trainingId of validTrainingIds) {
-			const record = bestProgressByWordTraining.get(`${word.remoteId}:${trainingId}`);
+			const record = bestProgressByWordTraining.get(
+				`${word.remoteId}:${trainingId}`,
+			);
 
 			if (!record || record.score <= 0) {
 				continue;

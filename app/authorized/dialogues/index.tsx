@@ -39,51 +39,66 @@ export default function DialoguesScreen() {
 	const [error, setError] = useState<string | null>(null);
 	const loadingRef = useRef(false);
 
-	useEffect(() => NetInfo.addEventListener((state) => setOnline(Boolean(state.isConnected))), []);
+	useEffect(
+		() =>
+			NetInfo.addEventListener((state) =>
+				setOnline(Boolean(state.isConnected)),
+			),
+		[],
+	);
 
-	const load = useCallback(async (showRefreshControl = false) => {
-		if (!user?.userId || loadingRef.current) return;
-		loadingRef.current = true;
-		if (showRefreshControl) setRefreshing(true);
-		setError(null);
-		const cached = await dialogueCacheRepository.list(user.userId);
-		const cachedActive =
-			cached.find((item) => item.session.status === "active")?.session ?? null;
-		setHistory(cached.map((item) => item.session));
-		setActive(cachedActive);
-		if (!online) {
-			setRefreshing(false);
-			loadingRef.current = false;
-			return;
-		}
-		if (!cachedActive) setLoadingScenarios(true);
-		try {
-			const activeRequest = getActiveDialogue();
-			const historyRequest = getDialogueHistory();
-			const recommendationsRequest = activeRequest.then((remoteActive) =>
-				remoteActive ? null : getDialogueRecommendations(),
-			);
-			const [remoteActive, remoteHistory, recommendations] = await Promise.all([
-				activeRequest,
-				historyRequest,
-				recommendationsRequest,
-			]);
-			setActive(remoteActive);
-			setHistory(remoteHistory);
-			await dialogueCacheRepository.mergeSessions(user.userId, remoteHistory);
-			if (!remoteActive) {
-				setScenarios(recommendations?.scenarios ?? []);
-			} else {
-				setScenarios([]);
+	const load = useCallback(
+		async (showRefreshControl = false) => {
+			if (!user?.userId || loadingRef.current) return;
+			loadingRef.current = true;
+			if (showRefreshControl) setRefreshing(true);
+			setError(null);
+			const cached = await dialogueCacheRepository.list(user.userId);
+			const cachedActive =
+				cached.find((item) => item.session.status === "active")?.session ??
+				null;
+			setHistory(cached.map((item) => item.session));
+			setActive(cachedActive);
+			if (!online) {
+				setRefreshing(false);
+				loadingRef.current = false;
+				return;
 			}
-		} catch (loadError) {
-			setError(loadError instanceof Error ? loadError.message : t("dialogue_load_error"));
-		} finally {
-			setLoadingScenarios(false);
-			setRefreshing(false);
-			loadingRef.current = false;
-		}
-	}, [online, t, user?.userId]);
+			if (!cachedActive) setLoadingScenarios(true);
+			try {
+				const activeRequest = getActiveDialogue();
+				const historyRequest = getDialogueHistory();
+				const recommendationsRequest = activeRequest.then((remoteActive) =>
+					remoteActive ? null : getDialogueRecommendations(),
+				);
+				const [remoteActive, remoteHistory, recommendations] =
+					await Promise.all([
+						activeRequest,
+						historyRequest,
+						recommendationsRequest,
+					]);
+				setActive(remoteActive);
+				setHistory(remoteHistory);
+				await dialogueCacheRepository.mergeSessions(user.userId, remoteHistory);
+				if (!remoteActive) {
+					setScenarios(recommendations?.scenarios ?? []);
+				} else {
+					setScenarios([]);
+				}
+			} catch (loadError) {
+				setError(
+					loadError instanceof Error
+						? loadError.message
+						: t("dialogue_load_error"),
+				);
+			} finally {
+				setLoadingScenarios(false);
+				setRefreshing(false);
+				loadingRef.current = false;
+			}
+		},
+		[online, t, user?.userId],
+	);
 
 	useFocusEffect(useCallback(() => void load(), [load]));
 
@@ -100,9 +115,16 @@ export default function DialoguesScreen() {
 					: { customTopic: topic },
 			);
 			await dialogueCacheRepository.upsert(user.userId, detail);
-			router.push({ pathname: "/authorized/dialogues/[id]", params: { id: detail.session.id } });
+			router.push({
+				pathname: "/authorized/dialogues/[id]",
+				params: { id: detail.session.id },
+			});
 		} catch (startError) {
-			setError(startError instanceof Error ? startError.message : t("dialogue_start_error"));
+			setError(
+				startError instanceof Error
+					? startError.message
+					: t("dialogue_start_error"),
+			);
 		} finally {
 			setStarting(null);
 		}
@@ -123,11 +145,17 @@ export default function DialoguesScreen() {
 			>
 				<View style={styles.heading}>
 					<View>
-						<WText size="2xl" weight="bold">{t("dialogue_title")}</WText>
+						<WText size="2xl" weight="bold">
+							{t("dialogue_title")}
+						</WText>
 						<WText mode="secondary">{t("dialogue_subtitle")}</WText>
 					</View>
 					<View style={styles.levelPill}>
-						<WText size="sm" weight="semibold" style={{ color: Colors.primary.base }}>
+						<WText
+							size="sm"
+							weight="semibold"
+							style={{ color: Colors.primary.base }}
+						>
 							{active?.difficulty_level ?? "A1"}
 						</WText>
 					</View>
@@ -136,28 +164,58 @@ export default function DialoguesScreen() {
 				{!online ? (
 					<View style={styles.infoCard}>
 						<FontAwesome5 name="wifi" color={Colors.accents.orange} />
-						<WText size="sm" wrap>{t("dialogue_offline_info")}</WText>
+						<WText size="sm" wrap>
+							{t("dialogue_offline_info")}
+						</WText>
 					</View>
 				) : null}
 
-				{error ? <WText size="sm" style={{ color: Colors.accents.red }} wrap>{error}</WText> : null}
+				{error ? (
+					<WText size="sm" style={{ color: Colors.accents.red }} wrap>
+						{error}
+					</WText>
+				) : null}
 
 				{active ? (
 					<Pressable
 						style={styles.activeCard}
-						onPress={() => router.push({ pathname: "/authorized/dialogues/[id]", params: { id: active.id } })}
+						onPress={() =>
+							router.push({
+								pathname: "/authorized/dialogues/[id]",
+								params: { id: active.id },
+							})
+						}
 					>
 						<View style={{ flex: 1, gap: 5 }}>
-							<WText size="xs" weight="semibold" style={{ color: Colors.primary.base }}>{t("dialogue_active").toUpperCase()}</WText>
-							<WText size="lg" weight="semibold" wrap>{active.scenario_title}</WText>
-							<WText size="sm" mode="secondary">{t("dialogue_turns", { count: active.turn_count, target: active.target_turns })}</WText>
+							<WText
+								size="xs"
+								weight="semibold"
+								style={{ color: Colors.primary.base }}
+							>
+								{t("dialogue_active").toUpperCase()}
+							</WText>
+							<WText size="lg" weight="semibold" wrap>
+								{active.scenario_title}
+							</WText>
+							<WText size="sm" mode="secondary">
+								{t("dialogue_turns", {
+									count: active.turn_count,
+									target: active.target_turns,
+								})}
+							</WText>
 						</View>
-						<FontAwesome5 name="arrow-right" color={Colors.primary.base} size={18} />
+						<FontAwesome5
+							name="arrow-right"
+							color={Colors.primary.base}
+							size={18}
+						/>
 					</Pressable>
 				) : null}
 
 				<View style={styles.sectionTitle}>
-					<WText size="lg" weight="semibold">{t("dialogue_choose_scenario")}</WText>
+					<WText size="lg" weight="semibold">
+						{t("dialogue_choose_scenario")}
+					</WText>
 				</View>
 
 				{loadingScenarios && scenarios.length === 0 && !refreshing ? (
@@ -168,7 +226,11 @@ export default function DialoguesScreen() {
 						style={styles.loadingCard}
 					>
 						<View style={styles.loadingIcon}>
-							<FontAwesome5 name="magic" color={Colors.primary.base} size={15} />
+							<FontAwesome5
+								name="magic"
+								color={Colors.primary.base}
+								size={15}
+							/>
 						</View>
 						<View style={{ flex: 1, gap: 4 }}>
 							<WText size="sm" weight="medium" wrap>
@@ -184,19 +246,53 @@ export default function DialoguesScreen() {
 				{scenarios.map((scenario, index) => (
 					<Pressable
 						key={scenario.title}
-						style={({ pressed }) => [styles.scenarioCard, pressed && { opacity: 0.75 }, active && { opacity: 0.45 }]}
+						style={({ pressed }) => [
+							styles.scenarioCard,
+							pressed && { opacity: 0.75 },
+							active && { opacity: 0.45 },
+						]}
 						disabled={Boolean(active) || Boolean(starting)}
 						onPress={() => void start(scenario)}
 					>
-						<View style={[styles.icon, { backgroundColor: [Colors.backgrounds.cyan, Colors.backgrounds.purple, Colors.backgrounds.orange, Colors.backgrounds.blue][index % 4] }]}>
-							<FontAwesome5 name={["coffee", "shopping-basket", "map-marked-alt", "users"][index % 4]} color={Colors.greys.white} size={17} />
+						<View
+							style={[
+								styles.icon,
+								{
+									backgroundColor: [
+										Colors.backgrounds.cyan,
+										Colors.backgrounds.purple,
+										Colors.backgrounds.orange,
+										Colors.backgrounds.blue,
+									][index % 4],
+								},
+							]}
+						>
+							<FontAwesome5
+								name={
+									["coffee", "shopping-basket", "map-marked-alt", "users"][
+										index % 4
+									]
+								}
+								color={Colors.greys.white}
+								size={17}
+							/>
 						</View>
 						<View style={{ flex: 1, gap: 4 }}>
-							<WText weight="semibold" wrap>{scenario.title}</WText>
-							<WText size="sm" mode="secondary" wrap>{scenario.description}</WText>
-							<WText size="xs" mode="tertiary">{t("dialogue_minutes", { count: scenario.estimatedMinutes })}</WText>
+							<WText weight="semibold" wrap>
+								{scenario.title}
+							</WText>
+							<WText size="sm" mode="secondary" wrap>
+								{scenario.description}
+							</WText>
+							<WText size="xs" mode="tertiary">
+								{t("dialogue_minutes", { count: scenario.estimatedMinutes })}
+							</WText>
 						</View>
-						{starting === scenario.title ? <ActivityIndicator color={Colors.primary.base} /> : <FontAwesome5 name="chevron-right" color={Colors.greys.grey6} />}
+						{starting === scenario.title ? (
+							<ActivityIndicator color={Colors.primary.base} />
+						) : (
+							<FontAwesome5 name="chevron-right" color={Colors.greys.grey6} />
+						)}
 					</Pressable>
 				))}
 
@@ -212,26 +308,61 @@ export default function DialoguesScreen() {
 						maxLength={500}
 					/>
 					<Pressable
-						style={[styles.startButton, (!customTopic.trim() || active || !online) && styles.disabled]}
-						disabled={!customTopic.trim() || Boolean(active) || !online || Boolean(starting)}
+						style={[
+							styles.startButton,
+							(!customTopic.trim() || active || !online) && styles.disabled,
+						]}
+						disabled={
+							!customTopic.trim() ||
+							Boolean(active) ||
+							!online ||
+							Boolean(starting)
+						}
 						onPress={() => void start()}
 					>
-						{starting === customTopic.trim() ? <ActivityIndicator color={Colors.greys.grey10} /> : <WText mode="inverted" weight="semibold">{t("dialogue_start")}</WText>}
+						{starting === customTopic.trim() ? (
+							<ActivityIndicator color={Colors.greys.grey10} />
+						) : (
+							<WText mode="inverted" weight="semibold">
+								{t("dialogue_start")}
+							</WText>
+						)}
 					</Pressable>
 				</View>
 
 				{history.length > 0 ? (
 					<View style={{ gap: 10 }}>
-						<WText size="lg" weight="semibold">{t("dialogue_history")}</WText>
-						{history.filter((item) => item.id !== active?.id).map((item) => (
-							<Pressable key={item.id} style={styles.historyRow} onPress={() => router.push({ pathname: "/authorized/dialogues/[id]", params: { id: item.id } })}>
-								<View style={{ flex: 1, gap: 3 }}>
-									<WText weight="medium" wrap>{item.scenario_title}</WText>
-									<WText size="xs" mode="tertiary">{new Date(item.updated_at).toLocaleDateString()} · {t("dialogue_history_turns", { count: item.turn_count })}</WText>
-								</View>
-								<FontAwesome5 name="chevron-right" color={Colors.greys.grey6} />
-							</Pressable>
-						))}
+						<WText size="lg" weight="semibold">
+							{t("dialogue_history")}
+						</WText>
+						{history
+							.filter((item) => item.id !== active?.id)
+							.map((item) => (
+								<Pressable
+									key={item.id}
+									style={styles.historyRow}
+									onPress={() =>
+										router.push({
+											pathname: "/authorized/dialogues/[id]",
+											params: { id: item.id },
+										})
+									}
+								>
+									<View style={{ flex: 1, gap: 3 }}>
+										<WText weight="medium" wrap>
+											{item.scenario_title}
+										</WText>
+										<WText size="xs" mode="tertiary">
+											{new Date(item.updated_at).toLocaleDateString()} ·{" "}
+											{t("dialogue_history_turns", { count: item.turn_count })}
+										</WText>
+									</View>
+									<FontAwesome5
+										name="chevron-right"
+										color={Colors.greys.grey6}
+									/>
+								</Pressable>
+							))}
 					</View>
 				) : null}
 			</ScrollView>
@@ -241,19 +372,109 @@ export default function DialoguesScreen() {
 
 const styles = StyleSheet.create({
 	page: { flex: 1, backgroundColor: Colors.backgrounds.primaryBackground },
-	content: { paddingTop: 60, paddingHorizontal: 18, paddingBottom: 40, gap: 16 },
-	heading: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-	levelPill: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 14, backgroundColor: Colors.dark.dark2, borderWidth: 1, borderColor: Colors.primary.disabled },
-	infoCard: { flexDirection: "row", gap: 10, padding: 13, borderRadius: 14, backgroundColor: Colors.dark.dark2, alignItems: "center" },
-	activeCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: Colors.dark.dark2, padding: 17, borderRadius: 20, borderColor: Colors.primary.disabled, borderWidth: 1 },
-	sectionTitle: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4 },
-	loadingCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 18, backgroundColor: Colors.dark.dark2 },
-	loadingIcon: { width: 38, height: 38, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: Colors.dark.dark3 },
-	scenarioCard: { flexDirection: "row", alignItems: "center", gap: 13, padding: 15, borderRadius: 18, backgroundColor: Colors.dark.dark2 },
-	icon: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-	customCard: { gap: 12, padding: 16, backgroundColor: Colors.dark.dark2, borderRadius: 18 },
-	input: { minHeight: 48, color: Colors.greys.white, backgroundColor: Colors.dark.dark3, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
-	startButton: { minHeight: 48, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: Colors.primary.base },
+	content: {
+		paddingTop: 60,
+		paddingHorizontal: 18,
+		paddingBottom: 40,
+		gap: 16,
+	},
+	heading: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "flex-start",
+	},
+	levelPill: {
+		paddingHorizontal: 12,
+		paddingVertical: 7,
+		borderRadius: 14,
+		backgroundColor: Colors.dark.dark2,
+		borderWidth: 1,
+		borderColor: Colors.primary.disabled,
+	},
+	infoCard: {
+		flexDirection: "row",
+		gap: 10,
+		padding: 13,
+		borderRadius: 14,
+		backgroundColor: Colors.dark.dark2,
+		alignItems: "center",
+	},
+	activeCard: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 12,
+		backgroundColor: Colors.dark.dark2,
+		padding: 17,
+		borderRadius: 20,
+		borderColor: Colors.primary.disabled,
+		borderWidth: 1,
+	},
+	sectionTitle: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		marginTop: 4,
+	},
+	loadingCard: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 12,
+		padding: 14,
+		borderRadius: 18,
+		backgroundColor: Colors.dark.dark2,
+	},
+	loadingIcon: {
+		width: 38,
+		height: 38,
+		alignItems: "center",
+		justifyContent: "center",
+		borderRadius: 12,
+		backgroundColor: Colors.dark.dark3,
+	},
+	scenarioCard: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 13,
+		padding: 15,
+		borderRadius: 18,
+		backgroundColor: Colors.dark.dark2,
+	},
+	icon: {
+		width: 42,
+		height: 42,
+		borderRadius: 13,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	customCard: {
+		gap: 12,
+		padding: 16,
+		backgroundColor: Colors.dark.dark2,
+		borderRadius: 18,
+	},
+	input: {
+		minHeight: 48,
+		color: Colors.greys.white,
+		backgroundColor: Colors.dark.dark3,
+		borderRadius: 14,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+		fontSize: 16,
+	},
+	startButton: {
+		minHeight: 48,
+		borderRadius: 14,
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: Colors.primary.base,
+	},
 	disabled: { opacity: 0.4 },
-	historyRow: { flexDirection: "row", alignItems: "center", gap: 12, borderBottomColor: Colors.dark.dark3, borderBottomWidth: 1, paddingVertical: 12 },
+	historyRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 12,
+		borderBottomColor: Colors.dark.dark3,
+		borderBottomWidth: 1,
+		paddingVertical: 12,
+	},
 });

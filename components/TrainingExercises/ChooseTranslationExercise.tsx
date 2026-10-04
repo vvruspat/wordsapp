@@ -17,7 +17,8 @@ export function ChooseTranslationExercise() {
 	const [modalVisible, setModalVisible] = useState(false);
 	const [answered, setAnswered] = useState(false);
 
-	const { translateX, buttonAnims, swipeOut, notifyContentChanged } = useSwipeAnimation(4);
+	const { translateX, buttonAnims, swipeOut, notifyContentChanged } =
+		useSwipeAnimation(4);
 
 	const {
 		addCompleteListener,
@@ -36,7 +37,9 @@ export function ChooseTranslationExercise() {
 		translation: null,
 	};
 
-	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>([]);
+	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>(
+		[],
+	);
 
 	const wordRemoteId = word?.remoteId;
 	const wordLanguage = word?.language;
@@ -129,7 +132,16 @@ export function ChooseTranslationExercise() {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[translation, word, acceptedTranslations, answered, complete, triggerLike, onFailure, onSuccess],
+		[
+			translation,
+			word,
+			acceptedTranslations,
+			answered,
+			complete,
+			triggerLike,
+			onFailure,
+			onSuccess,
+		],
 	);
 
 	const handleSkip = useCallback(() => {
@@ -171,12 +183,15 @@ export function ChooseTranslationExercise() {
 							key={option}
 							style={[
 								styles.buttonWrapper,
-								buttonAnims[i] ? { transform: [{ translateX: buttonAnims[i] }] } : undefined,
+								buttonAnims[i]
+									? { transform: [{ translateX: buttonAnims[i] }] }
+									: undefined,
 							]}
 						>
 							<WButton
 								mode={
-									selection?.wordId === wordRemoteId && selection?.option === option
+									selection?.wordId === wordRemoteId &&
+									selection?.option === option
 										? "primary"
 										: "dark"
 								}

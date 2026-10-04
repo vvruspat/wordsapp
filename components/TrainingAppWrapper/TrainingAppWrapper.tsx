@@ -13,9 +13,21 @@ import { buildTopicProgressStats } from "@/utils/topicProgress";
 import { shuffleArray } from "@/utils";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, View } from "react-native";
+import {
+	ActivityIndicator,
+	KeyboardAvoidingView,
+	Platform,
+	View,
+} from "react-native";
 import {
 	SafeAreaView,
 	SafeAreaViewProps,
@@ -63,9 +75,9 @@ export const TrainingAppWrapper = ({
 	const masteredPromptTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
-	const nextTopicPromptTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-		null,
-	);
+	const nextTopicPromptTimeoutRef = useRef<ReturnType<
+		typeof setTimeout
+	> | null>(null);
 	const previousMasteredRef = useRef<boolean | null>(null);
 	const previousTopicCompleteRef = useRef<boolean | null>(null);
 	const hasShownInitialTopicPromptRef = useRef(false);
@@ -80,7 +92,8 @@ export const TrainingAppWrapper = ({
 	const isExerciseReady = queueReady && currentTrainingId === currentExercise;
 	const { setColor, setOpacity } = useContext(BackgroundContext);
 	const { user } = useSessionUser();
-	const { currentCatalogs, currentTopics, currentPairs, setCurrentTopics } = useExcerciseStore();
+	const { currentCatalogs, currentTopics, currentPairs, setCurrentTopics } =
+		useExcerciseStore();
 	const { isAudioReady, isAudioReadinessLoading } = useAudioReadiness();
 	const selectedTopicId = currentTopics.length === 1 ? currentTopics[0] : null;
 	const isListeningAudioUnavailable =
@@ -117,7 +130,9 @@ export const TrainingAppWrapper = ({
 			return null;
 		}
 
-		return orderedTrainingIds[(currentIndex + 1) % orderedTrainingIds.length] ?? null;
+		return (
+			orderedTrainingIds[(currentIndex + 1) % orderedTrainingIds.length] ?? null
+		);
 	}, [currentExercise, orderedTrainingIds]);
 
 	useEffect(() => {
@@ -226,12 +241,13 @@ export const TrainingAppWrapper = ({
 			};
 		}
 
-		const [topics, words, progressRecords, availableTopicIds] = await Promise.all([
-			topicsRepository.getByLanguage(user.language_learn),
-			wordsRepository.getByTopicIds(currentTopics, currentCatalogs),
-			learningRepository.getByUser(user.userId),
-			wordsRepository.getTopicsByCatalogs(currentCatalogs),
-		]);
+		const [topics, words, progressRecords, availableTopicIds] =
+			await Promise.all([
+				topicsRepository.getByLanguage(user.language_learn),
+				wordsRepository.getByTopicIds(currentTopics, currentCatalogs),
+				learningRepository.getByUser(user.userId),
+				wordsRepository.getTopicsByCatalogs(currentCatalogs),
+			]);
 
 		const sortedTopics = topics.sort((a, b) => a.title.localeCompare(b.title));
 		const filteredTopics = sortedTopics.filter((topic) =>
@@ -240,13 +256,16 @@ export const TrainingAppWrapper = ({
 		const currentTopicIndex = filteredTopics.findIndex(
 			(topic) => topic.remoteId === selectedTopicId,
 		);
-		const nextTopic = currentTopicIndex >= 0 ? filteredTopics[currentTopicIndex + 1] : null;
+		const nextTopic =
+			currentTopicIndex >= 0 ? filteredTopics[currentTopicIndex + 1] : null;
 		const stats = buildTopicProgressStats(words, progressRecords);
 		const topicStats = stats.get(selectedTopicId);
 
 		return {
 			isComplete: Boolean(
-				topicStats && topicStats.total > 0 && topicStats.learned >= topicStats.total,
+				topicStats &&
+					topicStats.total > 0 &&
+					topicStats.learned >= topicStats.total,
 			),
 			nextTopicId: nextTopic?.remoteId ?? null,
 			nextTopicTitle: nextTopic?.title ?? null,
@@ -432,7 +451,13 @@ export const TrainingAppWrapper = ({
 		}
 
 		previousTopicCompleteRef.current = isCurrentTopicComplete;
-	}, [isCurrentTopicComplete, nextTopicId, selectedTopicId, showNextTopicPrompt, successEventCount]);
+	}, [
+		isCurrentTopicComplete,
+		nextTopicId,
+		selectedTopicId,
+		showNextTopicPrompt,
+		successEventCount,
+	]);
 
 	useEffect(() => {
 		if (
@@ -504,7 +529,7 @@ export const TrainingAppWrapper = ({
 			behavior={Platform.OS === "ios" ? "padding" : "height"}
 			style={{ flex: 1 }}
 		>
-		<SafeAreaView
+			<SafeAreaView
 				mode="padding"
 				style={[styles.page, style]}
 				{...restViewProps}
@@ -552,7 +577,9 @@ export const TrainingAppWrapper = ({
 								<ActivityIndicator color={Colors.primary.base} />
 							</View>
 						)}
-						{currentExercise === "choose_translation" && <ChooseTranslationExercise />}
+						{currentExercise === "choose_translation" && (
+							<ChooseTranslationExercise />
+						)}
 						{isListeningAudioUnavailable ? (
 							<View style={trainingAppWrapperStyles.audioUnavailable}>
 								<WCard style={trainingAppWrapperStyles.audioUnavailableCard}>
@@ -595,7 +622,11 @@ export const TrainingAppWrapper = ({
 								})}
 							</WText>
 							<View style={trainingAppWrapperStyles.masteredPromptActions}>
-								<WButton mode="dark" fullWidth onPress={handleStayOnCurrentTopic}>
+								<WButton
+									mode="dark"
+									fullWidth
+									onPress={handleStayOnCurrentTopic}
+								>
 									<WText>{t("topic_mastered_stay")}</WText>
 								</WButton>
 								<WButton mode="primary" fullWidth onPress={handleOpenNextTopic}>
@@ -624,7 +655,11 @@ export const TrainingAppWrapper = ({
 								{t("training_mastered_description")}
 							</WText>
 							<View style={trainingAppWrapperStyles.masteredPromptActions}>
-								<WButton mode="dark" fullWidth onPress={handleContinueCurrentTraining}>
+								<WButton
+									mode="dark"
+									fullWidth
+									onPress={handleContinueCurrentTraining}
+								>
 									<WText>{t("training_mastered_stay")}</WText>
 								</WButton>
 								<WButton

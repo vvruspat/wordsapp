@@ -145,7 +145,10 @@ export const translationsRepository = {
 			queryConditions.push(Q.where("word", Q.notIn(excludeWordIds)));
 		}
 
-		if ((topicIds && topicIds.length > 0) || (catalogIds && catalogIds.length > 0)) {
+		if (
+			(topicIds && topicIds.length > 0) ||
+			(catalogIds && catalogIds.length > 0)
+		) {
 			const wordConditions = [];
 			if (topicIds && topicIds.length > 0) {
 				wordConditions.push(Q.where("topic", Q.oneOf(topicIds)));
