@@ -15,7 +15,8 @@
 		"web": "expo start --web",
 		"lint": "biome lint .",
 		"format": "biome format . --write",
-		"precommit": "lint-staged"
+		"typecheck": "tsc --noEmit",
+		"precommit": "lint-staged && npm run typecheck"
 	},
 	"lint-staged": {
 		"*": [
