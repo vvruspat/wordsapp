@@ -31,7 +31,9 @@ type UpsertFromRemoteParams = {
 };
 
 export const learningRepository = {
-	async recordResult(params: RecordResultParams): Promise<LearningProgress | null> {
+	async recordResult(
+		params: RecordResultParams,
+	): Promise<LearningProgress | null> {
 		const { userId, wordId, scoreDelta, result, translationId, trainingId } =
 			params;
 		const now = new Date().toISOString();
@@ -59,9 +61,17 @@ export const learningRepository = {
 						r.lastReview = now;
 					});
 				});
-				logger.debug("learning_progress: reset to 0 (failure)", { userId, wordId, trainingId }, "db");
+				logger.debug(
+					"learning_progress: reset to 0 (failure)",
+					{ userId, wordId, trainingId },
+					"db",
+				);
 			} else {
-				logger.debug("learning_progress: failure but no record to reset", { userId, wordId, trainingId }, "db");
+				logger.debug(
+					"learning_progress: failure but no record to reset",
+					{ userId, wordId, trainingId },
+					"db",
+				);
 			}
 			return null;
 		}
@@ -77,7 +87,16 @@ export const learningRepository = {
 					if (trainingId !== undefined) r.training = trainingId;
 				});
 			});
-			logger.debug("learning_progress: updated (success)", { userId, wordId, trainingId, newScore: Math.min(1, (existing[0].score ?? 0) + scoreDelta) }, "db");
+			logger.debug(
+				"learning_progress: updated (success)",
+				{
+					userId,
+					wordId,
+					trainingId,
+					newScore: Math.min(1, (existing[0].score ?? 0) + scoreDelta),
+				},
+				"db",
+			);
 			return record;
 		}
 
@@ -95,7 +114,11 @@ export const learningRepository = {
 					if (trainingId !== undefined) r.training = trainingId;
 				});
 		});
-		logger.debug("learning_progress: created (success)", { userId, wordId, trainingId, score: scoreDelta }, "db");
+		logger.debug(
+			"learning_progress: created (success)",
+			{ userId, wordId, trainingId, score: scoreDelta },
+			"db",
+		);
 		return created;
 	},
 
@@ -133,7 +156,11 @@ export const learningRepository = {
 					if (remoteId !== undefined) r.remoteId = remoteId;
 				});
 			});
-			logger.debug("learning_progress: upserted from remote (update)", { userId, wordId, trainingId, score }, "db");
+			logger.debug(
+				"learning_progress: upserted from remote (update)",
+				{ userId, wordId, trainingId, score },
+				"db",
+			);
 			return record;
 		}
 
@@ -152,7 +179,11 @@ export const learningRepository = {
 					if (remoteId !== undefined) r.remoteId = remoteId;
 				});
 		});
-		logger.debug("learning_progress: upserted from remote (create)", { userId, wordId, trainingId, score }, "db");
+		logger.debug(
+			"learning_progress: upserted from remote (create)",
+			{ userId, wordId, trainingId, score },
+			"db",
+		);
 		return created;
 	},
 
@@ -179,7 +210,11 @@ export const learningRepository = {
 			.get<LearningProgress>("learning_progress")
 			.query(Q.where("user_id", userId))
 			.fetch();
-		logger.debug("learning_progress: getByUser", { userId, count: records.length }, "db");
+		logger.debug(
+			"learning_progress: getByUser",
+			{ userId, count: records.length },
+			"db",
+		);
 		return records;
 	},
 
@@ -191,7 +226,11 @@ export const learningRepository = {
 			.get<LearningProgress>("learning_progress")
 			.query(Q.where("user_id", userId), Q.where("training", trainingId))
 			.fetch();
-		logger.debug("learning_progress: getByUserAndTraining", { userId, trainingId, count: records.length }, "db");
+		logger.debug(
+			"learning_progress: getByUserAndTraining",
+			{ userId, trainingId, count: records.length },
+			"db",
+		);
 		return records;
 	},
 
@@ -202,7 +241,11 @@ export const learningRepository = {
 			.observe();
 	},
 
-	async recordIntro(params: { userId: number; wordId: number; translationId?: number }): Promise<void> {
+	async recordIntro(params: {
+		userId: number;
+		wordId: number;
+		translationId?: number;
+	}): Promise<void> {
 		const { userId, wordId, translationId } = params;
 		const now = new Date().toISOString();
 
@@ -218,22 +261,23 @@ export const learningRepository = {
 		if (existing.length > 0) return;
 
 		await database.write(async () => {
-			await database
-				.get<LearningProgress>("learning_progress")
-				.create((r) => {
-					r.userId = userId;
-					r.wordId = wordId;
-					r.score = 1;
-					r.lastReview = now;
-					r.createdAtRemote = now;
-					r.training = "intro";
-					if (translationId !== undefined) r.translation = translationId;
-				});
+			await database.get<LearningProgress>("learning_progress").create((r) => {
+				r.userId = userId;
+				r.wordId = wordId;
+				r.score = 1;
+				r.lastReview = now;
+				r.createdAtRemote = now;
+				r.training = "intro";
+				if (translationId !== undefined) r.translation = translationId;
+			});
 		});
 		logger.debug("learning_progress: intro recorded", { userId, wordId }, "db");
 	},
 
-	async getIntroducedWordIds(userId: number, wordIds: number[]): Promise<number[]> {
+	async getIntroducedWordIds(
+		userId: number,
+		wordIds: number[],
+	): Promise<number[]> {
 		if (wordIds.length === 0) return [];
 		const records = await database
 			.get<LearningProgress>("learning_progress")

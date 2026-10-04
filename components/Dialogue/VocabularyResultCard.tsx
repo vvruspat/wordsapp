@@ -35,12 +35,22 @@ export const VocabularyResultCard = ({
 			{result ? (
 				<View style={styles.details}>
 					<View style={{ flex: 1, gap: 3 }}>
-						<WText size="lg" weight="bold">{result.word.word}</WText>
-						<WText size="sm" mode="secondary" wrap>{result.translation.translation}</WText>
-						{result.word.meaning ? <WText size="xs" mode="tertiary" wrap>{result.word.meaning}</WText> : null}
+						<WText size="lg" weight="bold">
+							{result.word.word}
+						</WText>
+						<WText size="sm" mode="secondary" wrap>
+							{result.translation.translation}
+						</WText>
+						{result.word.meaning ? (
+							<WText size="xs" mode="tertiary" wrap>
+								{result.word.meaning}
+							</WText>
+						) : null}
 					</View>
 					<View style={styles.score}>
-						<WText size="xs" mode="tertiary">{t("dialogue_writing")}</WText>
+						<WText size="xs" mode="tertiary">
+							{t("dialogue_writing")}
+						</WText>
 						<WText weight="bold" style={{ color: Colors.primary.base }}>
 							{result.progress.writing?.score ?? "—"}
 						</WText>
@@ -64,5 +74,11 @@ const styles = StyleSheet.create({
 	},
 	header: { flexDirection: "row", gap: 9, alignItems: "center" },
 	details: { flexDirection: "row", gap: 12, alignItems: "center" },
-	score: { minWidth: 64, alignItems: "center", backgroundColor: Colors.dark.dark2, borderRadius: 10, padding: 8 },
+	score: {
+		minWidth: 64,
+		alignItems: "center",
+		backgroundColor: Colors.dark.dark2,
+		borderRadius: 10,
+		padding: 8,
+	},
 });

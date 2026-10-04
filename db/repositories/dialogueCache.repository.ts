@@ -30,7 +30,9 @@ export const dialogueCacheRepository = {
 		const rows = await collection
 			.query(Q.where("user_id", userId), Q.sortBy("updated_at", Q.desc))
 			.fetch();
-		return rows.map(parse).filter((item): item is DialogueDetail => Boolean(item));
+		return rows
+			.map(parse)
+			.filter((item): item is DialogueDetail => Boolean(item));
 	},
 
 	async upsert(userId: number, detail: DialogueDetail) {

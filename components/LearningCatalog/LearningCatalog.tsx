@@ -27,7 +27,9 @@ type TrainingCardStats = {
 
 type TrainingCardStatsMap = Record<LearningTrainingName, TrainingCardStats>;
 
-function createEmptyTrainingStats(totalCount: number = 0): TrainingCardStatsMap {
+function createEmptyTrainingStats(
+	totalCount: number = 0,
+): TrainingCardStatsMap {
 	return {
 		cards: { successCount: 0, totalCount },
 		true_or_false: { successCount: 0, totalCount },
@@ -137,11 +139,12 @@ export function LearningCatalog({
 		};
 
 		const subscription = progressQuery
-			? combineLatest([wordsQuery.observe(), progressQuery.observe()]).subscribe(
-					([words, progressRecords]) => {
-						setTrainingStats(buildStats(words, progressRecords));
-					},
-				)
+			? combineLatest([
+					wordsQuery.observe(),
+					progressQuery.observe(),
+				]).subscribe(([words, progressRecords]) => {
+					setTrainingStats(buildStats(words, progressRecords));
+				})
 			: wordsQuery.observe().subscribe((words) => {
 					setTrainingStats(buildStats(words));
 				});

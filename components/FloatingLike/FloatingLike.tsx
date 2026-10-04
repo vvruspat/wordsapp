@@ -49,7 +49,12 @@ export function FloatingLike({ trigger }: Props) {
 
 	return (
 		<Animated.View style={[styles.container, style]} pointerEvents="none">
-			<AntDesign name="like" size={72} color={Colors.accents.green} style={styles.icon} />
+			<AntDesign
+				name="like"
+				size={72}
+				color={Colors.accents.green}
+				style={styles.icon}
+			/>
 		</Animated.View>
 	);
 }

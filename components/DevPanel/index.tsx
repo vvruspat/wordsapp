@@ -27,7 +27,13 @@ const LEVEL_BG: Record<LogLevel, string> = {
 	error: "#2d0a0a",
 };
 
-const LEVELS: Array<LogLevel | "all"> = ["all", "debug", "info", "warn", "error"];
+const LEVELS: Array<LogLevel | "all"> = [
+	"all",
+	"debug",
+	"info",
+	"warn",
+	"error",
+];
 const CATEGORIES: Array<LogCategory | "all"> = [
 	"all",
 	"network",

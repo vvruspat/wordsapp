@@ -20,7 +20,8 @@ export function ListeningPracticeExercise() {
 	const [answered, setAnswered] = useState(false);
 	const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
-	const { translateX, buttonAnims, swipeOut, notifyContentChanged } = useSwipeAnimation(4);
+	const { translateX, buttonAnims, swipeOut, notifyContentChanged } =
+		useSwipeAnimation(4);
 
 	const {
 		addCompleteListener,
@@ -65,10 +66,12 @@ export function ListeningPracticeExercise() {
 
 	const options = useMemo(() => {
 		if (!translation) return [];
-		const opts = [...new Set([
-			translation.translation,
-			...randomTranslations.map((t) => t.translation),
-		])];
+		const opts = [
+			...new Set([
+				translation.translation,
+				...randomTranslations.map((t) => t.translation),
+			]),
+		];
 		return shuffleArray(opts);
 	}, [randomTranslations, translation]);
 
@@ -118,11 +121,7 @@ export function ListeningPracticeExercise() {
 					style={[styles.content, { transform: [{ translateX }] }]}
 				>
 					<TrainingPromptCard wordId={word.remoteId} onSkip={handleSkip}>
-						<PlayWordButton
-							key={word.remoteId}
-							autoplay
-							audio={word.audio}
-						/>
+						<PlayWordButton key={word.remoteId} autoplay audio={word.audio} />
 					</TrainingPromptCard>
 				</Animated.View>
 
@@ -132,7 +131,9 @@ export function ListeningPracticeExercise() {
 							key={option}
 							style={[
 								styles.buttonWrapper,
-								buttonAnims[i] ? { transform: [{ translateX: buttonAnims[i] }] } : undefined,
+								buttonAnims[i]
+									? { transform: [{ translateX: buttonAnims[i] }] }
+									: undefined,
 							]}
 						>
 							<WButton

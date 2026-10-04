@@ -57,27 +57,15 @@ function log(
 }
 
 export const logger = {
-	debug: (
-		message: string,
-		data?: unknown,
-		category: LogCategory = "general",
-	) => log("debug", category, message, data),
+	debug: (message: string, data?: unknown, category: LogCategory = "general") =>
+		log("debug", category, message, data),
 
-	info: (
-		message: string,
-		data?: unknown,
-		category: LogCategory = "general",
-	) => log("info", category, message, data),
+	info: (message: string, data?: unknown, category: LogCategory = "general") =>
+		log("info", category, message, data),
 
-	warn: (
-		message: string,
-		data?: unknown,
-		category: LogCategory = "general",
-	) => log("warn", category, message, data),
+	warn: (message: string, data?: unknown, category: LogCategory = "general") =>
+		log("warn", category, message, data),
 
-	error: (
-		message: string,
-		data?: unknown,
-		category: LogCategory = "general",
-	) => log("error", category, message, data),
+	error: (message: string, data?: unknown, category: LogCategory = "general") =>
+		log("error", category, message, data),
 };

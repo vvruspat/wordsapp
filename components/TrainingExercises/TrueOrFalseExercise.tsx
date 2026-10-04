@@ -41,7 +41,9 @@ export function TrueOrFalseExercise() {
 		translation: null,
 	};
 
-	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>([]);
+	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>(
+		[],
+	);
 
 	const wordRemoteId = word?.remoteId;
 	const wordLanguage = word?.language;
@@ -122,7 +124,17 @@ export function TrueOrFalseExercise() {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[statement, acceptedTranslations, answered, complete, triggerLike, word, translation, onFailure, onSuccess],
+		[
+			statement,
+			acceptedTranslations,
+			answered,
+			complete,
+			triggerLike,
+			word,
+			translation,
+			onFailure,
+			onSuccess,
+		],
 	);
 
 	const handleSkip = useCallback(() => {

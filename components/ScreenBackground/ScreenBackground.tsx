@@ -12,7 +12,12 @@ export const ScreenBackground = () => {
 	const gradientId = `gradient-${id}`;
 
 	return (
-		<Svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`} fill="none">
+		<Svg
+			width="100%"
+			height="100%"
+			viewBox={`0 0 ${width} ${height}`}
+			fill="none"
+		>
 			<G opacity={opacity}>
 				<Rect
 					width={width}
