@@ -189,5 +189,9 @@
 	"dialogue_branch_not_cached": "This explanation has not been saved on this device yet",
 	"dialogue_branch_error": "Could not open the explanation",
 	"dialogue_correction_review": "Correction review",
-	"dialogue_writing": "Writing"
+	"dialogue_writing": "Writing",
+	"mix_training_completed": "All words in this mix are completed in every available exercise.",
+	"mix_training_error": "Unable to load training progress. Please try again.",
+	"button_retry": "Try again",
+	"button_close": "Close"
 }

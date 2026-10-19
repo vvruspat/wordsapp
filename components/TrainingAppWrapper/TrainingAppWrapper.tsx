@@ -10,6 +10,7 @@ import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 import { buildTopicProgressStats } from "@/utils/topicProgress";
+import { logger } from "@/utils/logger";
 import { shuffleArray } from "@/utils";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link, router } from "expo-router";
@@ -66,6 +67,10 @@ export const TrainingAppWrapper = ({
 	const [currentExercise, setCurrentExercise] =
 		useState<LearningTrainingName | null>(null);
 	const [currentTitle, setCurrentTitle] = useState<string>("");
+	const [isSelectingExercise, setIsSelectingExercise] = useState(false);
+	const [mixComplete, setMixComplete] = useState(false);
+	const [selectionError, setSelectionError] = useState(false);
+	const selectionRequestId = useRef(0);
 	const [progressFlashTrigger, setProgressFlashTrigger] = useState(0);
 	const [showMasteredPrompt, setShowMasteredPrompt] = useState(false);
 	const [showNextTopicPrompt, setShowNextTopicPrompt] = useState(false);
@@ -87,6 +92,7 @@ export const TrainingAppWrapper = ({
 		setCurrentTrainingId,
 		currentTrainingId,
 		queueReady,
+		getIncompleteTrainingIds,
 		sessionStats: { successCount, totalCount, successEventCount },
 	} = useContext(ExerciseContext);
 	const isExerciseReady = queueReady && currentTrainingId === currentExercise;
@@ -147,33 +153,44 @@ export const TrainingAppWrapper = ({
 		[setCurrentTrainingId],
 	);
 
-	const setRandomExercise = useCallback(() => {
-		const availableTrainings = Object.values(EXERCISES_APPS).filter(
-			(training) => !effectiveExcludedExercises.includes(training.id),
-		);
-		const randomTraining = shuffleArray(availableTrainings)[0];
-
-		if (!randomTraining) {
-			return;
+	const setRandomExercise = useCallback(async () => {
+		const requestId = ++selectionRequestId.current;
+		setIsSelectingExercise(true);
+		setSelectionError(false);
+		try {
+			const incompleteIds = await getIncompleteTrainingIds(orderedTrainingIds);
+			if (requestId !== selectionRequestId.current) return;
+			const nextId = shuffleArray(incompleteIds)[0];
+			setMixComplete(!nextId);
+			if (nextId) setCurrentExercise(nextId);
+		} catch (error) {
+			if (requestId !== selectionRequestId.current) return;
+			logger.error("Failed to select next mix exercise", error, "db");
+			setSelectionError(true);
+		} finally {
+			if (requestId === selectionRequestId.current)
+				setIsSelectingExercise(false);
 		}
+	}, [getIncompleteTrainingIds, orderedTrainingIds]);
 
-		setCurrentExercise(randomTraining.id);
-		setCurrentTitle(t(randomTraining.titleId));
-		setColor(randomTraining.backgroundColor);
-		setOpacity(1);
-	}, [effectiveExcludedExercises, t, setColor, setOpacity]);
+	useEffect(
+		() => () => {
+			selectionRequestId.current += 1;
+		},
+		[],
+	);
 
 	const onExerciseComplete = useCallback(() => {
 		if (!exercise) {
-			setRandomExercise();
+			void setRandomExercise();
 		}
 	}, [setRandomExercise, exercise]);
 
 	useEffect(() => {
-		if (!exercise && !currentExercise) {
-			setRandomExercise();
+		if (!exercise && !currentExercise && queueReady) {
+			void setRandomExercise();
 		}
-	}, [currentExercise, exercise, setRandomExercise]);
+	}, [currentExercise, exercise, queueReady, setRandomExercise]);
 
 	useEffect(() => {
 		addCompleteListener(onExerciseComplete);
@@ -540,7 +557,7 @@ export const TrainingAppWrapper = ({
 						size="2xl"
 						style={trainingAppWrapperStyles.title}
 					>
-						{currentTitle}
+						{mixComplete ? t("mix_training_title") : currentTitle}
 					</WText>
 					<Link
 						href="/authorized/learning"
@@ -554,7 +571,30 @@ export const TrainingAppWrapper = ({
 					<TrainingProgressBar flashTrigger={progressFlashTrigger} />
 				</View>
 
-				{!isExerciseReady ? (
+				{!exercise && (mixComplete || selectionError) ? (
+					<View style={trainingAppWrapperStyles.audioUnavailable}>
+						<WCard style={trainingAppWrapperStyles.audioUnavailableCard}>
+							<WText wrap>
+								{t(
+									selectionError
+										? "mix_training_error"
+										: "mix_training_completed",
+								)}
+							</WText>
+							{selectionError ? (
+								<WButton
+									mode="primary"
+									onPress={() => void setRandomExercise()}
+								>
+									<WText mode="inverted">{t("button_retry")}</WText>
+								</WButton>
+							) : null}
+							<WButton mode="dark" onPress={() => router.back()}>
+								<WText>{t("button_close")}</WText>
+							</WButton>
+						</WCard>
+					</View>
+				) : !isExerciseReady || isSelectingExercise ? (
 					<View style={trainingAppWrapperStyles.loading}>
 						<ActivityIndicator color={Colors.primary.base} />
 					</View>

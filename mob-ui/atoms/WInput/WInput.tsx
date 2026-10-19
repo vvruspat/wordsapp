@@ -11,6 +11,7 @@ import {
 	Easing,
 	FocusEvent,
 	TextInput,
+	type TextInputInstance as InputRef,
 	TextInputProps,
 	TextStyle,
 	TouchableOpacity,
@@ -41,7 +42,7 @@ export interface WInputProps extends TextInputProps {
 	textProps?: WTextProps;
 }
 
-export const WInput = forwardRef<TextInput, WInputProps>((props, ref) => {
+export const WInput = forwardRef<InputRef, WInputProps>((props, ref) => {
 	const {
 		label,
 		status = "default",
@@ -63,8 +64,8 @@ export const WInput = forwardRef<TextInput, WInputProps>((props, ref) => {
 		...rest
 	} = props;
 
-	const internalRef = useRef<TextInput | null>(null);
-	useImperativeHandle(ref, () => internalRef.current as TextInput);
+	const internalRef = useRef<InputRef | null>(null);
+	useImperativeHandle(ref, () => internalRef.current as InputRef);
 
 	const [isSecure, setIsSecure] = useState<boolean>(!!secureTextEntry);
 	const [internalValue, setInternalValue] = useState(

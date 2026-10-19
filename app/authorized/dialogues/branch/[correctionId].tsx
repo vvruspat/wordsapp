@@ -11,7 +11,14 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import {
+	ActivityIndicator,
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	StyleSheet,
+	View,
+} from "react-native";
 import type {
 	DialogueDetail,
 	ExplanationBranch,
@@ -29,18 +36,40 @@ import { dialogueVocabularyRepository } from "@/db/repositories/dialogueVocabula
 import { useSessionUser } from "@/hooks/useSession";
 import { WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
+import { logger } from "@/utils/logger";
+
+// Effect restarts must share the request that creates the explanation thread.
+const pendingBranches = new Map<string, Promise<ExplanationBranch>>();
+const loadRemoteBranch = (userId: number, correctionId: string) => {
+	const key = `${userId}:${correctionId}`;
+	const existing = pendingBranches.get(key);
+	if (existing) return existing;
+	const request = openCorrectionBranch(correctionId).finally(() => {
+		pendingBranches.delete(key);
+	});
+	pendingBranches.set(key, request);
+	return request;
+};
+
+const hasMessages = (branch: ExplanationBranch) =>
+	branch.messages.some(
+		(message) => message.role !== "system" && message.content.trim(),
+	);
 
 const makeId = () =>
 	`${Date.now()}-${Math.random().toString(36).slice(2)}-branch`;
 
 const toInitialMessages = (branch: ExplanationBranch): ThreadMessageLike[] =>
-	branch.messages.map((message) => ({
-		id: message.id,
-		role: message.role as "user" | "assistant",
-		content: message.content,
-		createdAt: new Date(message.created_at),
-		metadata: { custom: { serverMessageId: message.id } },
-	}));
+	branch.messages
+		.filter((message) => message.role !== "system")
+		.sort((a, b) => a.sequence - b.sequence)
+		.map((message) => ({
+			id: message.id,
+			role: message.role as "user" | "assistant",
+			content: message.content,
+			createdAt: new Date(message.created_at),
+			metadata: { custom: { serverMessageId: message.id } },
+		}));
 
 type RenderMessage = {
 	role: "user" | "assistant" | "system";
@@ -84,8 +113,7 @@ function BranchThread({
 			async run({ messages }) {
 				if (!online) throw new Error("No network connection");
 				const last = messages.at(-1);
-				if (!last || last.role !== "user")
-					throw new Error("User message is missing");
+				if (last?.role !== "user") throw new Error("User message is missing");
 				const content = last.content
 					.map((part) => (part.type === "text" ? part.text : ""))
 					.join("");
@@ -145,9 +173,21 @@ function BranchThread({
 		],
 	);
 
-	const runtime = useLocalRuntime(model, {
-		initialMessages: toInitialMessages(branch),
-	});
+	const initialMessages = useMemo(() => toInitialMessages(branch), [branch]);
+	const runtime = useLocalRuntime(model, { initialMessages });
+	useEffect(() => {
+		const state = runtime.thread.getState();
+		if (state.isRunning) return;
+		if (
+			state.messages.length === initialMessages.length &&
+			state.messages.every(
+				(message, index) => message.id === initialMessages[index].id,
+			)
+		)
+			return;
+		// initialMessages only seeds useLocalRuntime once; cache refreshes arrive later.
+		runtime.thread.reset(initialMessages);
+	}, [initialMessages, runtime]);
 
 	const addWord = useCallback(
 		async (word: string, context: string, messageId?: string) => {
@@ -248,38 +288,53 @@ export default function CorrectionBranchScreen() {
 	const { user } = useSessionUser();
 	const [branch, setBranch] = useState<ExplanationBranch | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [loadAttempt, setLoadAttempt] = useState(0);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: loadAttempt explicitly retries a failed load
 	useEffect(() => {
 		if (!correctionId || !user?.userId) return;
 		let cancelled = false;
+		setBranch(null);
+		setError(null);
 		const load = async () => {
-			const cachedItems = await dialogueCacheRepository.list(user.userId);
-			const cached = cachedItems.find((detail) =>
-				detail.corrections.some((item) => item.id === correctionId),
-			);
-			const correction = cached?.corrections.find(
-				(item) => item.id === correctionId,
-			);
-			const thread = cached?.threads.find(
-				(item) => item.correction_id === correctionId,
-			);
-			if (cached && correction && thread) {
-				setBranch({
-					correction,
-					thread,
-					messages: cached.messages.filter(
-						(item) => item.thread_id === thread.id,
-					),
-				});
-			}
-			const network = await NetInfo.fetch();
-			if (!network.isConnected) {
-				if (!thread) setError(t("dialogue_branch_not_cached"));
-				return;
-			}
+			let usableCache = false;
 			try {
-				const remote = await openCorrectionBranch(correctionId);
+				const cachedItems = await dialogueCacheRepository
+					.list(user.userId)
+					.catch((cacheError) => {
+						logger.error("Failed to read correction cache", cacheError, "db");
+						return [];
+					});
 				if (cancelled) return;
+				const cached = cachedItems.find((detail) =>
+					detail.corrections.some((item) => item.id === correctionId),
+				);
+				const correction = cached?.corrections.find(
+					(item) => item.id === correctionId,
+				);
+				const thread = cached?.threads.find(
+					(item) => item.correction_id === correctionId,
+				);
+				if (cached && correction && thread) {
+					const cachedBranch = {
+						correction,
+						thread,
+						messages: cached.messages.filter(
+							(item) => item.thread_id === thread.id,
+						),
+					};
+					usableCache = hasMessages(cachedBranch);
+					if (usableCache) setBranch(cachedBranch);
+				}
+				const network = await NetInfo.fetch();
+				if (cancelled) return;
+				if (!network.isConnected) {
+					if (!usableCache) setError(t("dialogue_branch_not_cached"));
+					return;
+				}
+				const remote = await loadRemoteBranch(user.userId, correctionId);
+				if (cancelled) return;
+				if (!hasMessages(remote)) throw new Error(t("dialogue_branch_error"));
 				setBranch(remote);
 				const base =
 					(await dialogueCacheRepository.get(
@@ -309,7 +364,7 @@ export default function CorrectionBranchScreen() {
 					await dialogueCacheRepository.upsert(user.userId, next);
 				}
 			} catch (loadError) {
-				if (!cached)
+				if (!cancelled && !usableCache)
 					setError(
 						loadError instanceof Error
 							? loadError.message
@@ -321,10 +376,13 @@ export default function CorrectionBranchScreen() {
 		return () => {
 			cancelled = true;
 		};
-	}, [correctionId, t, user?.userId]);
+	}, [correctionId, t, user?.userId, loadAttempt]);
 
 	return (
-		<View style={styles.page}>
+		<KeyboardAvoidingView
+			behavior={Platform.OS === "ios" ? "padding" : "height"}
+			style={styles.page}
+		>
 			<View style={styles.header}>
 				<Pressable style={styles.back} onPress={() => router.back()}>
 					<FontAwesome5 name="chevron-left" color={Colors.greys.white} />
@@ -348,15 +406,24 @@ export default function CorrectionBranchScreen() {
 			) : (
 				<View style={styles.center}>
 					{error ? (
-						<WText style={{ color: Colors.accents.red }} wrap>
-							{error}
-						</WText>
+						<View style={{ gap: 16, alignItems: "center" }}>
+							<WText style={{ color: Colors.accents.red }} wrap>
+								{error}
+							</WText>
+							<Pressable
+								onPress={() => setLoadAttempt((attempt) => attempt + 1)}
+							>
+								<WText style={{ color: Colors.primary.base }}>
+									{t("button_retry")}
+								</WText>
+							</Pressable>
+						</View>
 					) : (
 						<ActivityIndicator color={Colors.primary.base} />
 					)}
 				</View>
 			)}
-		</View>
+		</KeyboardAvoidingView>
 	);
 }
 

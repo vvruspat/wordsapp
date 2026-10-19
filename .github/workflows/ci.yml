@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version-file: ".nvmrc"
           cache: "npm"
 
       - name: Install dependencies
@@ -29,6 +29,9 @@ jobs:
 
       - name: Run Biome lint
         run: npm run lint
+
+      - name: Run regression tests
+        run: npm test
 
       - name: Run TypeScript typecheck
         run: npm run typecheck

@@ -13,8 +13,17 @@ while offline.
 1. Install dependencies
 
    ```bash
-   npm install
+   nvm use
+   npm ci
    ```
+
+   Node.js 22.23.3 is pinned in `.nvmrc`, CI, and the EAS build profiles.
+   The app uses Expo SDK 58 and React Native 0.88. After upgrading native
+   dependencies, rebuild your development client with `npm run ios` or
+   `npm run android`.
+
+   `patch-package` preserves the local audio playback fix in `expo-audio` and
+   adapts WatermelonDB 0.28's iOS installer to React Native 0.88's bridge proxy.
 
 2. Start the app
 
@@ -39,11 +48,14 @@ on staged files, using the existing `biome.json` configuration. Formatting
 changes are included in the commit, and unstaged changes in partially staged
 files are preserved. The hook then runs `npm run typecheck` on the entire
 TypeScript project without emitting files. Lint and type errors abort the commit.
-CI runs both lint and typecheck.
+CI runs lint, regression tests, and typecheck. Type checking uses the native
+TypeScript 7 compiler through `@typescript/native`; TypeScript 6 remains installed
+for Expo and tools that require its JavaScript compiler API.
 
 - `npm run format` formats the project without applying lint fixes.
 - `npm run lint` lints the whole project.
 - `npm run typecheck` checks TypeScript types across the whole project.
+- `npm test` runs the regression tests.
 - `npm run precommit` runs the staged-file checks and typecheck manually.
 
 ## Get a fresh project

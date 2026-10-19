@@ -189,5 +189,9 @@
 	"dialogue_branch_not_cached": "Deze uitleg is nog niet op dit apparaat opgeslagen",
 	"dialogue_branch_error": "Uitleg kon niet worden geopend",
 	"dialogue_correction_review": "Correctie bespreken",
-	"dialogue_writing": "Schrijven"
+	"dialogue_writing": "Schrijven",
+	"mix_training_completed": "Alle woorden in deze mix zijn voltooid in elke beschikbare oefening.",
+	"mix_training_error": "De trainingsvoortgang kon niet worden geladen. Probeer het opnieuw.",
+	"button_retry": "Opnieuw proberen",
+	"button_close": "Sluiten"
 }

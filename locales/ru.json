@@ -189,5 +189,9 @@
 	"dialogue_branch_not_cached": "Эта ветка ещё не сохранена на устройстве",
 	"dialogue_branch_error": "Не удалось открыть объяснение",
 	"dialogue_correction_review": "Разбор исправления",
-	"dialogue_writing": "Письмо"
+	"dialogue_writing": "Письмо",
+	"mix_training_completed": "Все слова в этом миксе пройдены во всех доступных упражнениях.",
+	"mix_training_error": "Не удалось загрузить прогресс тренировки. Попробуйте ещё раз.",
+	"button_retry": "Повторить",
+	"button_close": "Закрыть"
 }

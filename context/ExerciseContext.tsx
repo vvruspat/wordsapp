@@ -9,6 +9,7 @@ import {
 	useState,
 } from "react";
 import { FloatingLike } from "@/components/FloatingLike";
+import type { LearningTrainingName } from "@/components/LearningCatalog/types";
 import {
 	WordExcerciseFailureModal,
 	WordExcerciseSuccessModal,
@@ -23,6 +24,7 @@ import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { logger } from "@/utils/logger";
+import { getIncompleteTrainings } from "@/utils/mixTrainingProgress";
 
 type SessionPair = {
 	word: WatermelonWord;
@@ -53,6 +55,9 @@ type ExerciseType = {
 	setCurrentTrainingId: (trainingId: string | null) => void;
 	currentTrainingId: string | null;
 	queueReady: boolean;
+	getIncompleteTrainingIds: (
+		trainingIds: LearningTrainingName[],
+	) => Promise<LearningTrainingName[]>;
 	triggerLike: () => void;
 	sessionStats: {
 		successCount: number;
@@ -74,6 +79,7 @@ const ExerciseContext = createContext<ExerciseType>({
 	setCurrentTrainingId: () => {},
 	currentTrainingId: null,
 	queueReady: false,
+	getIncompleteTrainingIds: async (trainingIds) => trainingIds,
 	triggerLike: () => {},
 	sessionStats: {
 		successCount: 0,
@@ -116,6 +122,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 	const sessionPairs = useRef<SessionPair[]>([]);
 	// Promise that resolves when queue initialization is complete
 	const initializationPromise = useRef<Promise<void> | null>(null);
+	const pendingResults = useRef(new Set<Promise<unknown>>());
 	const queueHydrationId = useRef(0);
 	// Track last served word to avoid immediate repeats
 	const lastServedWordId = useRef<number | null>(null);
@@ -567,17 +574,17 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				});
 			}
 
-			// Track unique failed words (skip if already succeeded or already counted)
-			if (
-				!succeededWordIds.current.has(wordId) &&
-				!failedWordIds.current.has(wordId)
-			) {
+			// A failed review makes a previously mastered word unfinished again.
+			if (succeededWordIds.current.delete(wordId)) {
+				setSessionSuccessCount((count) => Math.max(0, count - 1));
+			}
+			if (!failedWordIds.current.has(wordId)) {
 				failedWordIds.current.add(wordId);
 				setSessionFailureCount((c) => c + 1);
 			}
 
 			if (user?.userId) {
-				learningRepository
+				const result = learningRepository
 					.recordResult({
 						userId: user.userId,
 						wordId,
@@ -587,6 +594,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						trainingId: currentTrainingId ?? undefined,
 					})
 					.catch((err) => logger.error("Failed to record result", err, "db"));
+				pendingResults.current.add(result);
+				void result.finally(() => pendingResults.current.delete(result));
 			}
 
 			if (showModal) {
@@ -634,7 +643,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			}
 
 			if (user?.userId) {
-				learningRepository
+				const result = learningRepository
 					.recordResult({
 						userId: user.userId,
 						wordId,
@@ -644,6 +653,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 						trainingId: currentTrainingId ?? undefined,
 					})
 					.catch((err) => logger.error("Failed to record result", err, "db"));
+				pendingResults.current.add(result);
+				void result.finally(() => pendingResults.current.delete(result));
 			}
 
 			if (showModal) {
@@ -658,6 +669,22 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		[showSuccessModal, user, currentTrainingId],
 	);
 
+	const getIncompleteTrainingIds = useCallback(
+		async (trainingIds: LearningTrainingName[]) => {
+			await initializationPromise.current;
+			// A fast answer can advance before WatermelonDB has saved its progress.
+			await Promise.all([...pendingResults.current]);
+			if (!user?.userId) return trainingIds;
+			const wordIds = sessionPairs.current.map((pair) => pair.word.remoteId);
+			const progress = await learningRepository.getByUserAndWordIds(
+				user.userId,
+				wordIds,
+			);
+			return getIncompleteTrainings(wordIds, trainingIds, progress);
+		},
+		[user?.userId],
+	);
+
 	const value: ExerciseValue = {
 		showSuccessModal,
 		showFailureModal,
@@ -670,6 +697,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 		setCurrentTrainingId,
 		currentTrainingId,
 		queueReady: hydratedQueueKey === queueKey,
+		getIncompleteTrainingIds,
 		triggerLike,
 		sessionStats: {
 			successCount: sessionSuccessCount,

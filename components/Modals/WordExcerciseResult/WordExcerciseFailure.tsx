@@ -7,7 +7,11 @@ import { Modal, type ModalProps, View } from "react-native";
 import { ReportButton } from "@/components/ReportButton";
 import { SadSmileIcon } from "./assets/SadSmileIcon";
 
-export type WordExcerciseFailureModalProps = ModalProps & {
+export type WordExcerciseFailureModalProps = Omit<
+	ModalProps,
+	"onRequestClose"
+> & {
+	onRequestClose?: () => void;
 	word?: string;
 	translation?: string;
 	wordId?: number;

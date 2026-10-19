@@ -1,23 +1,23 @@
 diff --git a/node_modules/expo-audio/ios/AudioPlayer.swift b/node_modules/expo-audio/ios/AudioPlayer.swift
-index 0742943..57b800d 100644
+index 0f68a52..016a1f3 100644
 --- a/node_modules/expo-audio/ios/AudioPlayer.swift
 +++ b/node_modules/expo-audio/ios/AudioPlayer.swift
-@@ -267,6 +267,10 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable {
+@@ -294,6 +294,10 @@ public class AudioPlayer: SharedRef<AVPlayer>, Playable, LockScreenPlayable {
      removeQueuedLoopItems()
      ref.pause()
  
 +    // Local files are already buffered; waiting for network stall minimization
 +    // can leave short downloaded clips stuck before playback starts.
-+    ref.automaticallyWaitsToMinimizeStalling = source.uri?.isFileURL != true
++    ref.automaticallyWaitsToMinimizeStalling = source?.uri?.isFileURL != true
 +
      if samplingEnabled {
        uninstallTap()
      }
 diff --git a/node_modules/expo-audio/ios/AudioUtils.swift b/node_modules/expo-audio/ios/AudioUtils.swift
-index 79c7c0b..01ebdb6 100644
+index 41f63da..16a4a98 100644
 --- a/node_modules/expo-audio/ios/AudioUtils.swift
 +++ b/node_modules/expo-audio/ios/AudioUtils.swift
-@@ -69,7 +69,10 @@ struct AudioUtils {
+@@ -71,7 +71,10 @@ struct AudioUtils {
  
    static func createAVPlayer(from source: AudioSource?) -> AVPlayer {
      if let item = createAVPlayerItem(from: source) {

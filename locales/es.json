@@ -189,5 +189,9 @@
 	"dialogue_branch_not_cached": "Esta explicación aún no está guardada en el dispositivo",
 	"dialogue_branch_error": "No se pudo abrir la explicación",
 	"dialogue_correction_review": "Revisión de la corrección",
-	"dialogue_writing": "Escritura"
+	"dialogue_writing": "Escritura",
+	"mix_training_completed": "Todas las palabras de esta mezcla están completadas en todos los ejercicios disponibles.",
+	"mix_training_error": "No se pudo cargar el progreso. Inténtalo de nuevo.",
+	"button_retry": "Reintentar",
+	"button_close": "Cerrar"
 }
