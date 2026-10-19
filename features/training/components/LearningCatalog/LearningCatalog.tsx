@@ -18,7 +18,10 @@ import { useSessionUser } from "@/hooks/useSession";
 import { WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 import { TrainingProgressBar } from "@/features/training/components/TrainingProgressBar";
-import { EXERCISES_APPS, LearningTrainingName } from "./types";
+import {
+	EXERCISES_APPS,
+	LearningTrainingName,
+} from "@/features/training/components/LearningCatalog/types";
 
 type TrainingCardStats = {
 	successCount: number;

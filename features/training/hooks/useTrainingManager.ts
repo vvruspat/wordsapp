@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+	useSyncExternalStore,
+} from "react";
 import type {
 	ExerciseId,
 	LearningTrainingName,
@@ -49,6 +55,11 @@ export function useTrainingManager(mode: "mixed" | "single") {
 	const [readyKey, setReadyKey] = useState<string | null>(null);
 	const [, publish] = useState(0);
 	const prepared = useRef<Prepared | null>(null);
+	const model = prepared.current?.session;
+	useSyncExternalStore(
+		model?.subscribe ?? emptySubscribe,
+		model?.getRevision ?? zeroRevision,
+	);
 	const initialization = useRef<Promise<void> | null>(null);
 	const pending = useRef(new Map<string, Promise<unknown>>());
 	const inFlightLoad = useRef<Promise<void> | null>(null);
@@ -366,3 +377,6 @@ function conditionsFromKey(key: string): TrainingConditions {
 		wordIds,
 	};
 }
+
+const emptySubscribe = () => () => {};
+const zeroRevision = () => 0;

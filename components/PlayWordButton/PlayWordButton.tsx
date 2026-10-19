@@ -1,11 +1,9 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import * as FileSystem from "expo-file-system/legacy";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Pressable } from "react-native";
-import { useVocabularyStore } from "@/hooks/useVocabularyStore";
 import { Colors } from "@/mob-ui/brand/colors";
-import { isRemoteAudioPath, resolveLocalAudioPath } from "@/utils/audio";
+import { useAudioSource } from "@/shared/audio/useAudioSource";
 import { logger } from "@/utils/logger";
 import { styles } from "./PlayWordButton.styles";
 
@@ -17,11 +15,8 @@ export type PlayWordButtonProps = {
 export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [hasError, setHasError] = useState(false);
-	const [audioSource, setAudioSource] = useState<string | null>(null);
+	const { audioSource, available } = useAudioSource(audio);
 	const pendingAutoplay = useRef(false);
-	const audioDownloadCompleted = useVocabularyStore(
-		(state) => state.audioDownloadCompleted,
-	);
 
 	const scaleAnim = useRef(new Animated.Value(1)).current;
 	const colorAnim = useRef(new Animated.Value(0)).current;
@@ -30,9 +25,6 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		inputRange: [0, 1],
 		outputRange: [Colors.greys.grey10, Colors.backgrounds.green],
 	});
-
-	const localAudioPath = resolveLocalAudioPath(audio);
-	const remoteAudioSource = isRemoteAudioPath(audio) ? (audio ?? null) : null;
 
 	const player = useAudioPlayer(audioSource, {
 		downloadFirst: true,
@@ -51,32 +43,6 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 			setHasError(true);
 		}
 	}, [player]);
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: audioDownloadCompleted is a refresh trigger for local file availability.
-	useEffect(() => {
-		let cancelled = false;
-
-		if (!localAudioPath) {
-			setAudioSource(remoteAudioSource);
-			return;
-		}
-
-		FileSystem.getInfoAsync(localAudioPath)
-			.then((fileInfo) => {
-				if (!cancelled) {
-					setAudioSource(fileInfo.exists ? localAudioPath : remoteAudioSource);
-				}
-			})
-			.catch(() => {
-				if (!cancelled) {
-					setAudioSource(remoteAudioSource);
-				}
-			});
-
-		return () => {
-			cancelled = true;
-		};
-	}, [localAudioPath, remoteAudioSource, audioDownloadCompleted]);
 
 	useEffect(() => {
 		if (!audioSource) {
@@ -181,7 +147,7 @@ export const PlayWordButton = ({ autoplay, audio }: PlayWordButtonProps) => {
 		}
 	}, [isPlaying, scaleAnim, colorAnim]);
 
-	if (!audio || (!localAudioPath && !remoteAudioSource)) {
+	if (!audio || !available) {
 		return null;
 	}
 

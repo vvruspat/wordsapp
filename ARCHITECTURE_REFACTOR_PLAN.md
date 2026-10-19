@@ -203,7 +203,7 @@
 | 2. Words и progress services | Выполнен | Подготовка пар/синонимов/ответов wordsService и отменяемый hook; progressService; 15 regression tests, typecheck |
 | 3. Training session и пулы | Выполнен | Единое чистое ядро, singleton/review pools, immutable IDs, coverage и step IDs |
 | 4. Training UI и context | Выполнен | Manager + presentation controller, тонкий feedback provider, feature screens; 21 tests включая StrictMode, duplicate delivery, late event, failed save/retry |
-| 5. Vocabulary, catalog, audio | Запланирован | |
+| 5. Vocabulary, catalog, audio | Выполнен | React-free coordinator, transaction persistence, audio IO/service, отмена/дедупликация; catalog hook/screens; 23 tests с cached/offline/cancellation |
 | 6. Dialogues | Запланирован | |
 | 7. Session, account, bootstrap | Запланирован | |
 | 8. Общий код и документация | Запланирован | |

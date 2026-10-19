@@ -120,7 +120,7 @@ function setup({
 		},
 	);
 	const exerciseDefinitions = loadSource(
-		"components/LearningCatalog/types.ts",
+		"features/training/components/LearningCatalog/types.ts",
 		{ "@/mob-ui/brand/colors": { Colors } },
 	);
 	const exercise = (id) =>

@@ -9,6 +9,26 @@ export type SessionStatus =
 /** Owns the immutable selection, remaining exercise pool and per-step delivery.
  * Word objects are owned by wordsService; this model knows only identifiers. */
 export class TrainingSession {
+	private listeners = new Set<() => void>();
+	private revision = 0;
+	subscribe = (listener: () => void) => {
+		this.listeners.add(listener);
+		return () => {
+			this.listeners.delete(listener);
+		};
+	};
+	getRevision = () => this.revision;
+	getState = () => ({
+		wordIds: this.wordIds,
+		remainingTrainingIds: this.remaining(),
+		currentStep: this.currentStep,
+		status: this.status,
+	});
+	private publish() {
+		this.revision++;
+		for (const listener of this.listeners) listener();
+	}
+
 	readonly wordIds: readonly number[];
 	trainingIds: readonly ExerciseId[];
 	private coverage = new Set<string>();
@@ -78,6 +98,7 @@ export class TrainingSession {
 		const selected = candidates.slice(0, count);
 		this.order = selected;
 		this.currentStep = { id: ++this.sequence, training, wordIds: selected };
+		this.publish();
 		return this.currentStep;
 	}
 	canApply(step: number, wordId: number) {
@@ -118,5 +139,6 @@ export class TrainingSession {
 						).length
 					? "ready"
 					: "completed";
+		this.publish();
 	}
 }

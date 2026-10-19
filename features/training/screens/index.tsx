@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LearningCatalog } from "@/components/LearningCatalog";
+import { LearningCatalog } from "@/features/training/components/LearningCatalog";
 import { BackgroundContext } from "@/context/BackgroundContext";
 import { learningRepository } from "@/db/repositories/learning.repository";
 import { wordsRepository } from "@/db/repositories/words.repository";
