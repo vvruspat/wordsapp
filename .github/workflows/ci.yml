@@ -35,3 +35,6 @@ jobs:
 
       - name: Run TypeScript typecheck
         run: npm run typecheck
+
+      - name: Check architecture
+        run: npm run architecture

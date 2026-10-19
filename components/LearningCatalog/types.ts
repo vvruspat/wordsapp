@@ -51,6 +51,6 @@ export const EXERCISES_APPS = {
 	},
 } as const;
 
-export type LearningTrainingName = keyof typeof EXERCISES_APPS;
+export type { LearningTrainingName } from "@/shared/progress/exercises";
 
 export default EXERCISES_APPS;

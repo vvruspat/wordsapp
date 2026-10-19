@@ -9,8 +9,9 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 // Compile app modules with explicit native-boundary substitutes. React and the
 // assistant runtime remain real, so asynchronous updates exercise their effects.
-function loadSource(relativePath, mocks = {}) {
+function loadSource(relativePath, mocks = {}, cache = new Map()) {
 	const filename = path.resolve(__dirname, "..", relativePath);
+	if (cache.has(filename)) return cache.get(filename);
 	const localRequire = createRequire(filename);
 	const source = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
 		compilerOptions: {
@@ -21,13 +22,35 @@ function loadSource(relativePath, mocks = {}) {
 		},
 	}).outputText;
 	const module = { exports: {} };
-	const resolve = (name) =>
-		Object.hasOwn(mocks, name) ? mocks[name] : localRequire(name);
+	cache.set(filename, module.exports);
+	const resolve = (name) => {
+		if (Object.hasOwn(mocks, name)) return mocks[name];
+		if (name.startsWith("@/") || name.startsWith(".")) {
+			const base = name.startsWith("@/")
+				? path.resolve(__dirname, "..", name.slice(2))
+				: path.resolve(path.dirname(filename), name);
+			const file = [
+				base,
+				`${base}.ts`,
+				`${base}.tsx`,
+				path.join(base, "index.ts"),
+				path.join(base, "index.tsx"),
+			].find((f) => fs.existsSync(f) && fs.statSync(f).isFile());
+			if (file)
+				return loadSource(
+					path.relative(path.resolve(__dirname, ".."), file),
+					mocks,
+					cache,
+				);
+		}
+		return localRequire(name);
+	};
 	new Function("require", "module", "exports", source)(
 		resolve,
 		module,
 		module.exports,
 	);
+	cache.set(filename, module.exports);
 	return module.exports;
 }
 

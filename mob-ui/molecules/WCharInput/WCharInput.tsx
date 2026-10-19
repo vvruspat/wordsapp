@@ -9,7 +9,7 @@ import {
 	TextInputProps,
 	View,
 } from "react-native";
-import { ExerciseContext } from "@/context/ExerciseContext";
+import { ExerciseContext } from "@/shared/training/events";
 import { WInputProps } from "@/mob-ui/atoms";
 import { styles as wInputStyles } from "../../atoms/WInput/WInput.styles";
 import { inputCellMetrics, styles } from "./WCharInput.styles";

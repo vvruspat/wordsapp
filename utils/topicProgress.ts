@@ -1,6 +1,6 @@
 import LearningProgress from "@/db/models/LearningProgress";
 import Word from "@/db/models/Word";
-import EXERCISES_APPS from "@/components/LearningCatalog/types";
+import { TRAINING_IDS } from "@/shared/progress/exercises";
 
 export type TopicProgressStats = {
 	total: number;
@@ -9,7 +9,7 @@ export type TopicProgressStats = {
 	yellowScore: number;
 };
 
-const TRAININGS_COUNT = Object.keys(EXERCISES_APPS).length;
+const TRAININGS_COUNT = TRAINING_IDS.length;
 
 export function buildTopicProgressStats(
 	words: Pick<Word, "remoteId" | "topic">[],
@@ -24,7 +24,7 @@ export function buildTopicProgressStats(
 		return stats;
 	}
 
-	const validTrainingIds = new Set(Object.keys(EXERCISES_APPS));
+	const validTrainingIds = new Set<string>(TRAINING_IDS);
 	const wordIds = new Set(words.map((word) => word.remoteId));
 	const bestProgressByWordTraining = new Map<
 		string,

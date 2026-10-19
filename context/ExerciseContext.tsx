@@ -1,7 +1,6 @@
 import { Word } from "@vvruspat/words-types";
 import { usePathname } from "expo-router";
 import {
-	createContext,
 	type ReactNode,
 	useCallback,
 	useEffect,
@@ -9,7 +8,7 @@ import {
 	useState,
 } from "react";
 import { FloatingLike } from "@/components/FloatingLike";
-import type { LearningTrainingName } from "@/components/LearningCatalog/types";
+import type { LearningTrainingName } from "@/shared/progress/exercises";
 import {
 	WordExcerciseFailureModal,
 	WordExcerciseSuccessModal,
@@ -39,57 +38,8 @@ type QueueSnapshot = {
 	succeeded: SessionPair[];
 };
 
-type ExerciseType = {
-	showSuccessModal: () => void;
-	showFailureModal: () => void;
-	addCompleteListener: (listener: () => void) => void;
-	removeCompleteListener: (listener: () => void) => void;
-	complete: () => void;
-	loadData: (
-		numberOfPairs: number,
-		numberOfRandomWords: number,
-		numberOfRandomTranslations: number,
-	) => Promise<void>;
-	onFailure: (wordId: Word["id"], score: number, showModal?: boolean) => void;
-	onSuccess: (wordId: Word["id"], score: number, showModal?: boolean) => void;
-	setCurrentTrainingId: (trainingId: string | null) => void;
-	currentTrainingId: string | null;
-	queueReady: boolean;
-	getIncompleteTrainingIds: (
-		trainingIds: LearningTrainingName[],
-	) => Promise<LearningTrainingName[]>;
-	triggerLike: () => void;
-	sessionStats: {
-		successCount: number;
-		failureCount: number;
-		totalCount: number;
-		successEventCount: number;
-	};
-};
-
-const ExerciseContext = createContext<ExerciseType>({
-	showSuccessModal: () => {},
-	showFailureModal: () => {},
-	addCompleteListener: () => {},
-	removeCompleteListener: () => {},
-	complete: () => {},
-	loadData: async () => {},
-	onFailure: () => {},
-	onSuccess: () => {},
-	setCurrentTrainingId: () => {},
-	currentTrainingId: null,
-	queueReady: false,
-	getIncompleteTrainingIds: async (trainingIds) => trainingIds,
-	triggerLike: () => {},
-	sessionStats: {
-		successCount: 0,
-		failureCount: 0,
-		totalCount: 0,
-		successEventCount: 0,
-	},
-});
-
-export { ExerciseContext };
+export { ExerciseContext } from "@/shared/training/events";
+import { ExerciseContext, type ExerciseType } from "@/shared/training/events";
 
 type ExerciseProviderProps = { children?: ReactNode };
 
