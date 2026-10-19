@@ -205,6 +205,6 @@
 | 4. Training UI и context | Выполнен | Manager + presentation controller, тонкий feedback provider, feature screens; 21 tests включая StrictMode, duplicate delivery, late event, failed save/retry |
 | 5. Vocabulary, catalog, audio | Выполнен | React-free coordinator, transaction persistence, audio IO/service, отмена/дедупликация; catalog hook/screens; 23 tests с cached/offline/cancellation |
 | 6. Dialogues | Выполнен | Feature API/types/cache/screens; runtime и detail/list hooks; scope guards; 24 tests включая все 9 correction runtime сценариев и late detail другого user |
-| 7. Session, account, bootstrap | Запланирован | |
+| 7. Session, account, bootstrap | Выполнен | Один sessionOwner/store restore/refresh/observation, сериализация SecureStore, generation guard logout; form hooks/account persistence; bootstrap lifecycle hooks; 25 tests |
 | 8. Общий код и документация | Запланирован | |
 | Итоговая проверка и PR | Запланирован | |
