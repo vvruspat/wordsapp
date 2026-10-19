@@ -10,6 +10,7 @@ import { useCatalog } from "../hooks/useCatalog";
 
 export default function Catalog() {
 	const {
+		error,
 		t,
 		currentCatalogs,
 		currentTopics,
@@ -55,6 +56,7 @@ export default function Catalog() {
 			edges={["top", "left", "right"]}
 			style={styles.page}
 		>
+			{error ? <WText>{String(error)}</WText> : null}
 			<View
 				style={{
 					gap: 16,

@@ -1,3 +1,4 @@
+import { evaluateTypedAnswer } from "../../model/answers";
 import { TrainingCharInput as WCharInput } from "../TrainingCharInput";
 import { useAcceptedAnswers } from "@/shared/vocabulary/useAcceptedAnswers";
 import {
@@ -12,8 +13,7 @@ import { useTranslation } from "react-i18next";
 import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/features/training/components/WordExcerciseResult";
 import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
+import { useSwipeAnimation } from "@/shared/ui/useSwipeAnimation";
 import { WCharInputProps, WText } from "@/mob-ui";
 import { TrainingPromptCard } from "@/features/training/components/exercises/TrainingPromptCard";
 
@@ -46,7 +46,7 @@ export function TypeWordExercise() {
 		complete,
 		triggerLike,
 	} = useContext(ExerciseContext);
-	const { currentPairs } = useExcerciseStore();
+	const { currentPairs } = useContext(ExerciseContext).wordsPool;
 
 	const { word, translation } = currentPairs[0] ?? {
 		word: null,
@@ -114,21 +114,7 @@ export function TypeWordExercise() {
 	const evaluateStatus = useCallback(
 		(text: string): CharInputStatus => {
 			if (!word) return "default";
-			const primaryAnswer = word.word.trim().toLowerCase();
-			const normalizedInput = text.trim().toLowerCase();
-			const answers = [
-				...new Set([
-					primaryAnswer,
-					...acceptedWords.map((w) => w.trim().toLowerCase()),
-				]),
-			].filter((w) => w.length === primaryAnswer.length);
-
-			if (normalizedInput.length === primaryAnswer.length) {
-				return answers.some((a) => a === normalizedInput) ? "success" : "error";
-			}
-			return answers.some((a) => a.startsWith(normalizedInput))
-				? "default"
-				: "error";
+			return evaluateTypedAnswer(text, word.word, acceptedWords);
 		},
 		[word, acceptedWords],
 	);

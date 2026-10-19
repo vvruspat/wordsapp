@@ -48,8 +48,13 @@ function setup({
 } = {}) {
 	let context;
 	const user = { userId: 1, language_learn: "nl", language_speak: "en" };
-	const { useExcerciseStore: store } = loadSource("hooks/useExcerciseStore.ts");
-	store.getState().setChunkWordIds(wordIds);
+	const { useSelectionStore: store } = loadSource(
+		"shared/selection/selectionStore.ts",
+	);
+	const { useTrainingSelection: trainingSelection } = loadSource(
+		"features/training/model/trainingSelection.ts",
+	);
+	trainingSelection.getState().setChunkWordIds(wordIds);
 	const words = wordIds.map((id) => ({ remoteId: id, word: `word ${id}` }));
 	const translations = wordIds.map((id) => ({
 		remoteId: id,
@@ -81,15 +86,18 @@ function setup({
 		},
 	};
 	const session = { useSessionUser: () => ({ user }) };
-	const storeModule = { useExcerciseStore: store };
+	const storeModule = { useSelectionStore: store };
 	const common = {
+		"@/features/training/model/trainingSelection": {
+			useTrainingSelection: trainingSelection,
+		},
 		"@/db/repositories/synonymGroups.repository": {
 			synonymGroupsRepository: { getSynonymWordIds: async (id) => [id] },
 		},
 		"react-native": native,
 		"react-i18next": translation,
-		"@/hooks/useSession": session,
-		"@/hooks/useExcerciseStore": storeModule,
+		"@/shared/session/useSession": session,
+		"@/shared/selection/selectionStore": storeModule,
 		"@/db/repositories/learning.repository": { learningRepository },
 		"@/db/repositories/words.repository": { wordsRepository },
 		"@/utils/logger": { logger },
@@ -113,16 +121,15 @@ function setup({
 					getRandomTranslations: async () => [],
 				},
 			},
-			"@/hooks/useVocabularyStore": {
+			"@/shared/vocabulary/vocabularyStore": {
 				useVocabularyStore: (selector) => selector({ lastSyncTime: null }),
 			},
 			"@/utils/mixTrainingProgress": { getIncompleteTrainings },
 		},
 	);
-	const exerciseDefinitions = loadSource(
-		"features/training/components/LearningCatalog/types.ts",
-		{ "@/mob-ui/brand/colors": { Colors } },
-	);
+	const exerciseDefinitions = loadSource("shared/training/presentation.ts", {
+		"@/mob-ui/brand/colors": { Colors },
+	});
 	const exercise = (id) =>
 		function Exercise() {
 			const current = React.useContext(ExerciseContext);
@@ -144,7 +151,7 @@ function setup({
 			"@/features/training/components/ExerciseProvider": { ExerciseContext },
 			"@/db/repositories/topics.repository": { topicsRepository: {} },
 			"@/general.styles": { styles: { page: {} } },
-			"@/hooks/useAudioReadiness": {
+			"@/shared/audio/useAudioReadiness": {
 				useAudioReadiness: () => ({
 					isAudioReady: true,
 					isAudioReadinessLoading: false,
@@ -155,7 +162,6 @@ function setup({
 			"@expo/vector-icons/AntDesign": "Icon",
 			"expo-router": { Link: "Link", router: { back() {} } },
 			"react-native-safe-area-context": { SafeAreaView: "SafeAreaView" },
-			"../LearningCatalog/types": exerciseDefinitions,
 			"@/features/training/components/exercises": {
 				CardsExercise: exercise("cards"),
 				ChooseTranslationExercise: exercise("choose_translation"),
@@ -192,6 +198,7 @@ function setup({
 	return {
 		App,
 		store,
+		trainingSelection,
 		progress,
 		get context() {
 			return context;
@@ -238,13 +245,13 @@ test("mix skips mastered exercises at startup and after a quick answer, then com
 test("an unfinished exercise keeps serving its unmastered words", async () => {
 	const app = setup({ trainings: ["true_or_false"] });
 	const tree = await mount(app.App);
-	const first = app.store.getState().currentPairs[0].word.remoteId;
+	const first = app.context.wordsPool.currentPairs[0].word.remoteId;
 	await act(async () => {
 		app.context.onSuccess(first, 0.2, false);
 		app.context.complete();
 	});
 	assert.equal(currentExercise(tree), "true_or_false");
-	assert.notEqual(app.store.getState().currentPairs[0].word.remoteId, first);
+	assert.notEqual(app.context.wordsPool.currentPairs[0].word.remoteId, first);
 	assert.equal(app.context.sessionStats.successCount, 1);
 	await act(async () => tree.unmount());
 });
@@ -295,9 +302,9 @@ test("matching skips its mastered pool and never pulls new words into a fixed mi
 	const tree = await mount(app.App);
 	assert.equal(currentExercise(tree), "type_word");
 	assert.ok(
-		[1, 2].includes(app.store.getState().currentPairs[0].word.remoteId),
+		[1, 2].includes(app.context.wordsPool.currentPairs[0].word.remoteId),
 	);
-	assert.deepEqual(app.store.getState().chunkWordIds, [1, 2]);
+	assert.deepEqual(app.trainingSelection.getState().chunkWordIds, [1, 2]);
 	await act(async () => tree.unmount());
 });
 
@@ -329,6 +336,12 @@ test("an event retained by an old displayed step cannot score a new exercise", a
 	const tree = await mount(app.App, { fixedExercise: "true_or_false" });
 	const old = app.context.onSuccess;
 	await act(async () => app.context.setCurrentTrainingId("type_word"));
+	await act(async () => old(1, 0.2, false));
+	assert.equal(
+		app.progress.length,
+		0,
+		"switch invalidates displayed handlers before next load",
+	);
 	await act(async () => app.context.loadData(1, 0, 0));
 	await act(async () => old(1, 0.2, false));
 	assert.equal(app.progress.length, 0);
@@ -355,9 +368,11 @@ test("a failed persistence blocks completion and a deliberate retry reloads dura
 	await act(async () => app.context.retry());
 	await act(async () => app.context.loadData(1, 0, 0));
 	await act(async () => app.context.onSuccess(1, 0.2, false));
-	assert.deepEqual(
-		await app.context.getIncompleteTrainingIds(["true_or_false"]),
-		[],
+	await act(async () =>
+		assert.deepEqual(
+			await app.context.getIncompleteTrainingIds(["true_or_false"]),
+			[],
+		),
 	);
 	await act(async () => tree.unmount());
 });

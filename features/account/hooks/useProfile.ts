@@ -1,3 +1,4 @@
+import { useAccountOperation } from "./useAccountOperation";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -5,16 +6,15 @@ import { resendVerificationEmail } from "@/api/auth";
 import { saveAccount } from "../services/accountService";
 import { LanguageItem } from "@/constants/languages";
 import { useAuthContext } from "@/context/AuthContext";
-import { useSessionUser } from "@/hooks/useSession";
-import { useVocabularySync } from "@/hooks/useVocabularySync";
+import { useSessionUser } from "@/shared/session/useSession";
 
 export function useProfile() {
+	const beginOperation = useAccountOperation();
 	const { t, i18n } = useTranslation();
 	const router = useRouter();
 	const currentUser = useSessionUser();
 	const user = currentUser?.user;
 	const { logout } = useAuthContext();
-	const { syncVocabulary } = useVocabularySync();
 
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
@@ -47,76 +47,101 @@ export function useProfile() {
 	}, [user]);
 
 	const handleSave = async () => {
-		if (!user) return;
-
-		setIsSaving(true);
-		setError(undefined);
-		setSuccess(false);
-
-		const prevLanguageSpeak = user.language_speak;
-		const prevLanguageLearn = user.language_learn;
+		const operation = beginOperation("handleSave");
+		if (!operation) return;
 		try {
-			const response = await saveAccount(user, {
-				id: user.userId,
-				name,
-				email,
-				language_speak: languageISpeak,
-				language_learn: languageToLearn,
-				email_verified: user.email_verified ?? false,
-				onboarded: user.onboarded ?? false,
-			});
+			if (!user) return;
 
-			if (response.status === "error") {
-				setError(response.error?.message ?? t("profile_save_error"));
-				return;
+			setIsSaving(true);
+			setError(undefined);
+			setSuccess(false);
+
+			const prevLanguageSpeak = user.language_speak;
+			try {
+				const response = await saveAccount(user, {
+					id: user.userId,
+					name,
+					email,
+					language_speak: languageISpeak,
+					language_learn: languageToLearn,
+					email_verified: user.email_verified ?? false,
+					onboarded: user.onboarded ?? false,
+				});
+				if (!operation.current()) return;
+
+				if (response.status === "error") {
+					setError(response.error?.message ?? t("profile_save_error"));
+					return;
+				}
+
+				if (languageISpeak !== prevLanguageSpeak) {
+					i18n.changeLanguage(languageISpeak);
+				}
+
+				setSuccess(true);
+			} catch (e) {
+				if (!operation.current()) return;
+				setError((e as Error).message);
+			} finally {
+				setIsSaving(false);
 			}
-
-			if (languageISpeak !== prevLanguageSpeak) {
-				i18n.changeLanguage(languageISpeak);
-			}
-
-			if (
-				languageToLearn !== prevLanguageLearn ||
-				languageISpeak !== prevLanguageSpeak
-			) {
-				syncVocabulary(languageToLearn as LanguageItem["isoCode"]);
-			}
-
-			setSuccess(true);
-		} catch (e) {
-			setError((e as Error).message);
+		} catch (error) {
+			if (operation.current())
+				setError(error instanceof Error ? error.message : String(error));
 		} finally {
-			setIsSaving(false);
+			operation.finish();
 		}
 	};
 
 	const handleVerifyEmail = async () => {
-		if (!user?.email) return;
-
-		setError(undefined);
-
+		const operation = beginOperation("handleVerifyEmail");
+		if (!operation) return;
 		try {
-			await resendVerificationEmail(user.email);
+			if (!user?.email) return;
 
-			router.push({
-				pathname: "/verify",
-				params: { email: user.email },
-			});
-		} catch (e) {
-			setError((e as Error).message);
+			setError(undefined);
+
+			try {
+				await resendVerificationEmail(user.email);
+				if (!operation.current()) return;
+
+				router.push({
+					pathname: "/verify",
+					params: { email: user.email },
+				});
+			} catch (e) {
+				if (!operation.current()) return;
+				setError((e as Error).message);
+			}
+		} catch (error) {
+			if (operation.current())
+				setError(error instanceof Error ? error.message : String(error));
+		} finally {
+			operation.finish();
 		}
 	};
 
 	const handleLogout = async () => {
-		setIsLoggingOut(true);
-		setError(undefined);
-		setSuccess(false);
-
+		const operation = beginOperation("handleLogout");
+		if (!operation) return;
 		try {
-			await logout();
-		} catch (e) {
-			setError((e as Error).message);
-			setIsLoggingOut(false);
+			setIsLoggingOut(true);
+			setError(undefined);
+			setSuccess(false);
+
+			try {
+				await logout();
+				if (!operation.current()) return;
+			} catch (e) {
+				if (!operation.current()) return;
+				setError((e as Error).message);
+				setIsLoggingOut(false);
+			}
+		} catch (error) {
+			if (operation.current())
+				setError(error instanceof Error ? error.message : String(error));
+		} finally {
+			operation.finish();
 		}
 	};
 

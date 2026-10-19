@@ -6,7 +6,6 @@ import {
 } from "@/features/training/components/WordExcerciseResult";
 import { ExerciseContext, type ExerciseType } from "@/shared/training/events";
 import { useTrainingManager } from "@/features/training/hooks/useTrainingManager";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { logger } from "@/utils/logger";
 export { ExerciseContext } from "@/shared/training/events";
 export type Exercise = "success" | "failure";
@@ -48,9 +47,9 @@ export const ExerciseProvider = ({
 		score: number,
 		showModal = true,
 	) => {
-		const pair = useExcerciseStore
-			.getState()
-			.currentPairs.find((item) => item.word.remoteId === wordId);
+		const pair = manager.wordsPool.currentPairs.find(
+			(item) => item.word.remoteId === wordId,
+		);
 		void manager.record(wordId, score, result);
 		if (showModal) {
 			setModalPair({

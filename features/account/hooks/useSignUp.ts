@@ -1,11 +1,13 @@
+import { useAccountOperation } from "./useAccountOperation";
 import { requestTmpPassword } from "@/api/auth";
-import { useApiError } from "@/hooks/useApiError";
+import { useApiError } from "@/shared/localization/useApiError";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TextInputChangeEvent } from "react-native";
 
 export function useSignUp() {
+	const beginOperation = useAccountOperation();
 	const router = useRouter();
 
 	const [email, setEmail] = useState("");
@@ -15,20 +17,31 @@ export function useSignUp() {
 	const { getErrorMessage } = useApiError();
 
 	const handleContinueClick = async () => {
+		const operation = beginOperation("handleContinueClick");
+		if (!operation) return;
 		try {
-			const response = await requestTmpPassword(email);
+			try {
+				const response = await requestTmpPassword(email);
+				if (!operation.current()) return;
 
-			if (response.status === "error") {
-				setError(
-					getErrorMessage(response.error?.message) ??
-						t("sign_up_error_generic"),
-				);
-				return;
+				if (response.status === "error") {
+					setError(
+						getErrorMessage(response.error?.message) ??
+							t("sign_up_error_generic"),
+					);
+					return;
+				}
+
+				router.push({ pathname: "/verify", params: { email } });
+			} catch (e) {
+				if (!operation.current()) return;
+				setError(getErrorMessage((e as Error).message));
 			}
-
-			router.push({ pathname: "/verify", params: { email } });
-		} catch (e) {
-			setError(getErrorMessage((e as Error).message));
+		} catch (error) {
+			if (operation.current())
+				setError(error instanceof Error ? error.message : String(error));
+		} finally {
+			operation.finish();
 		}
 	};
 

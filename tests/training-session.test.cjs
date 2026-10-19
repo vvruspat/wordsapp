@@ -18,8 +18,8 @@ test("single and mixed share coverage, fixed selection and idempotent steps", ()
 });
 test("explicit review tracks its own coverage without resetting persisted scores", () => {
 	const saved = [{ wordId: 1, training: "cards", score: 0.2 }];
-	const session = new TrainingSession([1], ["cards"], saved);
-	assert.equal(session.status, "completed");
+	const session = new TrainingSession([1], ["cards", "type_word"], saved);
+	assert.deepEqual(session.remaining(), ["type_word"]);
 	session.startReview("cards");
 	assert.deepEqual(session.remaining(), ["cards"]);
 	assert.equal(
@@ -45,4 +45,16 @@ test("matching keeps one step across individual answers and rejects stale delive
 	const next = s.select("match_words", 4);
 	assert.equal(s.apply(step.id, 1, false), false);
 	assert.notEqual(next.id, step.id);
+});
+
+test("typed answers preserve prefix, case/space normalization and same-length alternative policy", () => {
+	const { evaluateTypedAnswer, isAcceptedTranslation } = loadSource(
+		"features/training/model/answers.ts",
+	);
+	assert.equal(evaluateTypedAnswer(" C ", "Cat", []), "default");
+	assert.equal(evaluateTypedAnswer(" CAT ", "Cat", []), "success");
+	assert.equal(evaluateTypedAnswer("dog", "cat", ["dog", "kitten"]), "success");
+	assert.equal(evaluateTypedAnswer("kitten", "cat", ["kitten"]), "error");
+	assert.equal(evaluateTypedAnswer("rat", "cat", []), "error");
+	assert.equal(isAcceptedTranslation("cat", "cat", []), true);
 });

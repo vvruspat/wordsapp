@@ -2,6 +2,11 @@ import { createContext } from "react";
 import type { Word } from "@vvruspat/words-types";
 import type { LearningTrainingName } from "@/shared/progress/exercises";
 export type ExerciseType = {
+	wordsPool: {
+		currentPairs: import("@/shared/vocabulary/wordsService").WordPair[];
+		currentRandomWords: import("@/db/models/Word").default[];
+		currentRandomTranslations: import("@/db/models/WordTranslation").default[];
+	};
 	startReview?: () => void;
 	status?: "loading" | "ready" | "empty" | "completed" | "error";
 	error?: unknown;
@@ -34,6 +39,11 @@ export type ExerciseType = {
 };
 
 const ExerciseContext = createContext<ExerciseType>({
+	wordsPool: {
+		currentPairs: [],
+		currentRandomWords: [],
+		currentRandomTranslations: [],
+	},
 	showSuccessModal: () => {},
 	showFailureModal: () => {},
 	addCompleteListener: () => {},

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import { useTranslation } from "react-i18next";
-import { useSessionUser } from "@/hooks/useSession";
+import { useSessionUser } from "@/shared/session/useSession";
 import { useOperationScope } from "@/shared/lifecycle/useOperationScope";
 import type { DialogueDetail } from "../model/types";
 import { completeDialogue, getDialogueDetail } from "../api/dialogues";

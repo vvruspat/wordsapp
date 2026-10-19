@@ -20,7 +20,7 @@ import type {
 	DialogueCorrection,
 	DialogueDetail,
 } from "@/features/dialogues/model/types";
-import { recordDialogueInteraction } from "@/features/dialogues/api/dialogues";
+import { useInteractionTracking } from "../hooks/useInteractionTracking";
 import { MIX_TRAINING_WORD_LIMIT } from "@/constants/training";
 import { WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
@@ -52,6 +52,7 @@ const DialogueMessageBubble = ({
 	onOpenBranch: (id: string) => void;
 	onWordPress: (word: string, context: string, messageId?: string) => void;
 }) => {
+	const recordInteraction = useInteractionTracking(sessionId);
 	const [showTranslation, setShowTranslation] = useState(false);
 	const { t } = useTranslation();
 	const [showHints, setShowHints] = useState(false);
@@ -89,7 +90,7 @@ const DialogueMessageBubble = ({
 		setShowTranslation((value) => !value);
 		if (!translationRecorded.current) {
 			translationRecorded.current = true;
-			void recordDialogueInteraction(sessionId, "translation");
+			recordInteraction("translation");
 		}
 	};
 
@@ -97,7 +98,7 @@ const DialogueMessageBubble = ({
 		setShowHints((value) => !value);
 		if (!hintsRecorded.current) {
 			hintsRecorded.current = true;
-			void recordDialogueInteraction(sessionId, "hint");
+			recordInteraction("hint");
 		}
 	};
 

@@ -1,6 +1,5 @@
-import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { router } from "expo-router";
+import { useWordIntro } from "../hooks/useWordIntro";
 import {
 	KeyboardAvoidingView,
 	Platform,
@@ -10,89 +9,21 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PlayWordButton } from "@/components/PlayWordButton";
-import WatermelonWord from "@/db/models/Word";
-import WatermelonWordTranslation from "@/db/models/WordTranslation";
-import { learningRepository } from "@/db/repositories/learning.repository";
-import { translationsRepository } from "@/db/repositories/translations.repository";
-import { wordsRepository } from "@/db/repositories/words.repository";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSessionUser } from "@/hooks/useSession";
 import { WButton, WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 
-type WordPair = {
-	word: WatermelonWord;
-	translation: WatermelonWordTranslation;
-};
-
-function parseWordIds(raw: string | undefined): number[] {
-	if (!raw) return [];
-	return raw
-		.split(",")
-		.map(Number)
-		.filter((n) => !Number.isNaN(n));
-}
-
 export default function WordIntro() {
-	const { t } = useTranslation();
-	const { wordIds } = useLocalSearchParams<{ wordIds: string }>();
-	const { user } = useSessionUser();
-	const { setChunkWordIds } = useExcerciseStore();
-
-	const [pairs, setPairs] = useState<WordPair[]>([]);
-	const [currentIndex, setCurrentIndex] = useState(0);
-	const [typed, setTyped] = useState("");
-	const [loading, setLoading] = useState(true);
-
-	// Parse IDs inside the effect so wordIds (stable string) is the only dep
-	useEffect(() => {
-		const ids = parseWordIds(wordIds);
-		if (!ids.length || !user?.language_speak) return;
-		setLoading(true);
-		wordsRepository
-			.getByRemoteIds(ids, user.language_learn ?? "en")
-			.then(async (fetchedWords) => {
-				const ordered = ids
-					.map((id) => fetchedWords.find((w) => w.remoteId === id))
-					.filter(Boolean) as WatermelonWord[];
-				const translations = await translationsRepository.getByWordIds(
-					user.language_speak ?? "en",
-					ordered.map((w) => w.remoteId),
-				);
-				const loadedPairs = ordered
-					.map((word) => ({
-						word,
-						translation: translations.find((tr) => tr.word === word.remoteId),
-					}))
-					.filter((p): p is WordPair => p.translation !== undefined);
-				setPairs(loadedPairs);
-			})
-			.finally(() => setLoading(false));
-	}, [wordIds, user?.language_speak, user?.language_learn]);
-
-	const handleNext = useCallback(async () => {
-		const pair = pairs[currentIndex];
-		if (!pair || !user?.userId) return;
-
-		await learningRepository.recordIntro({
-			userId: user.userId,
-			wordId: pair.word.remoteId,
-			translationId: pair.translation.remoteId,
-		});
-
-		const isLast = currentIndex === pairs.length - 1;
-
-		if (!isLast) {
-			setCurrentIndex((i) => i + 1);
-			setTyped("");
-			return;
-		}
-
-		const fallbackIds = parseWordIds(wordIds);
-		const introducedIds = pairs.map((p) => p.word.remoteId);
-		setChunkWordIds(introducedIds.length > 0 ? introducedIds : fallbackIds);
-		router.replace("/authorized/learning/mix-training");
-	}, [pairs, currentIndex, user, wordIds, setChunkWordIds]);
+	const {
+		error,
+		retry,
+		t,
+		pairs,
+		currentIndex,
+		typed,
+		setTyped,
+		loading,
+		handleNext,
+	} = useWordIntro();
 
 	if (loading) {
 		return (
@@ -103,7 +34,22 @@ export default function WordIntro() {
 	}
 
 	const pair = pairs[currentIndex];
-	if (!pair) return null;
+	if (error || !pair)
+		return (
+			<SafeAreaView style={styles.page}>
+				<WText>
+					{t(error ? "mix_training_error" : "mix_training_no_words")}
+				</WText>
+				{error ? (
+					<WButton mode="primary" onPress={retry}>
+						<WText>{t("button_retry")}</WText>
+					</WButton>
+				) : null}
+				<WButton mode="dark" onPress={() => router.back()}>
+					<WText>{t("button_close")}</WText>
+				</WButton>
+			</SafeAreaView>
+		);
 
 	const isLast = currentIndex === pairs.length - 1;
 

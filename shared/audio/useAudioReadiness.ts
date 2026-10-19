@@ -3,7 +3,7 @@ import { useDatabase } from "@nozbe/watermelondb/hooks";
 import { useEffect, useState } from "react";
 import Word from "@/db/models/Word";
 import { isRemoteAudioPath } from "@/utils/audio";
-import { useSessionUser } from "./useSession";
+import { useSessionUser } from "@/shared/session/useSession";
 
 export const useAudioReadiness = () => {
 	const database = useDatabase();

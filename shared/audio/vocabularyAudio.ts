@@ -7,7 +7,7 @@ import Word from "@/db/models/Word";
 import type User from "@/db/models/User";
 import { isRemoteAudioPath } from "@/utils/audio";
 import { logger } from "@/utils/logger";
-import { useVocabularyStore } from "@/hooks/useVocabularyStore";
+import { useVocabularyStore } from "@/shared/vocabulary/vocabularyStore";
 let activeAudioDownloadId = 0;
 export function cancelVocabularyAudio() {
 	activeAudioDownloadId++;
@@ -133,7 +133,7 @@ const downloadAudioFile = async (
 };
 
 export function createAudioDownloader(
-	user: User | null,
+	user: Pick<User, "language_learn"> | null,
 	isCurrent: () => boolean,
 ) {
 	const setAudioDownloadState: ReturnType<
@@ -153,12 +153,26 @@ export function createAudioDownloader(
 		}
 
 		const audioDownloadId = ++activeAudioDownloadId;
-		const remoteAudioWords = (
-			await database
-				.get<Word>("words")
-				.query(Q.where("language", targetLanguage))
-				.fetch()
-		).filter((word) => word.audio && isRemoteAudioPath(word.audio));
+		const isActiveDownload = () =>
+			activeAudioDownloadId === audioDownloadId && isCurrent();
+		let remoteAudioWords: Word[];
+		try {
+			remoteAudioWords = (
+				await database
+					.get<Word>("words")
+					.query(Q.where("language", targetLanguage))
+					.fetch()
+			).filter((word) => word.audio && isRemoteAudioPath(word.audio));
+		} catch (error) {
+			logger.error("Unable to read missing audio", error, "db");
+			setAudioDownloadState({
+				isAudioDownloading: false,
+				audioDownloadError:
+					error instanceof Error ? error.message : "Audio database read failed",
+			});
+			return;
+		}
+		if (!isActiveDownload()) return;
 
 		const audioCount = remoteAudioWords.length;
 
@@ -185,8 +199,6 @@ export function createAudioDownloader(
 		let audioCompleted = 0;
 		let wordIndex = 0;
 		const failedDownloads: FailedAudioDownload[] = [];
-		const isActiveDownload = () =>
-			activeAudioDownloadId === audioDownloadId && isCurrent();
 
 		const markAudioCompleted = () => {
 			audioCompleted += 1;
@@ -216,16 +228,11 @@ export function createAudioDownloader(
 					});
 				} else if (isActiveDownload()) {
 					await database.write(async () => {
+						if (!isActiveDownload()) return;
 						await word.update((w) => {
 							w.audio = localAudioPath;
 						});
 					});
-
-					if (useVocabularyStore.getState().languageLearn === targetLanguage) {
-						useVocabularyStore
-							.getState()
-							.setWordAudio(word.remoteId, localAudioPath);
-					}
 				}
 
 				markAudioCompleted();

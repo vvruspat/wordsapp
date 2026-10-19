@@ -2,10 +2,6 @@ import { components } from "@vvruspat/words-types";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-type WordDto = components["schemas"]["WordDto"];
-type WordTranslationDto = components["schemas"]["WordTranslationDto"];
-type VocabCatalogDto = components["schemas"]["VocabCatalogDto"];
-type TopicDto = components["schemas"]["TopicDto"];
 type TopicTranslationDto = components["schemas"]["TopicTranslationDto"];
 
 type AudioDownloadState = {
@@ -17,10 +13,6 @@ type AudioDownloadState = {
 };
 
 type VocabularyState = {
-	words: WordDto[];
-	translations: WordTranslationDto[];
-	catalogs: VocabCatalogDto[];
-	topics: TopicDto[];
 	topicTranslations: TopicTranslationDto[];
 	languageLearn: string | null;
 	isLoading: boolean;
@@ -33,11 +25,6 @@ type VocabularyState = {
 } & AudioDownloadState;
 
 type VocabularyActions = {
-	setWords: (words: WordDto[]) => void;
-	setWordAudio: (wordId: number, audio: string) => void;
-	setTranslations: (translations: WordTranslationDto[]) => void;
-	setCatalogs: (catalogs: VocabCatalogDto[]) => void;
-	setTopics: (topics: TopicDto[]) => void;
 	setTopicTranslations: (topicTranslations: TopicTranslationDto[]) => void;
 	setLanguageLearn: (language: string) => void;
 	setLoading: (loading: boolean) => void;
@@ -53,10 +40,6 @@ type VocabularyActions = {
 };
 
 const initialState: VocabularyState = {
-	words: [],
-	translations: [],
-	catalogs: [],
-	topics: [],
 	topicTranslations: [],
 	languageLearn: null,
 	isLoading: false,
@@ -76,29 +59,6 @@ const initialState: VocabularyState = {
 export const useVocabularyStore = create<VocabularyState & VocabularyActions>()(
 	immer((set) => ({
 		...initialState,
-		setWords: (words) =>
-			set((state) => {
-				state.words = words;
-			}),
-		setWordAudio: (wordId, audio) =>
-			set((state) => {
-				const word = state.words.find((item) => item.id === wordId);
-				if (word) {
-					word.audio = audio;
-				}
-			}),
-		setTranslations: (translations) =>
-			set((state) => {
-				state.translations = translations;
-			}),
-		setCatalogs: (catalogs) =>
-			set((state) => {
-				state.catalogs = catalogs;
-			}),
-		setTopics: (topics) =>
-			set((state) => {
-				state.topics = topics;
-			}),
 		setTopicTranslations: (topicTranslations) =>
 			set((state) => {
 				state.topicTranslations = topicTranslations;

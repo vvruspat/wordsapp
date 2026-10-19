@@ -1,3 +1,4 @@
+import { logger } from "@/utils/logger";
 import { useCallback, useEffect, useState } from "react";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
 
@@ -34,11 +35,22 @@ export function useChunkManagement(
 			setLoading(false);
 			return;
 		}
+		let active = true;
 		setLoading(true);
 		userSettingsRepository
 			.get(userId, key)
-			.then((value) => setLastProposedDate(value))
-			.finally(() => setLoading(false));
+			.then((value) => {
+				if (active) setLastProposedDate(value);
+			})
+			.catch((reason) =>
+				logger.error("Unable to read proposal marker", reason, "db"),
+			)
+			.finally(() => {
+				if (active) setLoading(false);
+			});
+		return () => {
+			active = false;
+		};
 	}, [userId, key]);
 
 	const shouldShowProposal =
@@ -47,8 +59,8 @@ export function useChunkManagement(
 	const markProposed = useCallback(async () => {
 		if (!userId) return;
 		const now = new Date().toISOString();
-		setLastProposedDate(now);
 		await userSettingsRepository.set(userId, key, now);
+		setLastProposedDate(now);
 	}, [userId, key]);
 
 	return { shouldShowProposal, loading, markProposed };

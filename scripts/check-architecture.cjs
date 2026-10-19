@@ -1,7 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const ts = require("typescript");
-const root = path.resolve(__dirname, "..");
+const root = path.resolve(process.argv[2] ?? path.join(__dirname, ".."));
 const excluded = new Set([
 	"node_modules",
 	".git",
@@ -63,14 +63,35 @@ for (const file of files) {
 			const target = resolve(file, literal.text);
 			if (target) {
 				dependencies.push(target);
+				const sourcePath = relative(file),
+					targetPath = relative(target);
+				if (
+					/^(shared|db|mob-ui|utils)\//.test(sourcePath) &&
+					/^(components|context|hooks)\//.test(targetPath)
+				)
+					errors.push(
+						`${sourcePath} imports a legacy UI facade: ${targetPath}`,
+					);
 				const from = relative(file),
 					to = relative(target);
+				if (
+					/^features\/[^/]+\/(components|screens)\//.test(from) &&
+					(to.includes("/api/") ||
+						to.startsWith("api/") ||
+						to.startsWith("db/repositories/") ||
+						to === "db/database.ts")
+				)
+					errors.push(`${from} display imports persistence/transport: ${to}`);
 				const feature = from.match(/^features\/([^/]+)\//)?.[1];
 				const other = to.match(/^features\/([^/]+)\//)?.[1];
+				if (feature && /^(app|composition)\//.test(to))
+					errors.push(`${from} imports application composition: ${to}`);
 				if (feature && other && feature !== other)
 					errors.push(`${from} imports another feature: ${to}`);
 				if (
-					/^(shared|db|mob-ui|utils)\//.test(from) &&
+					/^(shared|db|mob-ui|utils|components|context|constants|api)\//.test(
+						from,
+					) &&
 					/^(features|app|composition)\//.test(to)
 				)
 					errors.push(`${from} imports an upper layer: ${to}`);

@@ -1,3 +1,4 @@
+import { isAcceptedTranslation } from "../../model/answers";
 import { useAcceptedAnswers } from "@/shared/vocabulary/useAcceptedAnswers";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -5,8 +6,7 @@ import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/features/training/components/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
+import { useSwipeAnimation } from "@/shared/ui/useSwipeAnimation";
 import { WButton, WText } from "@/mob-ui";
 import { TrainingPromptCard } from "@/features/training/components/exercises/TrainingPromptCard";
 
@@ -33,7 +33,7 @@ export function TrueOrFalseExercise() {
 		triggerLike,
 	} = useContext(ExerciseContext);
 	const { currentPairs, currentRandomTranslations: randomTranslations } =
-		useExcerciseStore();
+		useContext(ExerciseContext).wordsPool;
 
 	const { word, translation } = currentPairs[0] ?? {
 		word: null,
@@ -98,10 +98,11 @@ export function TrueOrFalseExercise() {
 			setAnswered(true);
 
 			const userThinksCorrect = choice === "yes";
-			const isCorrect =
-				acceptedTranslations.length > 0
-					? acceptedTranslations.includes(statement)
-					: statement === translation.translation;
+			const isCorrect = isAcceptedTranslation(
+				statement,
+				translation.translation,
+				acceptedTranslations,
+			);
 
 			if (userThinksCorrect === isCorrect) {
 				triggerLike();

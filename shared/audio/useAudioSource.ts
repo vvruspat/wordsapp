@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import * as FileSystem from "expo-file-system/legacy";
-import { useVocabularyStore } from "@/hooks/useVocabularyStore";
+import { useVocabularyStore } from "@/shared/vocabulary/vocabularyStore";
 import { isRemoteAudioPath, resolveLocalAudioPath } from "@/utils/audio";
 export function useAudioSource(audio: string | null | undefined) {
 	const [audioSource, setAudioSource] = useState<string | null>(null);

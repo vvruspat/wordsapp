@@ -17,7 +17,6 @@ import { MatchWordCard } from "@/features/training/components/MatchWordCard/Matc
 import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
 import Word from "@/db/models/Word";
 import WordTranslation from "@/db/models/WordTranslation";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { shuffleArray } from "@/utils";
 import { logger } from "@/utils/logger";
 
@@ -147,7 +146,7 @@ export function MatchWordsExercise() {
 		onSuccess,
 		complete,
 	} = useContext(ExerciseContext);
-	const { currentPairs: pairs } = useExcerciseStore();
+	const { currentPairs: pairs } = useContext(ExerciseContext).wordsPool;
 	const shuffledPairs = useMemo(() => shuffleArray(pairs), [pairs]);
 
 	const load = useCallback(async () => {

@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, StyleSheet, View } from "react-native";
-import { useVocabularyStore } from "@/hooks/useVocabularyStore";
+import { useVocabularyStore } from "@/shared/vocabulary/vocabularyStore";
 import { Colors } from "@/mob-ui/brand/colors";
 
 type BackgroundProgressBarProps = {

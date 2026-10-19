@@ -9,13 +9,11 @@ import {
 	getWords,
 	getWordTranslations,
 } from "@/api/vocabulary";
-import Topic from "@/db/models/Topic";
 import VocabCatalog from "@/db/models/VocabCatalog";
 import Word from "@/db/models/Word";
-import WordTranslation from "@/db/models/WordTranslation";
 import { isRemoteAudioPath } from "@/utils/audio";
 import { logger } from "@/utils/logger";
-import { useVocabularyStore } from "@/hooks/useVocabularyStore";
+import { useVocabularyStore } from "@/shared/vocabulary/vocabularyStore";
 import database from "@/db/database";
 import type User from "@/db/models/User";
 
@@ -36,22 +34,11 @@ export function invalidateVocabularyOperations() {
 	epoch++;
 	inFlight.clear();
 	cancelVocabularyAudio();
+	useVocabularyStore.getState().reset();
 }
 function guardedActions(isCurrent: () => boolean) {
 	const state = useVocabularyStore.getState();
 	return {
-		setWords: (value: Parameters<typeof state.setWords>[0]) => {
-			if (isCurrent()) state.setWords(value);
-		},
-		setTranslations: (value: Parameters<typeof state.setTranslations>[0]) => {
-			if (isCurrent()) state.setTranslations(value);
-		},
-		setCatalogs: (value: Parameters<typeof state.setCatalogs>[0]) => {
-			if (isCurrent()) state.setCatalogs(value);
-		},
-		setTopics: (value: Parameters<typeof state.setTopics>[0]) => {
-			if (isCurrent()) state.setTopics(value);
-		},
 		setTopicTranslations: (
 			value: Parameters<typeof state.setTopicTranslations>[0],
 		) => {
@@ -90,16 +77,14 @@ function guardedActions(isCurrent: () => boolean) {
 		},
 	};
 }
-export function createVocabularyOperations(user: User | null) {
+export function createVocabularyOperations(
+	user: Pick<User, "userId" | "language_learn" | "language_speak"> | null,
+) {
 	const generation = epoch;
 	const language = user?.language_learn;
 	const isCurrent = () =>
 		generation === epoch && user?.language_learn === language;
 	const {
-		setWords,
-		setTranslations,
-		setCatalogs,
-		setTopics,
 		setTopicTranslations,
 		setLanguageLearn,
 		setSyncing,
@@ -322,11 +307,7 @@ export function createVocabularyOperations(user: User | null) {
 			);
 			if (!isCurrent()) return;
 			// Update Zustand store
-			setCatalogs(catalogs);
-			setTopics(topics);
 			setTopicTranslations(topicTranslations);
-			setWords(wordsWithKnownAudio);
-			setTranslations(translations);
 			setLastSyncTime(Date.now());
 
 			void downloadMissingAudio(targetLanguage);
@@ -351,100 +332,9 @@ export function createVocabularyOperations(user: User | null) {
 			setSyncing(false);
 		}
 	};
-	const loadFromLocal = async () => {
-		const { languageLearn } = useVocabularyStore.getState();
 
-		if (!languageLearn) {
-			return;
-		}
-
-		try {
-			// Load from local database
-			const catalogs = await database
-				.get<VocabCatalog>("vocab_catalogs")
-				.query(Q.where("language", languageLearn))
-				.fetch();
-
-			const catalogIds = catalogs.map((c) => c.remoteId);
-			const topics =
-				catalogIds.length > 0
-					? await database
-							.get<Topic>("topics")
-							.query(Q.where("catalog", Q.oneOf(catalogIds.map(String))))
-							.fetch()
-					: [];
-
-			const words = await database
-				.get<Word>("words")
-				.query(Q.where("language", languageLearn))
-				.fetch();
-
-			const wordIds = words.map((w) => w.remoteId);
-			const translations =
-				wordIds.length > 0
-					? await database
-							.get<WordTranslation>("word_translations")
-							.query(Q.where("word", Q.oneOf(wordIds)))
-							.fetch()
-					: [];
-
-			// Convert to DTO format
-			setCatalogs(
-				catalogs.map((c) => ({
-					id: c.remoteId,
-					created_at: c.remoteCreatedAt,
-					owner: c.owner,
-					title: c.title,
-					description: c.description ?? null,
-					language: c.language,
-					image: c.image ?? null,
-				})),
-			);
-
-			setTopics(
-				topics.map((t) => ({
-					id: t.remoteId,
-					created_at: t.remoteCreatedAt,
-					title: t.title,
-					description: t.description ?? "",
-					language: t.language,
-					image: t.image ?? null,
-				})),
-			);
-
-			setWords(
-				words.map((w) => ({
-					status: "processed",
-					id: w.remoteId,
-					created_at: w.remoteCreatedAt,
-					topic: w.topic,
-					word: w.word,
-					catalog: w.catalog,
-					language: w.language as Language,
-					audio: w.audio,
-					transcription: w.transcription,
-					meaning: w.meaning,
-				})),
-			);
-
-			setTranslations(
-				translations.map((t) => ({
-					id: t.remoteId,
-					created_at: t.remoteCreatedAt,
-					word: t.word,
-					translation: t.translation,
-					language: t.language,
-				})),
-			);
-		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : "Unknown error occurred";
-			setError(`Failed to load from local database: ${errorMessage}`);
-		}
-	};
 	return {
 		downloadMissingAudio,
-		loadFromLocal,
 		syncVocabulary: (language?: Language) => {
 			if (!isCurrent()) return Promise.resolve();
 			const key = JSON.stringify([

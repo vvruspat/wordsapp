@@ -1,8 +1,6 @@
+import { useReport } from "@/shared/reporting/useReport";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { useCallback, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Alert, Modal, Pressable, StyleSheet, View } from "react-native";
-import { createReport } from "@/api/report";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 
@@ -10,38 +8,15 @@ export type ReportButtonProps = {
 	wordId: number;
 };
 
-type ReportType = "word" | "translation" | "audio";
-
 export function ReportButton({ wordId }: ReportButtonProps) {
-	const { t } = useTranslation();
-	const [modalVisible, setModalVisible] = useState(false);
-
-	const closeModal = useCallback(() => {
-		setModalVisible(false);
-	}, []);
-
-	const submitReport = useCallback(
-		async (type: ReportType) => {
-			closeModal();
-			const result = await createReport({ word: wordId, type });
-			if (result.status === "success") {
-				Alert.alert(t("report_success"));
-			} else {
-				Alert.alert(t("report_error"));
-			}
-		},
-		[wordId, t, closeModal],
-	);
-
-	const handlePress = useCallback(() => {
-		setModalVisible(true);
-	}, []);
-
-	const reportOptions: { label: string; type: ReportType }[] = [
-		{ label: t("report_word"), type: "word" },
-		{ label: t("report_translation"), type: "translation" },
-		{ label: t("report_audio"), type: "audio" },
-	];
+	const {
+		t,
+		modalVisible,
+		closeModal,
+		submitReport,
+		handlePress,
+		reportOptions,
+	} = useReport(wordId);
 
 	return (
 		<>

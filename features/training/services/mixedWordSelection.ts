@@ -1,10 +1,10 @@
 import { Q } from "@nozbe/watermelondb";
 import { MIX_TRAINING_WORD_LIMIT } from "@/constants/training";
 import { shuffleArray } from "@/utils";
-import database from "../database";
-import VocabCatalog from "../models/VocabCatalog";
-import Word from "../models/Word";
-import WordTranslation from "../models/WordTranslation";
+import database from "@/db/database";
+import VocabCatalog from "@/db/models/VocabCatalog";
+import Word from "@/db/models/Word";
+import WordTranslation from "@/db/models/WordTranslation";
 
 export const mixTrainingRepository = {
 	async getDefaultWordIds({

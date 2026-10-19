@@ -1,3 +1,5 @@
+import { wordSelection } from "@/shared/vocabulary/wordSelection";
+import { logger } from "@/utils/logger";
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { wordsService } from "@/shared/vocabulary/wordsService";
 import { progressService } from "@/shared/progress/progressService";
@@ -32,7 +34,7 @@ export const trainingService = {
 				: null;
 		const words = ids
 			? await wordsRepository.getByRemoteIds(ids, learningLanguage)
-			: await wordsRepository.getRandomWords(
+			: await wordSelection.getRandomWords(
 					learningLanguage,
 					999999,
 					[],
@@ -68,7 +70,7 @@ export const trainingService = {
 		// Optional distractors can fail independently without dropping the main task.
 		const [words, translations] = await Promise.allSettled([
 			wordCount
-				? wordsRepository.getRandomWords(
+				? wordSelection.getRandomWords(
 						learningLanguage,
 						wordCount,
 						pairs.map((p) => p.word.remoteId),
@@ -85,6 +87,18 @@ export const trainingService = {
 				pairs.map((p) => p.word.remoteId),
 			),
 		]);
+		if (words.status === "rejected")
+			logger.error(
+				"Unable to load optional exercise words",
+				words.reason,
+				"db",
+			);
+		if (translations.status === "rejected")
+			logger.error(
+				"Unable to load optional exercise translations",
+				translations.reason,
+				"db",
+			);
 		return {
 			words: words.status === "fulfilled" ? words.value : [],
 			translations:

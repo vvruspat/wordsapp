@@ -3,7 +3,7 @@ const { test } = require("node:test");
 const { loadSource, deferred, logger } = require("./helpers.cjs");
 function setup({ cached = false, online = true, gate } = {}) {
 	const { useVocabularyStore: store } = loadSource(
-		"hooks/useVocabularyStore.ts",
+		"shared/vocabulary/vocabularyStore.ts",
 	);
 	let fetches = 0,
 		writes = 0;
@@ -34,7 +34,7 @@ function setup({ cached = false, online = true, gate } = {}) {
 	};
 	const module = loadSource("shared/vocabulary/vocabularyCoordinator.ts", {
 		"@/db/database": { default: database, __esModule: true },
-		"@/hooks/useVocabularyStore": { useVocabularyStore: store },
+		"@/shared/vocabulary/vocabularyStore": { useVocabularyStore: store },
 		"@/api/vocabulary": api,
 		"@/utils/logger": { logger },
 		"@react-native-community/netinfo": {
@@ -89,5 +89,5 @@ test("offline sync retains cache and cancelled old operations cannot publish or 
 	await pending;
 	assert.equal(app.writes, 0);
 	assert.equal(app.store.getState().lastSyncTime, null);
-	assert.equal(app.store.getState().words.length, 0);
+	assert.equal("words" in app.store.getState(), false);
 });

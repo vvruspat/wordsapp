@@ -45,7 +45,14 @@ const observeUser = (accessToken: string, epoch: number) => {
 	observation = database
 		.get<User>("users")
 		.query(Q.where("user_id", userId))
-		.observe()
+		.observeWithColumns([
+			"language_learn",
+			"language_speak",
+			"name",
+			"email",
+			"email_verified",
+			"onboarded",
+		])
 		.subscribe((users) => {
 			if (generation !== epoch) return;
 			const user = users[0] ?? null;
@@ -128,11 +135,11 @@ export const sessionOwner = {
 		invalidateVocabularyOperations();
 		const current = () => epoch === generation;
 		await persistAuthenticatedUser(user, current);
-		if (!current()) return;
+		if (!current()) return false;
 		await serializeTokens(() =>
 			current() ? setAuthTokens(accessToken, refreshToken) : Promise.resolve(),
 		);
-		if (!current()) return;
+		if (!current()) return false;
 		sessionStore.setState({
 			accessToken,
 			refreshToken,
@@ -141,6 +148,7 @@ export const sessionOwner = {
 		});
 		observeUser(accessToken, epoch);
 		restore = Promise.resolve();
+		return true;
 	},
 	async logout() {
 		generation++;

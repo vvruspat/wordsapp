@@ -181,11 +181,15 @@ export function useDialogueRuntime(
 				logger.error("Unable to restore dialogue draft", error, "db"),
 			);
 		const unsubscribe = runtime.thread.composer.subscribe(() => {
-			void dialogueCacheRepository.setDraft(
-				userId,
-				detail.session.id,
-				runtime.thread.composer.getState().text,
-			);
+			void dialogueCacheRepository
+				.setDraft(
+					userId,
+					detail.session.id,
+					runtime.thread.composer.getState().text,
+				)
+				.catch((error) =>
+					logger.error("Unable to persist dialogue draft", error, "db"),
+				);
 		});
 		return () => {
 			disposed = true;
@@ -213,6 +217,7 @@ export function useDialogueRuntime(
 				const first = result[0];
 				setWordNotice(first ? { result: first } : null);
 			} catch (error) {
+				if (!current()) return;
 				setWordNotice({
 					message:
 						error instanceof Error ? error.message : t("dialogue_word_error"),

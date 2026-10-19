@@ -2,18 +2,18 @@ import { useEffect, useRef } from "react";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
 import { vocabcatalogRepository } from "@/db/repositories/vocabcatalog.repository";
 import { logger } from "@/utils/logger";
-import { useExcerciseStore } from "./useExcerciseStore";
+import { useSelectionStore } from "@/shared/selection/selectionStore";
 
 export const useDefaultCatalogSelection = (
 	userId?: number,
 	learningLanguage?: string,
 ) => {
 	const { currentCatalogs, setCurrentCatalogs, _hasHydrated } =
-		useExcerciseStore();
+		useSelectionStore();
 	const previousLanguage = useRef(learningLanguage);
 
 	useEffect(() => {
-		if (!userId || !_hasHydrated || !useExcerciseStore.getState()._hasHydrated)
+		if (!userId || !_hasHydrated || !useSelectionStore.getState()._hasHydrated)
 			return;
 		void userSettingsRepository
 			.set(
@@ -31,7 +31,7 @@ export const useDefaultCatalogSelection = (
 			!userId ||
 			!learningLanguage ||
 			!_hasHydrated ||
-			!useExcerciseStore.getState()._hasHydrated
+			!useSelectionStore.getState()._hasHydrated
 		)
 			return;
 
@@ -70,7 +70,7 @@ export const useDefaultCatalogSelection = (
 					);
 					if (initialized && newMyWordsIds.length === 0) return;
 
-					const selectedIds = useExcerciseStore.getState().currentCatalogs;
+					const selectedIds = useSelectionStore.getState().currentCatalogs;
 					const levelIds = catalogs
 						.filter(
 							(catalog) => catalog.title === "A1" || catalog.title === "A2",
@@ -100,7 +100,7 @@ export const useDefaultCatalogSelection = (
 							await userSettingsRepository.set(
 								userId.toString(),
 								"selected_catalogs",
-								JSON.stringify(useExcerciseStore.getState().currentCatalogs),
+								JSON.stringify(useSelectionStore.getState().currentCatalogs),
 							);
 							await userSettingsRepository.set(
 								userId.toString(),

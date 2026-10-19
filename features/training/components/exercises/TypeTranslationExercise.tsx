@@ -1,3 +1,4 @@
+import { evaluateTypedAnswer } from "../../model/answers";
 import { TrainingCharInput as WCharInput } from "../TrainingCharInput";
 import { useAcceptedAnswers } from "@/shared/vocabulary/useAcceptedAnswers";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -5,8 +6,7 @@ import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/features/training/components/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
+import { useSwipeAnimation } from "@/shared/ui/useSwipeAnimation";
 import { WCharInputProps } from "@/mob-ui";
 import { TrainingPromptCard } from "@/features/training/components/exercises/TrainingPromptCard";
 
@@ -34,7 +34,7 @@ export function TypeTranslationExercise() {
 		complete,
 		triggerLike,
 	} = useContext(ExerciseContext);
-	const { currentPairs } = useExcerciseStore();
+	const { currentPairs } = useContext(ExerciseContext).wordsPool;
 
 	const { word, translation } = currentPairs[0] ?? {
 		word: null,
@@ -85,21 +85,12 @@ export function TypeTranslationExercise() {
 	const evaluateStatus = useCallback(
 		(text: string): CharInputStatus => {
 			if (!translation) return "default";
-			const primaryAnswer = translation.translation.trim().toLowerCase();
-			const normalizedInput = text.trim().toLowerCase();
-			const answers =
-				acceptedTranslations.length > 0
-					? acceptedTranslations
-							.map((t) => t.trim().toLowerCase())
-							.filter((t) => t.length === primaryAnswer.length)
-					: [primaryAnswer];
-
-			if (normalizedInput.length === primaryAnswer.length) {
-				return answers.some((a) => a === normalizedInput) ? "success" : "error";
-			}
-			return answers.some((a) => a.startsWith(normalizedInput))
-				? "default"
-				: "error";
+			return evaluateTypedAnswer(
+				text,
+				translation.translation,
+				acceptedTranslations,
+				acceptedTranslations.length === 0,
+			);
 		},
 		[translation, acceptedTranslations],
 	);

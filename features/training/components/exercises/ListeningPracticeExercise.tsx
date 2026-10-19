@@ -3,8 +3,7 @@ import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/features/training/components/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
+import { useSwipeAnimation } from "@/shared/ui/useSwipeAnimation";
 import { WButton, WText } from "@/mob-ui";
 import { shuffleArray } from "@/utils";
 import { TrainingPromptCard } from "@/features/training/components/exercises/TrainingPromptCard";
@@ -33,7 +32,7 @@ export function ListeningPracticeExercise() {
 		triggerLike,
 	} = useContext(ExerciseContext);
 	const { currentPairs, currentRandomTranslations: randomTranslations } =
-		useExcerciseStore();
+		useContext(ExerciseContext).wordsPool;
 
 	const { word, translation } = currentPairs[0] ?? {
 		word: null,

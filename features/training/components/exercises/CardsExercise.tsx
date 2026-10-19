@@ -1,7 +1,6 @@
 import { GlowingEllipse } from "@/components/GlowingEllipse";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WCard, WText, WZStack } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -37,7 +36,7 @@ export function CardsExercise() {
 		onSuccess,
 		complete,
 	} = useContext(ExerciseContext);
-	const { currentPairs } = useExcerciseStore();
+	const { currentPairs } = useContext(ExerciseContext).wordsPool;
 
 	const { word, translation } = currentPairs[0] ?? {
 		word: null,

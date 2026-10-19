@@ -10,8 +10,12 @@ import {
 	View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { LogCategory, LogEntry, LogLevel } from "@/hooks/useLogStore";
-import { useLogStore } from "@/hooks/useLogStore";
+import type {
+	LogCategory,
+	LogEntry,
+	LogLevel,
+} from "@/shared/logging/logStore";
+import { useLogStore } from "@/shared/logging/logStore";
 
 const LEVEL_COLOR: Record<LogLevel, string> = {
 	debug: "#60a5fa",

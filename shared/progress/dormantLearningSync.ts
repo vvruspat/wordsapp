@@ -2,7 +2,7 @@ import NetInfo from "@react-native-community/netinfo";
 import { useCallback } from "react";
 import { createLearning, getLearning, updateLearning } from "@/api/learning";
 import { learningRepository } from "@/db/repositories/learning.repository";
-import { useSessionUser } from "./useSession";
+import { useSessionUser } from "@/shared/session/useSession";
 
 export const useLearningSync = () => {
 	const { user } = useSessionUser();

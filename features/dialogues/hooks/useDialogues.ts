@@ -15,7 +15,7 @@ import {
 	startDialogue,
 } from "@/features/dialogues/api/dialogues";
 import { dialogueCacheRepository } from "@/features/dialogues/services/dialogueCache";
-import { useSessionUser } from "@/hooks/useSession";
+import { useSessionUser } from "@/shared/session/useSession";
 
 export function useDialogues() {
 	const router = useRouter();

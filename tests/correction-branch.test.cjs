@@ -117,7 +117,9 @@ function setup({
 			"@/shared/vocabulary/integrateDialogueVocabulary": {
 				dialogueVocabularyRepository: {},
 			},
-			"@/hooks/useSession": { useSessionUser: () => ({ user: { userId: 1 } }) },
+			"@/shared/session/useSession": {
+				useSessionUser: () => ({ user: { userId: 1 } }),
+			},
 			"@/mob-ui": ui,
 			"@/mob-ui/brand/colors": { Colors },
 			"@/utils/logger": { logger },

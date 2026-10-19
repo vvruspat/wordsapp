@@ -126,6 +126,9 @@ export class TrainingSession {
 		this.updateStatus();
 	}
 	private reviewTraining: ExerciseId | null = null;
+	hasMastered(wordId: number, training: ExerciseId) {
+		return this.coverage.has(`${wordId}:${training}`);
+	}
 	mastered(training: ExerciseId) {
 		return this.wordIds.filter((id) => this.coverage.has(`${id}:${training}`))
 			.length;

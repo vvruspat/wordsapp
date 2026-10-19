@@ -14,7 +14,7 @@ test("shared restoration refreshes once and logout prevents late credentials/use
 				default: {
 					get: () => ({
 						query: () => ({
-							observe: () => ({
+							observeWithColumns: () => ({
 								subscribe: () => {
 									observations++;
 									return { unsubscribe() {} };

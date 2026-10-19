@@ -22,7 +22,7 @@ test("detail requests and completion from another user cannot replace an open se
 	const { useDialogueDetail } = loadSource(
 		"features/dialogues/hooks/useDialogueDetail.ts",
 		{
-			"@/hooks/useSession": { useSessionUser: () => ({ user }) },
+			"@/shared/session/useSession": { useSessionUser: () => ({ user }) },
 			"react-i18next": translation,
 			"@/utils/logger": { logger },
 			"@react-native-community/netinfo": {

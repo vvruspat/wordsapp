@@ -1,9 +1,10 @@
+import { useTrainingSelection } from "@/features/training/model/trainingSelection";
 import { useCallback, useEffect, useState } from "react";
 import { File, Paths } from "expo-file-system";
 import { useRouter } from "expo-router";
 import { sessionOwner, sessionStore } from "@/shared/session/sessionOwner";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useVocabularyStore } from "@/hooks/useVocabularyStore";
+import { useSelectionStore } from "@/shared/selection/selectionStore";
+import { useVocabularyStore } from "@/shared/vocabulary/vocabularyStore";
 import { logger } from "@/utils/logger";
 
 export function useBootstrap() {
@@ -38,7 +39,8 @@ export function useBootstrap() {
 
 	const logout = useCallback(async () => {
 		await sessionOwner.logout();
-		useExcerciseStore.getState().reset();
+		useSelectionStore.getState().reset();
+		useTrainingSelection.getState().reset();
 		useVocabularyStore.getState().reset();
 		setHasStoredSession(false);
 		router.replace("/");

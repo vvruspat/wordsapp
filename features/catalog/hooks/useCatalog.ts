@@ -1,5 +1,6 @@
+import { useOperationScope } from "@/shared/lifecycle/useOperationScope";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import Topic from "@/db/models/Topic";
 import VocabCatalog from "@/db/models/VocabCatalog";
@@ -9,9 +10,9 @@ import { topicsRepository } from "@/db/repositories/topics.repository";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
 import { vocabcatalogRepository } from "@/db/repositories/vocabcatalog.repository";
 import { wordsRepository } from "@/db/repositories/words.repository";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSessionUser } from "@/hooks/useSession";
-import { useVocabularyStore } from "@/hooks/useVocabularyStore";
+import { useSelectionStore } from "@/shared/selection/selectionStore";
+import { useSessionUser } from "@/shared/session/useSession";
+import { useVocabularyStore } from "@/shared/vocabulary/vocabularyStore";
 import { logger } from "@/utils/logger";
 import { buildTopicProgressStats } from "@/utils/topicProgress";
 
@@ -26,14 +27,20 @@ export function useCatalog() {
 		_hasHydrated,
 		topicsInitialized,
 		setTopicsInitialized,
-	} = useExcerciseStore();
+	} = useSelectionStore();
 	const { user } = useSessionUser();
+	const begin = useOperationScope(
+		JSON.stringify([
+			user?.userId,
+			user?.language_learn,
+			user?.language_speak,
+			currentCatalogs,
+		]),
+	);
+	const [error, setError] = useState<unknown>(null);
 
 	const [catalogs, setCatalogs] = useState<VocabCatalog[]>([]);
 	const [topics, setTopics] = useState<Topic[]>([]);
-	const [topicTranslations, setTopicTranslations] = useState<
-		Map<number, string>
-	>(new Map());
 
 	const filterTopics = useCallback(async (): Promise<Topic[]> => {
 		if (currentCatalogs.length === 0) {
@@ -59,11 +66,25 @@ export function useCatalog() {
 	>(new Map());
 
 	useEffect(() => {
-		filterTopics().then((topics) => setFilteredTopics(topics));
-	}, [filterTopics]);
+		const current = begin();
+		let active = true;
+		void filterTopics()
+			.then((value) => {
+				if (active && current()) setFilteredTopics(value);
+			})
+			.catch((reason) => {
+				if (active && current()) setError(reason);
+				logger.error("Unable to filter catalog topics", reason, "db");
+			});
+		return () => {
+			active = false;
+		};
+	}, [filterTopics, begin]);
 
 	useFocusEffect(
 		useCallback(() => {
+			const current = begin();
+			let active = true;
 			if (filteredTopics.length === 0 || !user?.userId) {
 				setTopicWords([]);
 				return;
@@ -71,8 +92,17 @@ export function useCatalog() {
 			const topicIds = filteredTopics.map((t) => t.remoteId);
 			wordsRepository
 				.getByTopicIds(topicIds, currentCatalogs)
-				.then(setTopicWords);
-		}, [filteredTopics, currentCatalogs, user?.userId]),
+				.then((value) => {
+					if (active && current()) setTopicWords(value);
+				})
+				.catch((reason) => {
+					if (active && current()) setError(reason);
+					logger.error("Unable to load catalog words", reason, "db");
+				});
+			return () => {
+				active = false;
+			};
+		}, [filteredTopics, currentCatalogs, user?.userId, begin]),
 	);
 
 	useEffect(() => {
@@ -162,43 +192,46 @@ export function useCatalog() {
 			);
 	}, [currentTopics, _hasHydrated, user?.userId]);
 
-	const fetchCatalogs = useCallback(async (language: string) => {
-		const catalogs = (
-			await vocabcatalogRepository.getByLanguage(language)
-		).sort((a, b) => a.title.localeCompare(b.title));
-		setCatalogs(catalogs);
-	}, []);
-
-	const fetchTopics = useCallback(async (language: string) => {
-		const topics = (await topicsRepository.getByLanguage(language)).sort(
-			(a, b) => a.title.localeCompare(b.title),
-		);
-		setTopics(topics);
-	}, []);
-
 	const { topicTranslations: topicTranslationsData, lastSyncTime } =
 		useVocabularyStore();
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: lastSyncTime is a re-fetch trigger after sync completes
 	useEffect(() => {
-		(async () => {
-			if (user?.language_learn) {
-				await fetchCatalogs(user.language_learn);
-				await fetchTopics(user.language_learn);
-			}
-		})();
-	}, [user?.language_learn, fetchCatalogs, fetchTopics, lastSyncTime]);
-
-	useEffect(() => {
-		if (!user?.language_speak || user.language_speak === user?.language_learn) {
-			setTopicTranslations(new Map());
+		const current = begin();
+		let active = true;
+		setError(null);
+		const syncVersion = lastSyncTime;
+		if (!user?.language_learn) {
+			setCatalogs([]);
+			setTopics([]);
 			return;
 		}
-		const map = new Map<number, string>();
-		for (const t of topicTranslationsData) {
-			map.set(t.topic, t.translation);
-		}
-		setTopicTranslations(map);
+		void Promise.all([
+			vocabcatalogRepository.getByLanguage(user.language_learn),
+			topicsRepository.getByLanguage(user.language_learn),
+		])
+			.then(([catalogs, topics]) => {
+				if (
+					!active ||
+					!current() ||
+					useVocabularyStore.getState().lastSyncTime !== syncVersion
+				)
+					return;
+				setCatalogs(catalogs.sort((a, b) => a.title.localeCompare(b.title)));
+				setTopics(topics.sort((a, b) => a.title.localeCompare(b.title)));
+			})
+			.catch((reason) => {
+				if (active && current()) setError(reason);
+				logger.error("Unable to load catalog", reason, "db");
+			});
+		return () => {
+			active = false;
+		};
+	}, [begin, user?.language_learn, lastSyncTime]);
+	const topicTranslations = useMemo(() => {
+		if (!user?.language_speak || user.language_speak === user.language_learn)
+			return new Map<number, string>();
+		return new Map(
+			topicTranslationsData.map((item) => [item.topic, item.translation]),
+		);
 	}, [user?.language_speak, user?.language_learn, topicTranslationsData]);
 
 	const toggleCatalog = useCallback(
@@ -236,6 +269,7 @@ export function useCatalog() {
 	}, [filteredTopics, setCurrentTopics]);
 
 	return {
+		error,
 		t,
 		currentCatalogs,
 		currentTopics,

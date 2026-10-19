@@ -1,3 +1,5 @@
+import { readTopicCompletion } from "../services/topicCompletion";
+import { useOperationScope } from "@/shared/lifecycle/useOperationScope";
 import {
 	useCallback,
 	useContext,
@@ -10,14 +12,11 @@ import { useTranslation } from "react-i18next";
 import { router } from "expo-router";
 import { BackgroundContext } from "@/context/BackgroundContext";
 import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
-import { useAudioReadiness } from "@/hooks/useAudioReadiness";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSessionUser } from "@/hooks/useSession";
+import { useAudioReadiness } from "@/shared/audio/useAudioReadiness";
+import { useSelectionStore } from "@/shared/selection/selectionStore";
+import { useSessionUser } from "@/shared/session/useSession";
 import { Colors } from "@/mob-ui/brand/colors";
 import { learningRepository } from "@/db/repositories/learning.repository";
-import { topicsRepository } from "@/db/repositories/topics.repository";
-import { wordsRepository } from "@/db/repositories/words.repository";
-import { buildTopicProgressStats } from "@/utils/topicProgress";
 import { logger } from "@/utils/logger";
 import { shuffleArray } from "@/utils";
 import EXERCISES_APPS from "@/shared/training/presentation";
@@ -70,9 +69,20 @@ export function useTrainingPresentation(
 	const isExerciseReady = queueReady && currentTrainingId === currentExercise;
 	const { setColor, setOpacity } = useContext(BackgroundContext);
 	const { user } = useSessionUser();
-	const { currentCatalogs, currentTopics, currentPairs, setCurrentTopics } =
-		useExcerciseStore();
+	const { currentPairs } = useContext(ExerciseContext).wordsPool;
+	const { currentCatalogs, currentTopics, setCurrentTopics } =
+		useSelectionStore();
 	const { isAudioReady, isAudioReadinessLoading } = useAudioReadiness();
+	const begin = useOperationScope(
+		JSON.stringify([
+			user?.userId,
+			user?.language_learn,
+			user?.language_speak,
+			currentCatalogs,
+			currentTopics,
+			currentExercise,
+		]),
+	);
 	const selectedTopicId = currentTopics.length === 1 ? currentTopics[0] : null;
 	const isListeningAudioUnavailable =
 		exercise === "listening_practice" &&
@@ -216,56 +226,23 @@ export function useTrainingPresentation(
 		};
 	}, [currentExercise, setColor, setOpacity, t]);
 
-	const checkTopicCompletion = useCallback(async () => {
-		if (
-			!user?.userId ||
-			!user.language_learn ||
-			currentCatalogs.length === 0 ||
-			selectedTopicId == null
-		) {
-			return {
-				isComplete: false,
-				nextTopicId: null,
-				nextTopicTitle: null,
-			};
-		}
-
-		const [topics, words, progressRecords, availableTopicIds] =
-			await Promise.all([
-				topicsRepository.getByLanguage(user.language_learn),
-				wordsRepository.getByTopicIds(currentTopics, currentCatalogs),
-				learningRepository.getByUser(user.userId),
-				wordsRepository.getTopicsByCatalogs(currentCatalogs),
-			]);
-
-		const sortedTopics = topics.sort((a, b) => a.title.localeCompare(b.title));
-		const filteredTopics = sortedTopics.filter((topic) =>
-			availableTopicIds.has(topic.remoteId),
-		);
-		const currentTopicIndex = filteredTopics.findIndex(
-			(topic) => topic.remoteId === selectedTopicId,
-		);
-		const nextTopic =
-			currentTopicIndex >= 0 ? filteredTopics[currentTopicIndex + 1] : null;
-		const stats = buildTopicProgressStats(words, progressRecords);
-		const topicStats = stats.get(selectedTopicId);
-
-		return {
-			isComplete: Boolean(
-				topicStats &&
-					topicStats.total > 0 &&
-					topicStats.learned >= topicStats.total,
+	const checkTopicCompletion = useCallback(
+		async () =>
+			readTopicCompletion(
+				user?.userId,
+				user?.language_learn,
+				currentCatalogs,
+				currentTopics,
+				selectedTopicId,
 			),
-			nextTopicId: nextTopic?.remoteId ?? null,
-			nextTopicTitle: nextTopic?.title ?? null,
-		};
-	}, [
-		currentCatalogs,
-		currentTopics,
-		selectedTopicId,
-		user?.language_learn,
-		user?.userId,
-	]);
+		[
+			currentCatalogs,
+			currentTopics,
+			selectedTopicId,
+			user?.language_learn,
+			user?.userId,
+		],
+	);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -283,10 +260,11 @@ export function useTrainingPresentation(
 			return;
 		}
 
+		const current = begin();
 		const syncProgress = async () => {
 			const result = await checkTopicCompletion();
 
-			if (!isMounted) {
+			if (!isMounted || !current()) {
 				return;
 			}
 
@@ -296,7 +274,7 @@ export function useTrainingPresentation(
 		};
 
 		syncProgress().catch(() => {
-			if (!isMounted) {
+			if (!isMounted || !current()) {
 				return;
 			}
 
@@ -309,7 +287,7 @@ export function useTrainingPresentation(
 			.observeByUser(user.userId)
 			.subscribe(() => {
 				syncProgress().catch(() => {
-					if (!isMounted) {
+					if (!isMounted || !current()) {
 						return;
 					}
 
@@ -326,6 +304,7 @@ export function useTrainingPresentation(
 		};
 	}, [
 		checkTopicCompletion,
+		begin,
 		currentCatalogs,
 		selectedTopicId,
 		user?.language_learn,
@@ -358,6 +337,7 @@ export function useTrainingPresentation(
 
 			masteredPromptTimeoutRef.current = setTimeout(() => {
 				void (async () => {
+					const current = begin();
 					const shouldCheckTopic =
 						selectedTopicId != null &&
 						user?.userId != null &&
@@ -371,7 +351,7 @@ export function useTrainingPresentation(
 
 					try {
 						const result = await checkTopicCompletion();
-
+						if (!current()) return;
 						setIsCurrentTopicComplete(result.isComplete);
 						setNextTopicId(result.nextTopicId);
 						setNextTopicTitle(result.nextTopicTitle);
@@ -393,6 +373,7 @@ export function useTrainingPresentation(
 		previousMasteredRef.current = isMastered;
 	}, [
 		checkTopicCompletion,
+		begin,
 		currentCatalogs.length,
 		exercise,
 		isCurrentTopicComplete,

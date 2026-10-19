@@ -6,11 +6,11 @@ import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 import { userSettingsRepository } from "@/db/repositories/userSettings.repository";
-import { useDefaultCatalogSelection } from "@/hooks/useDefaultCatalogSelection";
-import { useExcerciseStore } from "@/hooks/useExcerciseStore";
-import { useSessionUser } from "@/hooks/useSession";
-import { useVocabularyStore } from "@/hooks/useVocabularyStore";
-import { useVocabularySync } from "@/hooks/useVocabularySync";
+import { useDefaultCatalogSelection } from "@/shared/selection/useDefaultCatalogSelection";
+import { useSelectionStore } from "@/shared/selection/selectionStore";
+import { useSessionUser } from "@/shared/session/useSession";
+import { useVocabularyStore } from "@/shared/vocabulary/vocabularyStore";
+import { useVocabularySync } from "@/shared/vocabulary/useVocabularySync";
 
 import { logger } from "@/utils/logger";
 export function useAuthorizedLifecycle() {
@@ -30,8 +30,13 @@ export function useAuthorizedLifecycle() {
 		setHasHydrated,
 		setTopicsInitialized,
 		_hasHydrated,
-	} = useExcerciseStore();
+	} = useSelectionStore();
 	const lastSyncedLanguageRef = useRef<string | null>(null);
+	const syncIdentity = JSON.stringify([
+		user?.userId,
+		user?.language_learn,
+		user?.language_speak,
+	]);
 	const lastLanguageLearnRef = useRef<string | null>(null);
 
 	// Reset catalog/topic selection when the learning language changes
@@ -58,7 +63,9 @@ export function useAuthorizedLifecycle() {
 					"selected_topics",
 					JSON.stringify([]),
 				),
-			]).catch(() => {});
+			]).catch((error) =>
+				logger.error("Unable to reset language selection", error, "db"),
+			);
 		}
 	}, [
 		user?.userId,
@@ -124,12 +131,12 @@ export function useAuthorizedLifecycle() {
 		const timeoutId = setTimeout(() => controller.abort(), 2500);
 
 		const checkOnlineAndSync = async () => {
-			if (isSyncing || lastSyncedLanguageRef.current === user.language_learn) {
+			if (isSyncing || lastSyncedLanguageRef.current === syncIdentity) {
 				return;
 			}
 
 			if (!server) {
-				lastSyncedLanguageRef.current = user.language_learn;
+				lastSyncedLanguageRef.current = syncIdentity;
 				syncVocabulary(user.language_learn as Language);
 				return;
 			}
@@ -140,7 +147,7 @@ export function useAuthorizedLifecycle() {
 					signal: controller.signal,
 				});
 				if (res) {
-					lastSyncedLanguageRef.current = user.language_learn;
+					lastSyncedLanguageRef.current = syncIdentity;
 					syncVocabulary(user.language_learn as Language);
 				}
 			} catch {
@@ -156,7 +163,7 @@ export function useAuthorizedLifecycle() {
 			clearTimeout(timeoutId);
 			controller.abort();
 		};
-	}, [syncVocabulary, user, isSyncing]);
+	}, [syncVocabulary, user, isSyncing, syncIdentity]);
 
 	useEffect(() => {
 		if (
@@ -164,7 +171,7 @@ export function useAuthorizedLifecycle() {
 			!user.language_learn ||
 			isSyncing ||
 			isAudioDownloading ||
-			lastSyncedLanguageRef.current !== user.language_learn
+			lastSyncedLanguageRef.current !== syncIdentity
 		) {
 			return;
 		}
@@ -176,5 +183,6 @@ export function useAuthorizedLifecycle() {
 		isSyncing,
 		user?.email_verified,
 		user?.language_learn,
+		syncIdentity,
 	]);
 }
