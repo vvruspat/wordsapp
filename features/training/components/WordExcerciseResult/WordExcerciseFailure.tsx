@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, type ModalProps, View } from "react-native";
 import { ReportButton } from "@/components/ReportButton";
-import { SadSmileIcon } from "./assets/SadSmileIcon";
+import { SadSmileIcon } from "@/features/training/components/WordExcerciseResult/assets/SadSmileIcon";
 
 export type WordExcerciseFailureModalProps = Omit<
 	ModalProps,

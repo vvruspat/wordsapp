@@ -1,19 +1,28 @@
+import { TrainingCharInput as WCharInput } from "../TrainingCharInput";
 import { useAcceptedAnswers } from "@/shared/vocabulary/useAcceptedAnswers";
-import { useCallback, useContext, useEffect, useState } from "react";
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
+import { useTranslation } from "react-i18next";
 import { Animated, StyleSheet, View } from "react-native";
-import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
-import { PlayWordButton } from "@/components/PlayWordButton";
-import { ExerciseContext } from "@/context/ExerciseContext";
+import { WordExcerciseCardResultModal } from "@/features/training/components/WordExcerciseResult";
+import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
-import { WCharInput, WCharInputProps } from "@/mob-ui";
-import { TrainingPromptCard } from "./TrainingPromptCard";
+import { WCharInputProps, WText } from "@/mob-ui";
+import { TrainingPromptCard } from "@/features/training/components/exercises/TrainingPromptCard";
 
 type CharInputStatus = WCharInputProps["status"];
 
 const score = 0.2;
 
-export function TypeTranslationExercise() {
+export function TypeWordExercise() {
+	const { t } = useTranslation();
 	const [status, setStatus] = useState<CharInputStatus>("default");
 	const [modalVisible, setModalVisible] = useState(false);
 	const [modalPair, setModalPair] = useState<{
@@ -21,6 +30,10 @@ export function TypeTranslationExercise() {
 		translation: string;
 	} | null>(null);
 	const [answered, setAnswered] = useState(false);
+	const [wrongAttempts, setWrongAttempts] = useState(0);
+	const [inputResetKey, setInputResetKey] = useState(0);
+	const wrongAttemptsRef = useRef(0);
+	const previousInputLengthRef = useRef(0);
 
 	const { translateX, swipeOut, notifyContentChanged } = useSwipeAnimation();
 
@@ -42,28 +55,45 @@ export function TypeTranslationExercise() {
 
 	const wordRemoteId = word?.remoteId;
 	const wordLanguage = word?.language;
+	const translationText = translation?.translation;
 	const translationLanguage = translation?.language;
+	const targetAnswerLength = word?.word.trim().length ?? 0;
+	const maxWrongAttempts = useMemo(
+		() => Math.max(1, Math.ceil(targetAnswerLength / 2)),
+		[targetAnswerLength],
+	);
 
-	const acceptedTranslations = useAcceptedAnswers(
-		"translations",
+	const resetAttempts = useCallback(() => {
+		wrongAttemptsRef.current = 0;
+		previousInputLengthRef.current = 0;
+		setWrongAttempts(0);
+	}, []);
+
+	const acceptedWords = useAcceptedAnswers(
+		"words",
 		wordRemoteId,
 		wordLanguage,
 		translationLanguage,
+		translationText,
 	);
 
 	const [loadKey, setLoadKey] = useState(0);
 
 	const load = useCallback(async () => {
 		setStatus("default");
+		resetAttempts();
 		await loadData(1, 0, 4);
-	}, [loadData]);
+	}, [loadData, resetAttempts]);
 
 	const onExerciseComplete = useCallback(() => {
 		swipeOut(() => {
 			setAnswered(false);
+			setStatus("default");
+			resetAttempts();
+			setInputResetKey((k) => k + 1);
 			setLoadKey((k) => k + 1);
 		});
-	}, [swipeOut]);
+	}, [resetAttempts, swipeOut]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
 	useEffect(() => {
@@ -83,15 +113,15 @@ export function TypeTranslationExercise() {
 
 	const evaluateStatus = useCallback(
 		(text: string): CharInputStatus => {
-			if (!translation) return "default";
-			const primaryAnswer = translation.translation.trim().toLowerCase();
+			if (!word) return "default";
+			const primaryAnswer = word.word.trim().toLowerCase();
 			const normalizedInput = text.trim().toLowerCase();
-			const answers =
-				acceptedTranslations.length > 0
-					? acceptedTranslations
-							.map((t) => t.trim().toLowerCase())
-							.filter((t) => t.length === primaryAnswer.length)
-					: [primaryAnswer];
+			const answers = [
+				...new Set([
+					primaryAnswer,
+					...acceptedWords.map((w) => w.trim().toLowerCase()),
+				]),
+			].filter((w) => w.length === primaryAnswer.length);
 
 			if (normalizedInput.length === primaryAnswer.length) {
 				return answers.some((a) => a === normalizedInput) ? "success" : "error";
@@ -100,13 +130,20 @@ export function TypeTranslationExercise() {
 				? "default"
 				: "error";
 		},
-		[translation, acceptedTranslations],
+		[word, acceptedWords],
 	);
 
 	const handleChange = useCallback(
 		(text: string) => {
 			if (!word || !translation || answered) return;
+
 			const nextStatus = evaluateStatus(text);
+			const currentInputLength = text.trim().length;
+			const addedCharacters = Math.max(
+				0,
+				currentInputLength - previousInputLengthRef.current,
+			);
+			previousInputLengthRef.current = currentInputLength;
 			setStatus(nextStatus);
 
 			if (nextStatus === "success") {
@@ -114,20 +151,29 @@ export function TypeTranslationExercise() {
 				triggerLike();
 				onSuccess?.(word.remoteId, score, false);
 				complete();
-			} else if (
-				nextStatus === "error" &&
-				text.trim().length === translation.translation.trim().length
-			) {
-				onFailure?.(word.remoteId, score);
+			} else if (nextStatus === "error" && addedCharacters > 0) {
+				const nextWrongAttempts = Math.min(
+					maxWrongAttempts,
+					wrongAttemptsRef.current + addedCharacters,
+				);
+				wrongAttemptsRef.current = nextWrongAttempts;
+				setWrongAttempts(nextWrongAttempts);
+
+				if (nextWrongAttempts >= maxWrongAttempts) {
+					setAnswered(true);
+					onFailure?.(word.remoteId, score);
+					return;
+				}
 			}
 		},
 		[
-			translation,
 			word,
+			translation,
 			answered,
 			complete,
 			triggerLike,
 			evaluateStatus,
+			maxWrongAttempts,
 			onFailure,
 			onSuccess,
 		],
@@ -153,24 +199,29 @@ export function TypeTranslationExercise() {
 		<View style={styles.wrapper}>
 			<Animated.View style={[styles.content, { transform: [{ translateX }] }]}>
 				<TrainingPromptCard
-					word={word.word}
-					transcription={word.transcription}
-					meaning={word.meaning}
+					word={translation.translation}
 					wordId={word.remoteId}
 					onSkip={handleSkip}
-				>
-					<View style={{ gap: 24, alignItems: "center" }}>
-						<PlayWordButton audio={word.audio} />
-					</View>
-				</TrainingPromptCard>
-
-				<WCharInput
-					length={translation.translation.length}
-					onChangeText={handleChange}
-					status={status}
-					displayUppercase={false}
 				/>
 			</Animated.View>
+
+			<WCharInput
+				key={`${word.remoteId}-${inputResetKey}`}
+				length={word.word.length}
+				onChangeText={handleChange}
+				status={status}
+				animateIn
+				displayUppercase={false}
+			/>
+
+			<View style={styles.attemptsCounter}>
+				<WText mode="secondary" size="sm" align="center">
+					{t("type_word_mistakes_counter", {
+						current: wrongAttempts,
+						max: maxWrongAttempts,
+					})}
+				</WText>
+			</View>
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
@@ -190,6 +241,10 @@ const styles = StyleSheet.create({
 	},
 	content: {
 		flex: 1,
+		width: "100%",
+	},
+	attemptsCounter: {
+		marginTop: 12,
 		width: "100%",
 	},
 });

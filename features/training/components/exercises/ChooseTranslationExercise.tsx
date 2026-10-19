@@ -1,24 +1,20 @@
+import { useAcceptedAnswers } from "@/shared/vocabulary/useAcceptedAnswers";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Animated, StyleSheet, View } from "react-native";
-import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
+import { WordExcerciseCardResultModal } from "@/features/training/components/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
-import { ExerciseContext } from "@/context/ExerciseContext";
+import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
 import { WButton, WText } from "@/mob-ui";
 import { shuffleArray } from "@/utils";
-import { TrainingPromptCard } from "./TrainingPromptCard";
+import { TrainingPromptCard } from "@/features/training/components/exercises/TrainingPromptCard";
 
 const score = 0.2;
 
-export function ListeningPracticeExercise() {
+export function ChooseTranslationExercise() {
 	const [modalVisible, setModalVisible] = useState(false);
-	const [modalPair, setModalPair] = useState<{
-		word: string;
-		translation: string;
-	} | null>(null);
 	const [answered, setAnswered] = useState(false);
-	const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
 	const { translateX, buttonAnims, swipeOut, notifyContentChanged } =
 		useSwipeAnimation(4);
@@ -40,16 +36,29 @@ export function ListeningPracticeExercise() {
 		translation: null,
 	};
 
+	const wordRemoteId = word?.remoteId;
+	const wordLanguage = word?.language;
+	const translationLanguage = translation?.language;
+
+	useEffect(() => {
+		if (wordRemoteId != null) setSelection(null);
+	}, [wordRemoteId]);
+	const acceptedTranslations = useAcceptedAnswers(
+		"translations",
+		wordRemoteId,
+		wordLanguage,
+		translationLanguage,
+	);
+
 	const [loadKey, setLoadKey] = useState(0);
 
 	const load = useCallback(async () => {
-		await loadData(1, 0, 3);
+		await loadData(1, 0, 4);
 	}, [loadData]);
 
 	const onExerciseComplete = useCallback(() => {
 		swipeOut(() => {
 			setAnswered(false);
-			setSelectedOption(null);
 			setLoadKey((k) => k + 1);
 		});
 	}, [swipeOut]);
@@ -66,13 +75,15 @@ export function ListeningPracticeExercise() {
 
 	const options = useMemo(() => {
 		if (!translation) return [];
-		const opts = [
-			...new Set([
-				translation.translation,
-				...randomTranslations.map((t) => t.translation),
-			]),
-		];
-		return shuffleArray(opts);
+		const correctText = translation.translation;
+		const distractors = [
+			...new Set(
+				randomTranslations
+					.map((t) => t.translation)
+					.filter((t) => t !== correctText),
+			),
+		].slice(0, 3);
+		return shuffleArray([correctText, ...distractors]);
 	}, [randomTranslations, translation]);
 
 	useEffect(() => {
@@ -81,13 +92,27 @@ export function ListeningPracticeExercise() {
 		}
 	}, [word, options, notifyContentChanged]);
 
+	const [selection, setSelection] = useState<{
+		wordId: number;
+		option: string;
+	} | null>(null);
+	const [modalPair, setModalPair] = useState<{
+		word: string;
+		translation: string;
+	} | null>(null);
+
 	const handlePress = useCallback(
 		(option: string) => {
 			if (!word || !translation || answered) return;
-			setSelectedOption(option);
-			setAnswered(true);
+			setSelection({ wordId: word.remoteId, option });
 
-			if (option === translation.translation) {
+			const isAccepted =
+				acceptedTranslations.length > 0
+					? acceptedTranslations.includes(option)
+					: option === translation.translation;
+
+			if (isAccepted) {
+				setAnswered(true);
 				triggerLike();
 				onSuccess?.(word.remoteId, score, false);
 				complete();
@@ -95,7 +120,16 @@ export function ListeningPracticeExercise() {
 				onFailure?.(word.remoteId, score);
 			}
 		},
-		[translation, word, answered, complete, triggerLike, onFailure, onSuccess],
+		[
+			translation,
+			word,
+			acceptedTranslations,
+			answered,
+			complete,
+			triggerLike,
+			onFailure,
+			onSuccess,
+		],
 	);
 
 	const handleSkip = useCallback(() => {
@@ -120,8 +154,14 @@ export function ListeningPracticeExercise() {
 				<Animated.View
 					style={[styles.content, { transform: [{ translateX }] }]}
 				>
-					<TrainingPromptCard wordId={word.remoteId} onSkip={handleSkip}>
-						<PlayWordButton key={word.remoteId} autoplay audio={word.audio} />
+					<TrainingPromptCard
+						word={word.word}
+						transcription={word.transcription}
+						meaning={word.meaning}
+						wordId={word.remoteId}
+						onSkip={handleSkip}
+					>
+						<PlayWordButton audio={word.audio} />
 					</TrainingPromptCard>
 				</Animated.View>
 
@@ -137,7 +177,12 @@ export function ListeningPracticeExercise() {
 							]}
 						>
 							<WButton
-								mode={selectedOption === option ? "primary" : "dark"}
+								mode={
+									selection?.wordId === wordRemoteId &&
+									selection?.option === option
+										? "primary"
+										: "dark"
+								}
 								fullWidth
 								onPress={() => handlePress(option)}
 							>

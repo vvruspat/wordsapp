@@ -13,8 +13,8 @@ import {
 	useWindowDimensions,
 	View,
 } from "react-native";
-import { MatchWordCard } from "@/components/MatchWordCard/MatchWordCard";
-import { ExerciseContext } from "@/context/ExerciseContext";
+import { MatchWordCard } from "@/features/training/components/MatchWordCard/MatchWordCard";
+import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
 import Word from "@/db/models/Word";
 import WordTranslation from "@/db/models/WordTranslation";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";

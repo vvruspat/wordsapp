@@ -10,7 +10,7 @@ export type SessionStatus =
  * Word objects are owned by wordsService; this model knows only identifiers. */
 export class TrainingSession {
 	readonly wordIds: readonly number[];
-	readonly trainingIds: readonly ExerciseId[];
+	trainingIds: readonly ExerciseId[];
 	private coverage = new Set<string>();
 	private delivered = new Set<string>();
 	private order: number[] = [];
@@ -39,9 +39,15 @@ export class TrainingSession {
 		this.updateStatus();
 	}
 	remaining(ids: readonly ExerciseId[] = this.trainingIds) {
-		return ids.filter((id) =>
-			this.wordIds.some((word) => !this.coverage.has(`${word}:${id}`)),
+		return ids.filter(
+			(id) =>
+				(!this.reviewTraining || id === this.reviewTraining) &&
+				this.wordIds.some((word) => !this.coverage.has(`${word}:${id}`)),
 		);
+	}
+	configureTrainings(ids: ExerciseId[]) {
+		this.trainingIds = Object.freeze([...new Set(ids)]);
+		this.updateStatus();
 	}
 	nextTraining(random = Math.random): ExerciseId | null {
 		const pool = this.remaining();

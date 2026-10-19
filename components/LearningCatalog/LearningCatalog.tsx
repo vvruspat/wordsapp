@@ -17,7 +17,7 @@ import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSessionUser } from "@/hooks/useSession";
 import { WCard, WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
-import { TrainingProgressBar } from "../TrainingProgressBar";
+import { TrainingProgressBar } from "@/features/training/components/TrainingProgressBar";
 import { EXERCISES_APPS, LearningTrainingName } from "./types";
 
 type TrainingCardStats = {

@@ -1,4 +1,4 @@
-import { ExerciseContext } from "@/context/ExerciseContext";
+import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
 import { Colors } from "@/mob-ui/brand/colors";
 import { useContext, useEffect, useRef } from "react";
 import { Animated, Easing, View } from "react-native";

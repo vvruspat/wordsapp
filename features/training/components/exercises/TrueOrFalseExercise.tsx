@@ -1,23 +1,27 @@
 import { useAcceptedAnswers } from "@/shared/vocabulary/useAcceptedAnswers";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Animated, StyleSheet, View } from "react-native";
-import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
+import { WordExcerciseCardResultModal } from "@/features/training/components/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
-import { ExerciseContext } from "@/context/ExerciseContext";
+import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
 import { WButton, WText } from "@/mob-ui";
-import { shuffleArray } from "@/utils";
-import { TrainingPromptCard } from "./TrainingPromptCard";
+import { TrainingPromptCard } from "@/features/training/components/exercises/TrainingPromptCard";
 
 const score = 0.2;
 
-export function ChooseTranslationExercise() {
+export function TrueOrFalseExercise() {
+	const { t } = useTranslation();
 	const [modalVisible, setModalVisible] = useState(false);
+	const [modalPair, setModalPair] = useState<{
+		word: string;
+		translation: string;
+	} | null>(null);
 	const [answered, setAnswered] = useState(false);
 
-	const { translateX, buttonAnims, swipeOut, notifyContentChanged } =
-		useSwipeAnimation(4);
+	const { translateX, swipeOut, notifyContentChanged } = useSwipeAnimation();
 
 	const {
 		addCompleteListener,
@@ -40,9 +44,6 @@ export function ChooseTranslationExercise() {
 	const wordLanguage = word?.language;
 	const translationLanguage = translation?.language;
 
-	useEffect(() => {
-		if (wordRemoteId != null) setSelection(null);
-	}, [wordRemoteId]);
 	const acceptedTranslations = useAcceptedAnswers(
 		"translations",
 		wordRemoteId,
@@ -73,46 +74,36 @@ export function ChooseTranslationExercise() {
 		return () => removeCompleteListener(onExerciseComplete);
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
-	const options = useMemo(() => {
-		if (!translation) return [];
-		const correctText = translation.translation;
-		const distractors = [
-			...new Set(
-				randomTranslations
-					.map((t) => t.translation)
-					.filter((t) => t !== correctText),
-			),
-		].slice(0, 3);
-		return shuffleArray([correctText, ...distractors]);
-	}, [randomTranslations, translation]);
+	const translationText = translation?.translation;
+	const alternativeText = randomTranslations.find(
+		(item) => item.translation !== translationText,
+	)?.translation;
+
+	const statement = useMemo(() => {
+		if (!translationText) return "";
+		return alternativeText && Math.random() < 0.5
+			? alternativeText
+			: translationText;
+	}, [translationText, alternativeText]);
 
 	useEffect(() => {
-		if (word && options.length > 0) {
+		if (word && translation) {
 			notifyContentChanged();
 		}
-	}, [word, options, notifyContentChanged]);
+	}, [word, translation, notifyContentChanged]);
 
-	const [selection, setSelection] = useState<{
-		wordId: number;
-		option: string;
-	} | null>(null);
-	const [modalPair, setModalPair] = useState<{
-		word: string;
-		translation: string;
-	} | null>(null);
-
-	const handlePress = useCallback(
-		(option: string) => {
+	const handleAnswer = useCallback(
+		(choice: "yes" | "no") => {
 			if (!word || !translation || answered) return;
-			setSelection({ wordId: word.remoteId, option });
+			setAnswered(true);
 
-			const isAccepted =
+			const userThinksCorrect = choice === "yes";
+			const isCorrect =
 				acceptedTranslations.length > 0
-					? acceptedTranslations.includes(option)
-					: option === translation.translation;
+					? acceptedTranslations.includes(statement)
+					: statement === translation.translation;
 
-			if (isAccepted) {
-				setAnswered(true);
+			if (userThinksCorrect === isCorrect) {
 				triggerLike();
 				onSuccess?.(word.remoteId, score, false);
 				complete();
@@ -121,12 +112,13 @@ export function ChooseTranslationExercise() {
 			}
 		},
 		[
-			translation,
-			word,
+			statement,
 			acceptedTranslations,
 			answered,
 			complete,
 			triggerLike,
+			word,
+			translation,
 			onFailure,
 			onSuccess,
 		],
@@ -144,7 +136,7 @@ export function ChooseTranslationExercise() {
 		complete();
 	}, [complete]);
 
-	if (!word || !translation || options.length === 0) {
+	if (!word || !translation) {
 		return null;
 	}
 
@@ -161,36 +153,23 @@ export function ChooseTranslationExercise() {
 						wordId={word.remoteId}
 						onSkip={handleSkip}
 					>
-						<PlayWordButton audio={word.audio} />
+						<View style={{ gap: 24, alignItems: "center" }}>
+							<WText mode="primary" size="xl">
+								{statement}
+							</WText>
+							<PlayWordButton audio={word.audio} />
+						</View>
 					</TrainingPromptCard>
-				</Animated.View>
 
-				<View style={styles.buttonsContainer}>
-					{options.map((option, i) => (
-						<Animated.View
-							key={option}
-							style={[
-								styles.buttonWrapper,
-								buttonAnims[i]
-									? { transform: [{ translateX: buttonAnims[i] }] }
-									: undefined,
-							]}
-						>
-							<WButton
-								mode={
-									selection?.wordId === wordRemoteId &&
-									selection?.option === option
-										? "primary"
-										: "dark"
-								}
-								fullWidth
-								onPress={() => handlePress(option)}
-							>
-								<WText>{option}</WText>
-							</WButton>
-						</Animated.View>
-					))}
-				</View>
+					<View style={styles.buttonsContainer}>
+						<WButton mode="dark" stretch onPress={() => handleAnswer("yes")}>
+							<WText>{t("true_or_false_yes")}</WText>
+						</WButton>
+						<WButton mode="dark" stretch onPress={() => handleAnswer("no")}>
+							<WText>{t("true_or_false_no")}</WText>
+						</WButton>
+					</View>
+				</Animated.View>
 			</View>
 
 			<WordExcerciseCardResultModal
@@ -215,14 +194,10 @@ const styles = StyleSheet.create({
 	},
 	buttonsContainer: {
 		width: "100%",
-		flexDirection: "column",
+		flexDirection: "row",
 		justifyContent: "center",
 		alignItems: "center",
 		alignContent: "stretch",
-		gap: 16,
-		overflow: "hidden",
-	},
-	buttonWrapper: {
-		width: "100%",
+		gap: 24,
 	},
 });

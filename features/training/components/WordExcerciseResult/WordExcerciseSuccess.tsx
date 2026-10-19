@@ -4,7 +4,7 @@ import { getBiggestWordLength } from "@/utils/getBiggestWordLength";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal, type ModalProps, View } from "react-native";
-import { ThumbsUpIcon } from "./assets/ThumbsUpIcon";
+import { ThumbsUpIcon } from "@/features/training/components/WordExcerciseResult/assets/ThumbsUpIcon";
 
 export type WordExcerciseSuccessModalProps = Omit<
 	ModalProps,

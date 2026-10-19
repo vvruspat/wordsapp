@@ -1,6 +1,6 @@
 import { GlowingEllipse } from "@/components/GlowingEllipse";
 import { PlayWordButton } from "@/components/PlayWordButton";
-import { ExerciseContext } from "@/context/ExerciseContext";
+import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { WButton, WCard, WText, WZStack } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
@@ -17,7 +17,7 @@ import Animated, {
 	withTiming,
 } from "react-native-reanimated";
 import { runOnJS } from "react-native-worklets";
-import { TrainingPromptCard } from "./TrainingPromptCard";
+import { TrainingPromptCard } from "@/features/training/components/exercises/TrainingPromptCard";
 
 const SCORE = 0.2;
 const FLIP_DURATION = 400;

@@ -83,6 +83,9 @@ function setup({
 	const session = { useSessionUser: () => ({ user }) };
 	const storeModule = { useExcerciseStore: store };
 	const common = {
+		"@/db/repositories/synonymGroups.repository": {
+			synonymGroupsRepository: { getSynonymWordIds: async (id) => [id] },
+		},
 		"react-native": native,
 		"react-i18next": translation,
 		"@/hooks/useSession": session,
@@ -94,12 +97,12 @@ function setup({
 		"@/mob-ui/brand/colors": { Colors },
 	};
 	const { ExerciseProvider, ExerciseContext } = loadSource(
-		"context/ExerciseContext.tsx",
+		"features/training/components/ExerciseProvider.tsx",
 		{
 			...common,
 			"expo-router": { usePathname: () => "/authorized/learning/mix-training" },
 			"@/components/FloatingLike": { FloatingLike: "Like" },
-			"@/components/Modals/WordExcerciseResult": {
+			"@/features/training/components/WordExcerciseResult": {
 				WordExcerciseFailureModal: "FailureModal",
 				WordExcerciseSuccessModal: "SuccessModal",
 			},
@@ -129,7 +132,7 @@ function setup({
 			return React.createElement("Exercise", { id });
 		};
 	const { TrainingAppWrapper } = loadSource(
-		"components/TrainingAppWrapper/TrainingAppWrapper.tsx",
+		"features/training/components/TrainingAppWrapper/TrainingAppWrapper.tsx",
 		{
 			...common,
 			"@/context/BackgroundContext": {
@@ -138,7 +141,7 @@ function setup({
 					setOpacity() {},
 				}),
 			},
-			"@/context/ExerciseContext": { ExerciseContext },
+			"@/features/training/components/ExerciseProvider": { ExerciseContext },
 			"@/db/repositories/topics.repository": { topicsRepository: {} },
 			"@/general.styles": { styles: { page: {} } },
 			"@/hooks/useAudioReadiness": {
@@ -153,7 +156,7 @@ function setup({
 			"expo-router": { Link: "Link", router: { back() {} } },
 			"react-native-safe-area-context": { SafeAreaView: "SafeAreaView" },
 			"../LearningCatalog/types": exerciseDefinitions,
-			"../TrainingExercises": {
+			"@/features/training/components/exercises": {
 				CardsExercise: exercise("cards"),
 				ChooseTranslationExercise: exercise("choose_translation"),
 				ListeningPracticeExercise: exercise("listening_practice"),
@@ -161,8 +164,11 @@ function setup({
 				TrueOrFalseExercise: exercise("true_or_false"),
 				TypeWordExercise: exercise("type_word"),
 			},
-			"../TrainingProgressBar": { TrainingProgressBar: "ProgressBar" },
-			"./TrainingAppWrapper.styles": { trainingAppWrapperStyles: {} },
+			"@/features/training/components/TrainingProgressBar": {
+				TrainingProgressBar: "ProgressBar",
+			},
+			"@/features/training/components/TrainingAppWrapper/TrainingAppWrapper.styles":
+				{ trainingAppWrapperStyles: {} },
 		},
 	);
 	const excluded = Object.keys(exerciseDefinitions.EXERCISES_APPS).filter(
@@ -175,7 +181,7 @@ function setup({
 	function App({ fixedExercise }) {
 		return React.createElement(
 			ExerciseProvider,
-			null,
+			{ mode: "mixed" },
 			React.createElement(Capture),
 			React.createElement(TrainingAppWrapper, {
 				excludedExercises: excluded,
@@ -292,5 +298,66 @@ test("matching skips its mastered pool and never pulls new words into a fixed mi
 		[1, 2].includes(app.store.getState().currentPairs[0].word.remoteId),
 	);
 	assert.deepEqual(app.store.getState().chunkWordIds, [1, 2]);
+	await act(async () => tree.unmount());
+});
+
+test("StrictMode hydration survives effect replay and duplicate answers persist once", async () => {
+	let writes = 0;
+	const app = setup({
+		wordIds: [1],
+		trainings: ["true_or_false"],
+		save: async () => {
+			writes++;
+		},
+	});
+	const tree = await mount(() =>
+		React.createElement(React.StrictMode, null, React.createElement(app.App)),
+	);
+	const answered = app.context;
+	await act(async () => {
+		answered.onSuccess(1, 0.2, false);
+		answered.onSuccess(1, 0.2, false);
+		answered.complete();
+		answered.complete();
+	});
+	assert.equal(writes, 1);
+	assert.match(JSON.stringify(tree.toJSON()), /mix_training_completed/);
+	await act(async () => tree.unmount());
+});
+test("an event retained by an old displayed step cannot score a new exercise", async () => {
+	const app = setup({ wordIds: [1] });
+	const tree = await mount(app.App, { fixedExercise: "true_or_false" });
+	const old = app.context.onSuccess;
+	await act(async () => app.context.setCurrentTrainingId("type_word"));
+	await act(async () => app.context.loadData(1, 0, 0));
+	await act(async () => old(1, 0.2, false));
+	assert.equal(app.progress.length, 0);
+	await act(async () => tree.unmount());
+});
+test("a failed persistence blocks completion and a deliberate retry reloads durable progress", async () => {
+	let fail = true;
+	const app = setup({
+		wordIds: [1],
+		trainings: ["true_or_false"],
+		save: async () => {
+			if (fail) throw new Error("disk unavailable");
+		},
+	});
+	const tree = await mount(app.App);
+	await act(async () => app.context.onSuccess(1, 0.2, false));
+	await assert.rejects(
+		app.context.getIncompleteTrainingIds(["true_or_false"]),
+		/disk unavailable/,
+	);
+	assert.equal(app.context.status, "error");
+	assert.equal(app.progress.length, 0);
+	fail = false;
+	await act(async () => app.context.retry());
+	await act(async () => app.context.loadData(1, 0, 0));
+	await act(async () => app.context.onSuccess(1, 0.2, false));
+	assert.deepEqual(
+		await app.context.getIncompleteTrainingIds(["true_or_false"]),
+		[],
+	);
 	await act(async () => tree.unmount());
 });

@@ -21,6 +21,11 @@ test("explicit review tracks its own coverage without resetting persisted scores
 	const session = new TrainingSession([1], ["cards"], saved);
 	assert.equal(session.status, "completed");
 	session.startReview("cards");
+	assert.deepEqual(session.remaining(), ["cards"]);
+	assert.equal(
+		session.nextTraining(() => 0.99),
+		"cards",
+	);
 	session.refresh(saved);
 	assert.equal(session.status, "ready");
 	const step = session.select("cards", 1);

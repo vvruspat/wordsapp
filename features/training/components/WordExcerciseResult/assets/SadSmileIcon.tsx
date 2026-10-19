@@ -8,7 +8,7 @@ export const SadSmileIcon = (props: SadSmileIconProps) => {
 			<Path
 				fill="#D53434"
 				d="m64.477 83.069 3.885-7.152 3.642-6.061 10.07-7.149 11.52-1.327 10.792 1.948 9.213 5.947 7.39 11.04 2.175 12.856-3.04 12.61-6.554 8.849-13.222 6.904-11.52-.735-12.367-4.131-8.119-9.828L63.5 95.68z"
-				fillOpacity=".2"
+				fillOpacity="@/features/training/components/WordExcerciseResult/assets/.2"
 			/>
 			<G filter="url(#a)">
 				<Path

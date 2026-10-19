@@ -2,6 +2,10 @@ import { createContext } from "react";
 import type { Word } from "@vvruspat/words-types";
 import type { LearningTrainingName } from "@/shared/progress/exercises";
 export type ExerciseType = {
+	startReview?: () => void;
+	status?: "loading" | "ready" | "empty" | "completed" | "error";
+	error?: unknown;
+	retry?: () => Promise<void>;
 	showSuccessModal: () => void;
 	showFailureModal: () => void;
 	addCompleteListener: (listener: () => void) => void;

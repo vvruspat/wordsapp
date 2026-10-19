@@ -201,8 +201,8 @@
 | Исходный аудит и план | Выполнен | main обновлён; baseline lint/typecheck/15 tests успешны |
 | 1. Границы и типы | Выполнен | Чистые persisted IDs; AST import/cycle check; устранён цикл UI-kit → ExerciseProvider; 15 tests и typecheck |
 | 2. Words и progress services | Выполнен | Подготовка пар/синонимов/ответов wordsService и отменяемый hook; progressService; 15 regression tests, typecheck |
-| 3. Training session и пулы | Запланирован | |
-| 4. Training UI и context | Запланирован | |
+| 3. Training session и пулы | Выполнен | Единое чистое ядро, singleton/review pools, immutable IDs, coverage и step IDs |
+| 4. Training UI и context | Выполнен | Manager + presentation controller, тонкий feedback provider, feature screens; 21 tests включая StrictMode, duplicate delivery, late event, failed save/retry |
 | 5. Vocabulary, catalog, audio | Запланирован | |
 | 6. Dialogues | Запланирован | |
 | 7. Session, account, bootstrap | Запланирован | |
