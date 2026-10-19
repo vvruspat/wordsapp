@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	Animated,
 	Easing,
@@ -9,7 +9,6 @@ import {
 	TextInputProps,
 	View,
 } from "react-native";
-import { ExerciseContext } from "@/context/ExerciseContext";
 import { WInputProps } from "@/mob-ui/atoms";
 import { styles as wInputStyles } from "../../atoms/WInput/WInput.styles";
 import { inputCellMetrics, styles } from "./WCharInput.styles";
@@ -21,6 +20,7 @@ const CELL_DURATION = 140;
 
 export interface WCharInputProps extends TextInputProps {
 	length: number;
+	resetKey?: number;
 	status?: WInputProps["status"];
 	/** When true, cells appear one by one (typewriter effect) on mount */
 	animateIn?: boolean;
@@ -30,6 +30,7 @@ export interface WCharInputProps extends TextInputProps {
 
 export const WCharInput = ({
 	length = 4,
+	resetKey = 0,
 	onChangeText,
 	status = "default",
 	secureTextEntry,
@@ -72,23 +73,15 @@ export const WCharInput = ({
 		]).start();
 	}, []);
 
-	const { addCompleteListener, removeCompleteListener } =
-		useContext(ExerciseContext);
-
 	const reset = useCallback(() => {
 		setVal("");
 		inputRef.current?.clear();
 		inputRef.current?.focus();
 	}, []);
 
-	const onExerciseComplete = useCallback(async () => {
-		reset();
-	}, [reset]);
-
 	useEffect(() => {
-		addCompleteListener(onExerciseComplete);
-		return () => removeCompleteListener(onExerciseComplete);
-	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
+		if (resetKey > 0) reset();
+	}, [resetKey, reset]);
 
 	useEffect(() => {
 		if (typeof inputRef === "object" && inputRef?.current) {

@@ -249,7 +249,7 @@ export const learningRepository = {
 		return database
 			.get<LearningProgress>("learning_progress")
 			.query(Q.where("user_id", userId))
-			.observe();
+			.observeWithColumns(["score", "training", "last_review"]);
 	},
 
 	async recordIntro(params: {

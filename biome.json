@@ -59,5 +59,36 @@
 				"organizeImports": "on"
 			}
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": [
+				"shared/**",
+				"db/**",
+				"mob-ui/**",
+				"utils/**",
+				"components/**",
+				"context/**",
+				"constants/**",
+				"api/**"
+			],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"patterns": [
+									{
+										"group": ["@/features/**", "@/app/**", "@/composition/**"],
+										"message": "Shared modules cannot import application features or composition."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		}
+	]
 }

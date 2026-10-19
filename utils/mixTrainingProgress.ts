@@ -1,4 +1,4 @@
-import type { LearningTrainingName } from "@/components/LearningCatalog/types";
+import type { LearningTrainingName } from "@/shared/progress/exercises";
 import type LearningProgress from "@/db/models/LearningProgress";
 
 export function getIncompleteTrainings(

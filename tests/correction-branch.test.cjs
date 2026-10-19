@@ -76,7 +76,7 @@ function setup({
 		);
 	}
 	const { default: Screen } = loadSource(
-		"app/authorized/dialogues/branch/[correctionId].tsx",
+		"features/dialogues/screens/CorrectionBranchScreen.tsx",
 		{
 			"@assistant-ui/react-native": {
 				AssistantRuntimeProvider: core.AssistantRuntimeProvider,
@@ -98,26 +98,28 @@ function setup({
 				fetch: async () => ({ isConnected: online }),
 				addEventListener: () => () => {},
 			},
-			"@/api/dialogues": {
+			"@/features/dialogues/api/dialogues": {
 				sendBranchMessage: send,
 				openCorrectionBranch: (...args) => {
 					requests += 1;
 					return remote(...args);
 				},
 			},
-			"@/components/Dialogue/TappableText": {
+			"@/features/dialogues/components/TappableText": {
 				TappableText: ({ text }) => React.createElement("Text", null, text),
 			},
-			"@/components/Dialogue/VocabularyResultCard": {
+			"@/features/dialogues/components/VocabularyResultCard": {
 				VocabularyResultCard: "Notice",
 			},
-			"@/db/repositories/dialogueCache.repository": {
+			"@/features/dialogues/services/dialogueCache": {
 				dialogueCacheRepository: cache,
 			},
-			"@/db/repositories/dialogueVocabulary.repository": {
+			"@/shared/vocabulary/integrateDialogueVocabulary": {
 				dialogueVocabularyRepository: {},
 			},
-			"@/hooks/useSession": { useSessionUser: () => ({ user: { userId: 1 } }) },
+			"@/shared/session/useSession": {
+				useSessionUser: () => ({ user: { userId: 1 } }),
+			},
 			"@/mob-ui": ui,
 			"@/mob-ui/brand/colors": { Colors },
 			"@/utils/logger": { logger },

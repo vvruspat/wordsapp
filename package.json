@@ -17,7 +17,9 @@
 		"format": "biome format . --write",
 		"typecheck": "node node_modules/@typescript/native/bin/tsc --noEmit",
 		"test": "node --test tests/*.test.cjs",
-		"precommit": "lint-staged && npm run typecheck"
+		"precommit": "lint-staged && npm run typecheck",
+		"architecture": "node scripts/check-architecture.cjs",
+		"format:check": "biome format ."
 	},
 	"lint-staged": {
 		"*": [

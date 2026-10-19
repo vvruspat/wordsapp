@@ -1,6 +1,10 @@
 import * as Sentry from "@sentry/react-native";
-import type { LogCategory, LogEntry, LogLevel } from "@/hooks/useLogStore";
-import { useLogStore } from "@/hooks/useLogStore";
+import type {
+	LogCategory,
+	LogEntry,
+	LogLevel,
+} from "@/shared/logging/logStore";
+import { useLogStore } from "@/shared/logging/logStore";
 
 export type { LogLevel, LogCategory, LogEntry };
 

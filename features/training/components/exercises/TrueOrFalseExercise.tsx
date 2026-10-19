@@ -1,0 +1,204 @@
+import { isAcceptedTranslation } from "../../model/answers";
+import { useAcceptedAnswers } from "@/shared/vocabulary/useAcceptedAnswers";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Animated, StyleSheet, View } from "react-native";
+import { WordExcerciseCardResultModal } from "@/features/training/components/WordExcerciseResult";
+import { PlayWordButton } from "@/components/PlayWordButton";
+import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
+import { useSwipeAnimation } from "@/shared/ui/useSwipeAnimation";
+import { WButton, WText } from "@/mob-ui";
+import { TrainingPromptCard } from "@/features/training/components/exercises/TrainingPromptCard";
+
+const score = 0.2;
+
+export function TrueOrFalseExercise() {
+	const { t } = useTranslation();
+	const [modalVisible, setModalVisible] = useState(false);
+	const [modalPair, setModalPair] = useState<{
+		word: string;
+		translation: string;
+	} | null>(null);
+	const [answered, setAnswered] = useState(false);
+
+	const { translateX, swipeOut, notifyContentChanged } = useSwipeAnimation();
+
+	const {
+		addCompleteListener,
+		removeCompleteListener,
+		loadData,
+		onFailure,
+		onSuccess,
+		complete,
+		triggerLike,
+	} = useContext(ExerciseContext);
+	const { currentPairs, currentRandomTranslations: randomTranslations } =
+		useContext(ExerciseContext).wordsPool;
+
+	const { word, translation } = currentPairs[0] ?? {
+		word: null,
+		translation: null,
+	};
+
+	const wordRemoteId = word?.remoteId;
+	const wordLanguage = word?.language;
+	const translationLanguage = translation?.language;
+
+	const acceptedTranslations = useAcceptedAnswers(
+		"translations",
+		wordRemoteId,
+		wordLanguage,
+		translationLanguage,
+	);
+
+	const [loadKey, setLoadKey] = useState(0);
+
+	const load = useCallback(async () => {
+		await loadData(1, 0, 4);
+	}, [loadData]);
+
+	const onExerciseComplete = useCallback(() => {
+		swipeOut(() => {
+			setAnswered(false);
+			setLoadKey((k) => k + 1);
+		});
+	}, [swipeOut]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
+	useEffect(() => {
+		load();
+	}, [load, loadKey]);
+
+	useEffect(() => {
+		addCompleteListener(onExerciseComplete);
+		return () => removeCompleteListener(onExerciseComplete);
+	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
+
+	const translationText = translation?.translation;
+	const alternativeText = randomTranslations.find(
+		(item) => item.translation !== translationText,
+	)?.translation;
+
+	const statement = useMemo(() => {
+		if (!translationText) return "";
+		return alternativeText && Math.random() < 0.5
+			? alternativeText
+			: translationText;
+	}, [translationText, alternativeText]);
+
+	useEffect(() => {
+		if (word && translation) {
+			notifyContentChanged();
+		}
+	}, [word, translation, notifyContentChanged]);
+
+	const handleAnswer = useCallback(
+		(choice: "yes" | "no") => {
+			if (!word || !translation || answered) return;
+			setAnswered(true);
+
+			const userThinksCorrect = choice === "yes";
+			const isCorrect = isAcceptedTranslation(
+				statement,
+				translation.translation,
+				acceptedTranslations,
+			);
+
+			if (userThinksCorrect === isCorrect) {
+				triggerLike();
+				onSuccess?.(word.remoteId, score, false);
+				complete();
+			} else {
+				onFailure?.(word.remoteId, score);
+			}
+		},
+		[
+			statement,
+			acceptedTranslations,
+			answered,
+			complete,
+			triggerLike,
+			word,
+			translation,
+			onFailure,
+			onSuccess,
+		],
+	);
+
+	const handleSkip = useCallback(() => {
+		if (!word || !translation) return;
+		onFailure?.(word.remoteId, score, false);
+		setModalPair({ word: word.word, translation: translation.translation });
+		setModalVisible(true);
+	}, [word, translation, onFailure]);
+
+	const handleModalClose = useCallback(() => {
+		setModalVisible(false);
+		complete();
+	}, [complete]);
+
+	if (!word || !translation) {
+		return null;
+	}
+
+	return (
+		<>
+			<View style={styles.wrapper}>
+				<Animated.View
+					style={[styles.content, { transform: [{ translateX }] }]}
+				>
+					<TrainingPromptCard
+						word={word.word}
+						transcription={word.transcription}
+						meaning={word.meaning}
+						wordId={word.remoteId}
+						onSkip={handleSkip}
+					>
+						<View style={{ gap: 24, alignItems: "center" }}>
+							<WText mode="primary" size="xl">
+								{statement}
+							</WText>
+							<PlayWordButton audio={word.audio} />
+						</View>
+					</TrainingPromptCard>
+
+					<View style={styles.buttonsContainer}>
+						<WButton mode="dark" stretch onPress={() => handleAnswer("yes")}>
+							<WText>{t("true_or_false_yes")}</WText>
+						</WButton>
+						<WButton mode="dark" stretch onPress={() => handleAnswer("no")}>
+							<WText>{t("true_or_false_no")}</WText>
+						</WButton>
+					</View>
+				</Animated.View>
+			</View>
+
+			<WordExcerciseCardResultModal
+				visible={modalVisible}
+				word={modalPair?.word}
+				translation={modalPair?.translation}
+				onRequestClose={handleModalClose}
+			/>
+		</>
+	);
+}
+
+const styles = StyleSheet.create({
+	wrapper: {
+		flex: 1,
+		width: "100%",
+		overflow: "hidden",
+	},
+	content: {
+		flex: 1,
+		width: "100%",
+	},
+	buttonsContainer: {
+		width: "100%",
+		flexDirection: "row",
+		justifyContent: "center",
+		alignItems: "center",
+		alignContent: "stretch",
+		gap: 24,
+	},
+});
