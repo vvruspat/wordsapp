@@ -207,4 +207,4 @@
 | 6. Dialogues | Выполнен | Feature API/types/cache/screens; runtime и detail/list hooks; scope guards; 24 tests включая все 9 correction runtime сценариев и late detail другого user |
 | 7. Session, account, bootstrap | Выполнен | Один sessionOwner/store restore/refresh/observation, сериализация SecureStore, generation guard logout; form hooks/account persistence; bootstrap lifecycle hooks; 25 tests |
 | 8. Общий код и документация | Выполнен | Один observable controller и раздельный selection/words ownership; старые пути удалены; strict AST + Biome restrictions; ARCHITECTURE.md; 36 tests; graphify обновлён |
-| Итоговая проверка и PR | Локальные проверки выполнены; независимая проверка/PR у ведущего агента | Node 22.23.3: tests/typecheck/lint/format/architecture/diff check; native/Metro smoke и создание PR фиксируются отдельно |
+| Итоговая проверка и PR | Независимые проверки выполнены; ветка подготовлена к review | Node 22.23.3: 36 tests/typecheck/lint/format/architecture/diff check; Hermes bundles iOS+Android; Xcode build и неавторизованный iOS smoke. Подробности и пределы: REFACTOR_VALIDATION.md. PR прикрепляется к задаче |
