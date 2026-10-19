@@ -1,10 +1,9 @@
+import { useAcceptedAnswers } from "@/shared/vocabulary/useAcceptedAnswers";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { PlayWordButton } from "@/components/PlayWordButton";
 import { ExerciseContext } from "@/context/ExerciseContext";
-import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
-import { translationsRepository } from "@/db/repositories/translations.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
 import { WButton, WText } from "@/mob-ui";
@@ -37,30 +36,19 @@ export function ChooseTranslationExercise() {
 		translation: null,
 	};
 
-	const [acceptedTranslations, setAcceptedTranslations] = useState<string[]>(
-		[],
-	);
-
 	const wordRemoteId = word?.remoteId;
 	const wordLanguage = word?.language;
 	const translationLanguage = translation?.language;
 
 	useEffect(() => {
-		setSelection(null);
-		setAcceptedTranslations([]);
-		if (!wordRemoteId || !wordLanguage || !translationLanguage) return;
-		(async () => {
-			const synonymIds = await synonymGroupsRepository.getSynonymWordIds(
-				wordRemoteId,
-				wordLanguage,
-			);
-			const ts = await translationsRepository.getByWordIds(
-				translationLanguage,
-				synonymIds,
-			);
-			setAcceptedTranslations(ts.map((t) => t.translation));
-		})();
-	}, [wordRemoteId, wordLanguage, translationLanguage]);
+		if (wordRemoteId != null) setSelection(null);
+	}, [wordRemoteId]);
+	const acceptedTranslations = useAcceptedAnswers(
+		"translations",
+		wordRemoteId,
+		wordLanguage,
+		translationLanguage,
+	);
 
 	const [loadKey, setLoadKey] = useState(0);
 

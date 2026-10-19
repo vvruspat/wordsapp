@@ -200,7 +200,7 @@
 | --- | --- | --- |
 | Исходный аудит и план | Выполнен | main обновлён; baseline lint/typecheck/15 tests успешны |
 | 1. Границы и типы | Выполнен | Чистые persisted IDs; AST import/cycle check; устранён цикл UI-kit → ExerciseProvider; 15 tests и typecheck |
-| 2. Words и progress services | Запланирован | |
+| 2. Words и progress services | Выполнен | Подготовка пар/синонимов/ответов wordsService и отменяемый hook; progressService; 15 regression tests, typecheck |
 | 3. Training session и пулы | Запланирован | |
 | 4. Training UI и context | Запланирован | |
 | 5. Vocabulary, catalog, audio | Запланирован | |

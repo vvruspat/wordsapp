@@ -16,7 +16,7 @@ import {
 import { MIX_TRAINING_WORD_LIMIT } from "@/constants/training";
 import WatermelonWord from "@/db/models/Word";
 import WatermelonWordTranslation from "@/db/models/WordTranslation";
-import { learningRepository } from "@/db/repositories/learning.repository";
+import { progressService } from "@/shared/progress/progressService";
 import { translationsRepository } from "@/db/repositories/translations.repository";
 import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
@@ -187,11 +187,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 				if (user?.userId) {
 					const progressRecords =
 						trainingId != null
-							? await learningRepository.getByUserAndTraining(
-									user.userId,
-									trainingId,
-								)
-							: await learningRepository.getByUser(user.userId);
+							? await progressService.readTraining(user.userId, trainingId)
+							: await progressService.read(user.userId);
 					const progressByWordId = new Map(
 						progressRecords.map((r) => [r.wordId, r]),
 					);
@@ -534,8 +531,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			}
 
 			if (user?.userId) {
-				const result = learningRepository
-					.recordResult({
+				const result = progressService
+					.record({
 						userId: user.userId,
 						wordId,
 						scoreDelta,
@@ -593,8 +590,8 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			}
 
 			if (user?.userId) {
-				const result = learningRepository
-					.recordResult({
+				const result = progressService
+					.record({
 						userId: user.userId,
 						wordId,
 						scoreDelta,
@@ -626,10 +623,7 @@ export const ExerciseProvider = ({ children }: ExerciseProviderProps) => {
 			await Promise.all([...pendingResults.current]);
 			if (!user?.userId) return trainingIds;
 			const wordIds = sessionPairs.current.map((pair) => pair.word.remoteId);
-			const progress = await learningRepository.getByUserAndWordIds(
-				user.userId,
-				wordIds,
-			);
+			const progress = await progressService.readWords(user.userId, wordIds);
 			return getIncompleteTrainings(wordIds, trainingIds, progress);
 		},
 		[user?.userId],

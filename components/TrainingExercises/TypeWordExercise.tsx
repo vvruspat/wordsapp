@@ -1,3 +1,4 @@
+import { useAcceptedAnswers } from "@/shared/vocabulary/useAcceptedAnswers";
 import {
 	useCallback,
 	useContext,
@@ -10,9 +11,6 @@ import { useTranslation } from "react-i18next";
 import { Animated, StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/components/Modals/WordExcerciseResult";
 import { ExerciseContext } from "@/context/ExerciseContext";
-import { synonymGroupsRepository } from "@/db/repositories/synonymGroups.repository";
-import { translationsRepository } from "@/db/repositories/translations.repository";
-import { wordsRepository } from "@/db/repositories/words.repository";
 import { useExcerciseStore } from "@/hooks/useExcerciseStore";
 import { useSwipeAnimation } from "@/hooks/useSwipeAnimation";
 import { WCharInput, WCharInputProps, WText } from "@/mob-ui";
@@ -54,11 +52,8 @@ export function TypeWordExercise() {
 		translation: null,
 	};
 
-	const [acceptedWords, setAcceptedWords] = useState<string[]>([]);
-
 	const wordRemoteId = word?.remoteId;
 	const wordLanguage = word?.language;
-	const translationRemoteId = translation?.remoteId;
 	const translationText = translation?.translation;
 	const translationLanguage = translation?.language;
 	const targetAnswerLength = word?.word.trim().length ?? 0;
@@ -73,45 +68,13 @@ export function TypeWordExercise() {
 		setWrongAttempts(0);
 	}, []);
 
-	useEffect(() => {
-		let isActive = true;
-		setAcceptedWords([]);
-		if (
-			!wordRemoteId ||
-			!wordLanguage ||
-			!translationRemoteId ||
-			!translationText ||
-			!translationLanguage
-		)
-			return;
-		(async () => {
-			const synonymIds = await synonymGroupsRepository.getSynonymWordIds(
-				wordRemoteId,
-				wordLanguage,
-			);
-			const translationMatches =
-				await translationsRepository.getByTranslationText(
-					translationText,
-					translationLanguage,
-				);
-			const allWordIds = [
-				...new Set([...synonymIds, ...translationMatches.map((t) => t.word)]),
-			];
-			const ws = await wordsRepository.getByRemoteIds(allWordIds, wordLanguage);
-			if (isActive) {
-				setAcceptedWords(ws.map((w) => w.word));
-			}
-		})();
-		return () => {
-			isActive = false;
-		};
-	}, [
+	const acceptedWords = useAcceptedAnswers(
+		"words",
 		wordRemoteId,
 		wordLanguage,
-		translationRemoteId,
-		translationText,
 		translationLanguage,
-	]);
+		translationText,
+	);
 
 	const [loadKey, setLoadKey] = useState(0);
 
