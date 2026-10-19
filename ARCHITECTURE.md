@@ -31,7 +31,7 @@
 
 `useTrainingManager` — тонкая интеграция React с одним vanilla Zustand controller. При изменении пользователя, обоих языков, выбранных каталогов/тем или входных IDs создаётся новый controller. Поздняя операция предыдущего controller не может публиковать данные. Перемонтирование effects в StrictMode поддерживается.
 
-Подготовка фиксирует исходные eligible word IDs. Фоновая синхронизация не меняет знаменатель текущей сессии. Mixed ограничен 20 словами; dialogue words идут первыми, затем личные и выбранные каталоги. Standalone не получает лимит mixed. Обе формы используют TrainingSession: pool содержит допустимые незавершённые exercise IDs; у standalone один ID. Доступность listening учитывается при выборе и отображении.
+Подготовка фиксирует исходные eligible word IDs. Пустая выборка, прочитанная до первой синхронизации, перечитывается после сохранения vocabulary; во время загрузки она не показывается как окончательный empty. Фоновая синхронизация не меняет непустой набор и знаменатель текущей сессии. Mixed ограничен 20 словами; dialogue words идут первыми, затем личные и выбранные каталоги. Standalone не получает лимит mixed. Обе формы используют TrainingSession: pool содержит допустимые незавершённые exercise IDs; у standalone один ID. Доступность listening учитывается при выборе и отображении.
 
 Покрытие пары word/training означает **score > 0**, а не score = 1. Intro и type_translation сохраняют свои IDs, score increments и payloads. При 100% exercise удаляется из текущего pool; mixed не возвращает завершённый exercise. Пустой pool — completed; отсутствие слов — empty; ошибка чтения/записи — error.
 
@@ -69,6 +69,6 @@ Account формы используют hooks. Pending sign-in/verification по
 
 ## Проверки реализации
 
-Локальные regression tests: 36, включая все исходные 15. Дополнительные сценарии: coverage/review/matching, StrictMode, дублированные события, старый отображённый step, failed write/retry, serialized progress, late auth/logout и duplicate submit, same mutable user language, catalog defaults/manual deselect/late language rows, cached/offline/single-flight vocabulary, queued audio cancellation/read error/partial fallback, запрещённые imports/reexports/cycles.
+Локальные regression tests: 50, включая все исходные 15. Дополнительные сценарии: first-sync/loading/empty/retry, fixed pool при background sync, coverage/review/matching, повторный вход и смена упражнения, приоритет незавершённых слов, счётчики mastery, StrictMode, дублированные события, старый отображённый step, failed write/retry, serialized progress, late auth/logout и duplicate submit, same mutable user language, catalog defaults/manual deselect/late language rows, cached/offline/single-flight vocabulary, queued audio cancellation/read error/partial fallback, запрещённые imports/reexports/cycles.
 
 Отдельно запускаются TypeScript, Biome lint, read-only format, architecture check и git diff --check. Исходное предупреждение react-test-renderer deprecated сохраняется. Независимые проверки, сборки обеих платформ и ограниченный iOS smoke описаны в [REFACTOR_VALIDATION.md](REFACTOR_VALIDATION.md). Android device runtime и полный authenticated smoke matrix локальными тестами не покрыты.

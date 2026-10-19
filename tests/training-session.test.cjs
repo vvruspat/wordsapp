@@ -58,3 +58,71 @@ test("typed answers preserve prefix, case/space normalization and same-length al
 	assert.equal(evaluateTypedAnswer("rat", "cat", []), "error");
 	assert.equal(isAcceptedTranslation("cat", "cat", []), true);
 });
+
+test("an unfinished word stays ahead of mastered words after failure, with matching fillers only after it", () => {
+	const session = new TrainingSession(
+		[1, 2, 3],
+		["cards"],
+		[
+			{ wordId: 2, training: "cards", score: 0.2 },
+			{ wordId: 3, training: "cards", score: 0.2 },
+		],
+	);
+	const step = session.select("cards", 1);
+	assert.deepEqual(step.wordIds, [1]);
+	session.apply(step.id, 1, false);
+	const retry = session.select("cards", 1);
+	assert.deepEqual(
+		retry.wordIds,
+		[1],
+		"repeat the unfinished word even when mastered alternatives were not served last",
+	);
+	session.apply(retry.id, 1, false);
+	const matching = session.select("cards", 4);
+	assert.equal(matching.wordIds[0], 1);
+	assert.deepEqual(new Set(matching.wordIds), new Set([1, 2, 3]));
+});
+
+test("switching exercises leaves the single review pass and restores durable coverage including review results", () => {
+	const session = new TrainingSession(
+		[1, 2],
+		["cards"],
+		[
+			{ wordId: 1, training: "cards", score: 0.2 },
+			{ wordId: 1, training: "type_word", score: 0.2 },
+		],
+	);
+	session.startReview("cards");
+	assert.deepEqual(session.remaining(), ["cards"]);
+	assert.throws(() => session.select("type_word", 1), /leaving a review/);
+	let step = session.select("cards", 1);
+	session.apply(step.id, 1, false);
+	step = session.select("cards", 1);
+	assert.deepEqual(step.wordIds, [2]);
+	session.apply(step.id, 2, true);
+	session.configureTrainings(["type_word"]);
+	assert.equal(session.mastered("type_word"), 1);
+	assert.deepEqual(session.remaining(), ["type_word"]);
+	assert.equal(session.status, "ready");
+	assert.equal(session.currentStep, null);
+	step = session.select("type_word", 1);
+	assert.deepEqual(step.wordIds, [2]);
+	session.apply(step.id, 2, true);
+	assert.equal(session.status, "completed");
+	session.configureTrainings(["cards"]);
+	assert.equal(session.mastered("cards"), 1);
+	assert.equal(session.hasMastered(1, "cards"), false);
+	assert.equal(session.hasMastered(2, "cards"), true);
+	assert.deepEqual(session.remaining(), ["cards"]);
+});
+
+test("refreshing durable progress during a review preserves pass coverage and is used after switching", () => {
+	const session = new TrainingSession([1], ["cards"], []);
+	session.startReview("cards");
+	session.refresh([{ wordId: 1, training: "type_word", score: 0.2 }]);
+	assert.equal(session.mastered("cards"), 0);
+	assert.equal(session.status, "ready");
+	session.configureTrainings(["type_word"]);
+	assert.equal(session.mastered("type_word"), 1);
+	assert.equal(session.status, "completed");
+});

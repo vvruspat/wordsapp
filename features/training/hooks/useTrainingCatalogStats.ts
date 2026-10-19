@@ -80,7 +80,7 @@ export function useTrainingCatalogStats() {
 			) as Record<LearningTrainingName, Set<number>>;
 
 			for (const progressRecord of progressRecords) {
-				if (!progressRecord.training) {
+				if (!progressRecord.training || !(progressRecord.score > 0)) {
 					continue;
 				}
 

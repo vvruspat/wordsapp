@@ -45,6 +45,9 @@ function setup({
 	wordIds = [1, 2],
 	trainings = ["true_or_false", "type_word"],
 	save,
+	available = true,
+	syncing = false,
+	mode = "mixed",
 } = {}) {
 	let context;
 	const user = { userId: 1, language_learn: "nl", language_speak: "en" };
@@ -54,6 +57,10 @@ function setup({
 	const { useTrainingSelection: trainingSelection } = loadSource(
 		"features/training/model/trainingSelection.ts",
 	);
+	const { useVocabularyStore: vocabularyStore } = loadSource(
+		"shared/vocabulary/vocabularyStore.ts",
+	);
+	vocabularyStore.getState().setSyncing(syncing);
 	trainingSelection.getState().setChunkWordIds(wordIds);
 	const words = wordIds.map((id) => ({ remoteId: id, word: `word ${id}` }));
 	const translations = wordIds.map((id) => ({
@@ -61,7 +68,10 @@ function setup({
 		word: id,
 		translation: `translation ${id}`,
 	}));
-	const wordsRepository = { getByRemoteIds: async () => words };
+	const wordsRepository = {
+		getByRemoteIds: async () => (available ? words : []),
+		findCandidates: async () => (available ? words : []),
+	};
 	const learningRepository = {
 		getByUser: async () => [...progress],
 		getByUserAndWordIds: async (_userId, ids) =>
@@ -122,7 +132,7 @@ function setup({
 				},
 			},
 			"@/shared/vocabulary/vocabularyStore": {
-				useVocabularyStore: (selector) => selector({ lastSyncTime: null }),
+				useVocabularyStore: vocabularyStore,
 			},
 			"@/utils/mixTrainingProgress": { getIncompleteTrainings },
 		},
@@ -184,15 +194,16 @@ function setup({
 		context = React.useContext(ExerciseContext);
 		return null;
 	}
-	function App({ fixedExercise }) {
+	function App({ fixedExercise, visible = true }) {
 		return React.createElement(
 			ExerciseProvider,
-			{ mode: "mixed" },
+			{ mode },
 			React.createElement(Capture),
-			React.createElement(TrainingAppWrapper, {
-				excludedExercises: excluded,
-				exercise: fixedExercise,
-			}),
+			visible &&
+				React.createElement(TrainingAppWrapper, {
+					excludedExercises: excluded,
+					exercise: fixedExercise,
+				}),
 		);
 	}
 	return {
@@ -200,6 +211,10 @@ function setup({
 		store,
 		trainingSelection,
 		progress,
+		vocabularyStore,
+		setAvailable(value) {
+			available = value;
+		},
 		get context() {
 			return context;
 		},
@@ -207,6 +222,66 @@ function setup({
 }
 
 const currentExercise = (tree) => tree.root.findByType("Exercise").props.id;
+
+test("reopening a completed standalone training still offers explicit review", async () => {
+	const app = setup({
+		mode: "single",
+		wordIds: [1],
+		progress: [{ wordId: 1, training: "cards", score: 0.2 }],
+	});
+	const tree = await mount(app.App, { fixedExercise: "cards" });
+	assert.match(JSON.stringify(tree.toJSON()), /training_mastered_title/);
+	await act(async () =>
+		tree.update(React.createElement(app.App, { visible: false })),
+	);
+	await act(async () =>
+		tree.update(React.createElement(app.App, { fixedExercise: "cards" })),
+	);
+	assert.match(JSON.stringify(tree.toJSON()), /training_mastered_title/);
+	await act(async () => tree.unmount());
+});
+
+test("review preserves a matching round's pair count", async () => {
+	const app = setup({
+		mode: "single",
+		wordIds: [1, 2, 3, 4],
+		progress: [1, 2, 3, 4].map((wordId) => ({
+			wordId,
+			training: "match_words",
+			score: 0.1,
+		})),
+	});
+	const tree = await mount(app.App, { fixedExercise: "match_words" });
+	await act(async () => app.context.startReview());
+	assert.equal(app.context.wordsPool.currentPairs.length, 4);
+	await act(async () => tree.unmount());
+});
+
+test("first sync replaces an empty training snapshot without restarting a populated session", async () => {
+	const app = setup({ mode: "single", available: false, syncing: true });
+	const tree = await mount(app.App, { fixedExercise: "cards" });
+	assert.equal(app.context.queueReady, false);
+	assert.doesNotMatch(JSON.stringify(tree.toJSON()), /mix_training_no_words/);
+	await act(async () => {
+		app.setAvailable(true);
+		app.vocabularyStore.getState().setLastSyncTime(1);
+		app.vocabularyStore.getState().setSyncing(false);
+	});
+	assert.equal(currentExercise(tree), "cards");
+	assert.equal(app.context.sessionStats.totalCount, 2);
+	const displayed = app.context.wordsPool.currentPairs[0];
+	await act(async () =>
+		app.context.onSuccess(displayed.word.remoteId, 0.2, false),
+	);
+	await act(async () => {
+		app.vocabularyStore.getState().setSyncing(true);
+		app.vocabularyStore.getState().setLastSyncTime(2);
+		app.vocabularyStore.getState().setSyncing(false);
+	});
+	assert.equal(app.context.sessionStats.successCount, 1);
+	assert.equal(app.context.wordsPool.currentPairs[0], displayed);
+	await act(async () => tree.unmount());
+});
 
 test("mix skips mastered exercises at startup and after a quick answer, then completes", async () => {
 	const pending = deferred();

@@ -62,10 +62,6 @@ export function useTrainingPresentation(
 		getIncompleteTrainingIds,
 		sessionStats: { successCount, totalCount, successEventCount },
 	} = useContext(ExerciseContext);
-	useEffect(() => {
-		if (exercise && queueReady && trainingStatus === "completed")
-			setShowMasteredPrompt(true);
-	}, [exercise, queueReady, trainingStatus]);
 	const isExerciseReady = queueReady && currentTrainingId === currentExercise;
 	const { setColor, setOpacity } = useContext(BackgroundContext);
 	const { user } = useSessionUser();
@@ -211,6 +207,24 @@ export function useTrainingPresentation(
 			nextTopicPromptTimeoutRef.current = null;
 		}
 	}, [currentExercise]);
+
+	useEffect(() => {
+		if (
+			exercise &&
+			queueReady &&
+			currentTrainingId === currentExercise &&
+			trainingStatus === "completed" &&
+			successEventCount === 0
+		)
+			setShowMasteredPrompt(true);
+	}, [
+		exercise,
+		queueReady,
+		currentExercise,
+		currentTrainingId,
+		trainingStatus,
+		successEventCount,
+	]);
 
 	useEffect(() => {
 		if (!currentExercise) return;

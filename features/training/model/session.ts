@@ -32,6 +32,7 @@ export class TrainingSession {
 	readonly wordIds: readonly number[];
 	trainingIds: readonly ExerciseId[];
 	private coverage = new Set<string>();
+	private durableCoverage = new Set<string>();
 	private delivered = new Set<string>();
 	private order: number[] = [];
 	private sequence = 0;
@@ -50,12 +51,13 @@ export class TrainingSession {
 		this.refresh(progress);
 	}
 	refresh(progress: Coverage[]) {
-		if (this.review) return;
-		this.coverage = new Set(
+		this.durableCoverage = new Set(
 			progress
 				.filter((item) => item.score > 0)
 				.map((item) => `${item.wordId}:${item.training}`),
 		);
+		if (this.review) return;
+		this.coverage = new Set(this.durableCoverage);
 		this.updateStatus();
 	}
 	remaining(ids: readonly ExerciseId[] = this.trainingIds) {
@@ -66,6 +68,16 @@ export class TrainingSession {
 		);
 	}
 	configureTrainings(ids: ExerciseId[]) {
+		if (
+			this.reviewTraining &&
+			(ids.length !== 1 || ids[0] !== this.reviewTraining)
+		) {
+			this.review = false;
+			this.reviewTraining = null;
+			this.coverage = new Set(this.durableCoverage);
+			this.currentStep = null;
+			this.order = [];
+		}
 		this.trainingIds = Object.freeze([...new Set(ids)]);
 		this.updateStatus();
 	}
@@ -77,6 +89,9 @@ export class TrainingSession {
 		);
 	}
 	select(training: ExerciseId, count: number) {
+		if (this.reviewTraining && training !== this.reviewTraining) {
+			throw new Error("Select the next exercise before leaving a review pass");
+		}
 		// Matching and single-word exercises consume the same bounded selection.
 		if (
 			this.currentStep?.training === training &&
@@ -88,13 +103,17 @@ export class TrainingSession {
 		const unfinished = this.wordIds.filter(
 			(id) => !this.coverage.has(`${id}:${training}`),
 		);
+		const avoidImmediateRepeats = (ids: number[]) =>
+			ids.sort(
+				(a, b) =>
+					Number(this.order.includes(a)) - Number(this.order.includes(b)),
+			);
 		const candidates = [
-			...unfinished,
-			...this.wordIds.filter((id) => !unfinished.includes(id)),
+			...avoidImmediateRepeats(unfinished),
+			...avoidImmediateRepeats(
+				this.wordIds.filter((id) => !unfinished.includes(id)),
+			),
 		];
-		candidates.sort(
-			(a, b) => Number(this.order.includes(a)) - Number(this.order.includes(b)),
-		);
 		const selected = candidates.slice(0, count);
 		this.order = selected;
 		this.currentStep = { id: ++this.sequence, training, wordIds: selected };
@@ -112,8 +131,13 @@ export class TrainingSession {
 		if (!this.canApply(step, wordId) || !this.currentStep) return false;
 		this.delivered.add(`${step}:${wordId}`);
 		const key = `${wordId}:${this.currentStep.training}`;
-		if (success) this.coverage.add(key);
-		else this.coverage.delete(key);
+		if (success) {
+			this.coverage.add(key);
+			this.durableCoverage.add(key);
+		} else {
+			this.coverage.delete(key);
+			this.durableCoverage.delete(key);
+		}
 		this.updateStatus();
 		return true;
 	}

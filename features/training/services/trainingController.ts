@@ -62,6 +62,7 @@ export function createTrainingController(
 		epoch = 0;
 	let initialization: Promise<void> = Promise.resolve();
 	let loading: Promise<void> | null = null;
+	let taskSize: [number, number, number] = [1, 0, 1];
 	let unsubscribe: (() => void) | undefined;
 	let pending = new Map<string, Promise<unknown>>();
 	let failures = new Set<number>(),
@@ -137,6 +138,7 @@ export function createTrainingController(
 		wordCount = 0,
 		translationCount = 1,
 	): Promise<void> => {
+		taskSize = [count, wordCount, translationCount];
 		if (loading) return loading;
 		const version = epoch;
 		const request = (async () => {
@@ -278,7 +280,7 @@ export function createTrainingController(
 		pendingFailures.clear();
 		successEvents = 0;
 		publish();
-		void loadData();
+		void loadData(...taskSize);
 	};
 	return {
 		store,
