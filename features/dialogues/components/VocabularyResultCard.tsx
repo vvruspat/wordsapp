@@ -1,7 +1,8 @@
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import type { VocabularyResult } from "@/api/dialogues";
+
+import type { VocabularyResult } from "@/shared/vocabulary/dialogueVocabulary";
 import { WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 

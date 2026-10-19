@@ -1,0 +1,75 @@
+import { StyleSheet } from "react-native";
+import { Colors } from "@/mob-ui/brand/colors";
+export const styles = StyleSheet.create({
+	page: {
+		flex: 1,
+		backgroundColor: Colors.backgrounds.primaryBackground,
+		paddingTop: 48,
+	},
+	header: {
+		height: 60,
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 10,
+		paddingHorizontal: 12,
+		borderBottomColor: Colors.dark.dark3,
+		borderBottomWidth: 1,
+	},
+	back: {
+		width: 42,
+		height: 42,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	center: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+		padding: 24,
+	},
+	offline: {
+		padding: 8,
+		alignItems: "center",
+		backgroundColor: Colors.dark.dark2,
+	},
+	messages: { padding: 16, gap: 14 },
+	message: { maxWidth: "88%", padding: 14, borderRadius: 18 },
+	assistant: {
+		alignSelf: "flex-start",
+		backgroundColor: Colors.dark.dark2,
+		borderTopLeftRadius: 6,
+	},
+	user: {
+		alignSelf: "flex-end",
+		backgroundColor: Colors.dark.dark4,
+		borderTopRightRadius: 6,
+	},
+	composer: {
+		flexDirection: "row",
+		alignItems: "flex-end",
+		gap: 10,
+		paddingHorizontal: 14,
+		paddingVertical: 10,
+		borderTopColor: Colors.dark.dark3,
+		borderTopWidth: 1,
+	},
+	input: {
+		flex: 1,
+		minHeight: 46,
+		maxHeight: 120,
+		backgroundColor: Colors.dark.dark2,
+		color: Colors.greys.white,
+		borderRadius: 18,
+		paddingHorizontal: 15,
+		paddingVertical: 12,
+		fontSize: 16,
+	},
+	send: {
+		width: 46,
+		height: 46,
+		borderRadius: 23,
+		backgroundColor: Colors.primary.base,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+});

@@ -1,15 +1,12 @@
+import { useDialogueRuntime } from "../hooks/useDialogueRuntime";
 import {
 	AssistantRuntimeProvider,
-	type ChatModelAdapter,
 	ComposerPrimitive,
-	type ThreadMessageLike,
 	ThreadPrimitive,
-	useLocalRuntime,
 } from "@assistant-ui/react-native";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import NetInfo from "@react-native-community/netinfo";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	ActivityIndicator,
@@ -22,21 +19,14 @@ import {
 import type {
 	DialogueCorrection,
 	DialogueDetail,
-	VocabularyResult,
-} from "@/api/dialogues";
-import {
-	addDialogueWord,
-	recordDialogueInteraction,
-	sendDialogueMessage,
-} from "@/api/dialogues";
+} from "@/features/dialogues/model/types";
+import { recordDialogueInteraction } from "@/features/dialogues/api/dialogues";
 import { MIX_TRAINING_WORD_LIMIT } from "@/constants/training";
-import { dialogueCacheRepository } from "@/db/repositories/dialogueCache.repository";
-import { dialogueVocabularyRepository } from "@/db/repositories/dialogueVocabulary.repository";
 import { WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
-import { CorrectionCard } from "./CorrectionCard";
-import { TappableText } from "./TappableText";
-import { VocabularyResultCard } from "./VocabularyResultCard";
+import { CorrectionCard } from "@/features/dialogues/components/CorrectionCard";
+import { TappableText } from "@/features/dialogues/components/TappableText";
+import { VocabularyResultCard } from "@/features/dialogues/components/VocabularyResultCard";
 
 type RenderMessage = {
 	role: "user" | "assistant" | "system";
@@ -50,54 +40,6 @@ const textOf = (message: RenderMessage) =>
 		.filter((part) => part.type === "text")
 		.map((part) => part.text ?? "")
 		.join("");
-
-const id = () =>
-	`${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
-
-const mergeById = <T extends { id: string }>(current: T[], incoming: T[]) => {
-	const merged = new Map(current.map((item) => [item.id, item]));
-	for (const item of incoming) merged.set(item.id, item);
-	return [...merged.values()];
-};
-
-const initialMessages = (detail: DialogueDetail): ThreadMessageLike[] => {
-	const main = detail.threads.find((thread) => thread.kind === "main");
-	if (!main) return [];
-	const messagesById = new Map(
-		detail.messages.map((message) => [message.id, message]),
-	);
-	return detail.messages
-		.filter(
-			(message) => message.thread_id === main.id && message.role !== "system",
-		)
-		.sort((a, b) => a.sequence - b.sequence)
-		.map((message) => {
-			const corrections = detail.corrections.filter(
-				(item) => item.assistant_message_id === message.id,
-			);
-			const correctionSource = corrections[0]
-				? messagesById.get(corrections[0].message_id)?.content
-				: undefined;
-			return {
-				id: message.id,
-				role: message.role as "user" | "assistant",
-				content: message.content,
-				createdAt: new Date(message.created_at),
-				metadata: {
-					custom: {
-						serverMessageId: message.id,
-						translation: message.translation,
-						teacherNote: message.metadata.teacherNote,
-						hints: message.metadata.hints ?? [],
-						focusWords: message.metadata.focusWords ?? [],
-						corrections,
-						correctionSource,
-						correctedAnswer: message.metadata.correctedAnswer,
-					},
-				},
-			};
-		});
-};
 
 const DialogueMessageBubble = ({
 	message,
@@ -341,138 +283,8 @@ export const DialogueChat = ({
 	userId: number;
 	onDetailChange: (detail: DialogueDetail) => void;
 }) => {
-	const router = useRouter();
-	const { t } = useTranslation();
-	const [online, setOnline] = useState(true);
-	const [wordNotice, setWordNotice] = useState<{
-		message?: string;
-		result?: VocabularyResult;
-	} | null>(null);
-	const detailRef = useRef(detail);
-	detailRef.current = detail;
-
-	useEffect(
-		() =>
-			NetInfo.addEventListener((state) =>
-				setOnline(Boolean(state.isConnected)),
-			),
-		[],
-	);
-
-	const acceptVocabulary = useCallback(
-		async (items: VocabularyResult[]) => {
-			await dialogueVocabularyRepository.integrate(userId, items);
-			return items;
-		},
-		[userId],
-	);
-
-	const model = useMemo<ChatModelAdapter>(
-		() => ({
-			async run({ messages }) {
-				if (!online) throw new Error("No network connection");
-				const last = messages.at(-1);
-				if (last?.role !== "user") throw new Error("User message is missing");
-				const content = last.content
-					.filter((part) => part.type === "text")
-					.map((part) => (part.type === "text" ? part.text : ""))
-					.join("")
-					.trim();
-				const result = await sendDialogueMessage(
-					detail.session.id,
-					content,
-					id(),
-				);
-				const addedWords = await acceptVocabulary(result.addedWords);
-				const savedWord =
-					addedWords.find((item) => item.source === "native_insert") ??
-					addedWords[0];
-				if (savedWord) setWordNotice({ result: savedWord });
-				const previous = detailRef.current;
-				const next: DialogueDetail = {
-					...previous,
-					session: result.session,
-					messages: mergeById(previous.messages, [
-						result.userMessage,
-						result.assistantMessage,
-					]),
-					corrections: mergeById(previous.corrections, result.corrections),
-				};
-				detailRef.current = next;
-				onDetailChange(next);
-				await dialogueCacheRepository.upsert(userId, next);
-				await dialogueCacheRepository.setDraft(userId, detail.session.id, "");
-				return {
-					content: [
-						{ type: "text" as const, text: result.assistantMessage.content },
-					],
-					metadata: {
-						custom: {
-							serverMessageId: result.assistantMessage.id,
-							translation: result.assistantMessage.translation,
-							teacherNote: result.assistantMessage.metadata.teacherNote,
-							hints: result.assistantMessage.metadata.hints ?? [],
-							focusWords: result.assistantMessage.metadata.focusWords ?? [],
-							corrections: result.corrections,
-							correctionSource: result.userMessage.content,
-							correctedAnswer: result.assistantMessage.metadata.correctedAnswer,
-						},
-					},
-				};
-			},
-		}),
-		[acceptVocabulary, detail.session.id, online, onDetailChange, userId],
-	);
-
-	const runtime = useLocalRuntime(model, {
-		initialMessages: initialMessages(detail),
-	});
-
-	useEffect(() => {
-		let disposed = false;
-		void dialogueCacheRepository
-			.getDraft(userId, detail.session.id)
-			.then((draft) => {
-				if (!disposed && draft) runtime.thread.composer.setText(draft);
-			});
-		const unsubscribe = runtime.thread.composer.subscribe(() => {
-			void dialogueCacheRepository.setDraft(
-				userId,
-				detail.session.id,
-				runtime.thread.composer.getState().text,
-			);
-		});
-		return () => {
-			disposed = true;
-			unsubscribe();
-		};
-	}, [detail.session.id, runtime, userId]);
-
-	const addWord = useCallback(
-		async (word: string, context: string, messageId?: string) => {
-			if (!online) {
-				setWordNotice({ message: t("dialogue_word_offline") });
-				return;
-			}
-			setWordNotice({ message: t("dialogue_word_adding", { word }) });
-			try {
-				const result = await addDialogueWord(detail.session.id, {
-					word,
-					context,
-					messageId,
-				});
-				await acceptVocabulary(result);
-				const first = result[0];
-				setWordNotice(first ? { result: first } : null);
-			} catch (error) {
-				setWordNotice({
-					message:
-						error instanceof Error ? error.message : t("dialogue_word_error"),
-				});
-			}
-		},
-		[acceptVocabulary, detail.session.id, online, t],
-	);
+	const { router, t, online, wordNotice, setWordNotice, runtime, addWord } =
+		useDialogueRuntime(detail, userId, onDetailChange);
 
 	return (
 		<AssistantRuntimeProvider runtime={runtime}>

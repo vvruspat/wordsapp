@@ -1,9 +1,10 @@
 import { Q } from "@nozbe/watermelondb";
-import type { VocabularyResult } from "@/api/dialogues";
-import database from "../database";
-import LearningProgress from "../models/LearningProgress";
-import Word from "../models/Word";
-import WordTranslation from "../models/WordTranslation";
+
+import type { VocabularyResult } from "@/shared/vocabulary/dialogueVocabulary";
+import database from "@/db/database";
+import LearningProgress from "@/db/models/LearningProgress";
+import Word from "@/db/models/Word";
+import WordTranslation from "@/db/models/WordTranslation";
 
 export const dialogueVocabularyRepository = {
 	async integrate(userId: number, results: VocabularyResult[]) {

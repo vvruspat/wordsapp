@@ -2,7 +2,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { DialogueCorrection } from "@/api/dialogues";
+import type { DialogueCorrection } from "@/features/dialogues/model/types";
 import { WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 

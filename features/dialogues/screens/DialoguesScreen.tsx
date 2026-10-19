@@ -1,0 +1,380 @@
+import { useDialogues } from "../hooks/useDialogues";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import {
+	ActivityIndicator,
+	Pressable,
+	RefreshControl,
+	ScrollView,
+	StyleSheet,
+	TextInput,
+	View,
+} from "react-native";
+import { WText } from "@/mob-ui";
+import { Colors } from "@/mob-ui/brand/colors";
+
+export default function DialoguesScreen() {
+	const {
+		router,
+		t,
+		online,
+		active,
+		history,
+		scenarios,
+		customTopic,
+		setCustomTopic,
+		loadingScenarios,
+		refreshing,
+		starting,
+		error,
+		load,
+		start,
+	} = useDialogues();
+
+	return (
+		<View style={styles.page}>
+			<ScrollView
+				contentContainerStyle={styles.content}
+				refreshControl={
+					<RefreshControl
+						refreshing={refreshing}
+						onRefresh={() => void load(true)}
+						tintColor={Colors.primary.base}
+					/>
+				}
+				keyboardShouldPersistTaps="handled"
+			>
+				<View style={styles.heading}>
+					<View>
+						<WText size="2xl" weight="bold">
+							{t("dialogue_title")}
+						</WText>
+						<WText mode="secondary">{t("dialogue_subtitle")}</WText>
+					</View>
+					<View style={styles.levelPill}>
+						<WText
+							size="sm"
+							weight="semibold"
+							style={{ color: Colors.primary.base }}
+						>
+							{active?.difficulty_level ?? "A1"}
+						</WText>
+					</View>
+				</View>
+
+				{!online ? (
+					<View style={styles.infoCard}>
+						<FontAwesome5 name="wifi" color={Colors.accents.orange} />
+						<WText size="sm" wrap>
+							{t("dialogue_offline_info")}
+						</WText>
+					</View>
+				) : null}
+
+				{error ? (
+					<WText size="sm" style={{ color: Colors.accents.red }} wrap>
+						{error}
+					</WText>
+				) : null}
+
+				{active ? (
+					<Pressable
+						style={styles.activeCard}
+						onPress={() =>
+							router.push({
+								pathname: "/authorized/dialogues/[id]",
+								params: { id: active.id },
+							})
+						}
+					>
+						<View style={{ flex: 1, gap: 5 }}>
+							<WText
+								size="xs"
+								weight="semibold"
+								style={{ color: Colors.primary.base }}
+							>
+								{t("dialogue_active").toUpperCase()}
+							</WText>
+							<WText size="lg" weight="semibold" wrap>
+								{active.scenario_title}
+							</WText>
+							<WText size="sm" mode="secondary">
+								{t("dialogue_turns", {
+									count: active.turn_count,
+									target: active.target_turns,
+								})}
+							</WText>
+						</View>
+						<FontAwesome5
+							name="arrow-right"
+							color={Colors.primary.base}
+							size={18}
+						/>
+					</Pressable>
+				) : null}
+
+				<View style={styles.sectionTitle}>
+					<WText size="lg" weight="semibold">
+						{t("dialogue_choose_scenario")}
+					</WText>
+				</View>
+
+				{loadingScenarios && scenarios.length === 0 && !refreshing ? (
+					<View
+						accessible
+						accessibilityRole="text"
+						accessibilityLabel={t("dialogue_loading_scenarios")}
+						style={styles.loadingCard}
+					>
+						<View style={styles.loadingIcon}>
+							<FontAwesome5
+								name="magic"
+								color={Colors.primary.base}
+								size={15}
+							/>
+						</View>
+						<View style={{ flex: 1, gap: 4 }}>
+							<WText size="sm" weight="medium" wrap>
+								{t("dialogue_loading_scenarios")}
+							</WText>
+							<WText size="xs" mode="tertiary" wrap>
+								{t("dialogue_loading_scenarios_hint")}
+							</WText>
+						</View>
+					</View>
+				) : null}
+
+				{scenarios.map((scenario, index) => (
+					<Pressable
+						key={scenario.title}
+						style={({ pressed }) => [
+							styles.scenarioCard,
+							pressed && { opacity: 0.75 },
+							active && { opacity: 0.45 },
+						]}
+						disabled={Boolean(active) || Boolean(starting)}
+						onPress={() => void start(scenario)}
+					>
+						<View
+							style={[
+								styles.icon,
+								{
+									backgroundColor: [
+										Colors.backgrounds.cyan,
+										Colors.backgrounds.purple,
+										Colors.backgrounds.orange,
+										Colors.backgrounds.blue,
+									][index % 4],
+								},
+							]}
+						>
+							<FontAwesome5
+								name={
+									["coffee", "shopping-basket", "map-marked-alt", "users"][
+										index % 4
+									]
+								}
+								color={Colors.greys.white}
+								size={17}
+							/>
+						</View>
+						<View style={{ flex: 1, gap: 4 }}>
+							<WText weight="semibold" wrap>
+								{scenario.title}
+							</WText>
+							<WText size="sm" mode="secondary" wrap>
+								{scenario.description}
+							</WText>
+							<WText size="xs" mode="tertiary">
+								{t("dialogue_minutes", { count: scenario.estimatedMinutes })}
+							</WText>
+						</View>
+						{starting === scenario.title ? (
+							<ActivityIndicator color={Colors.primary.base} />
+						) : (
+							<FontAwesome5 name="chevron-right" color={Colors.greys.grey6} />
+						)}
+					</Pressable>
+				))}
+
+				<View style={styles.customCard}>
+					<WText weight="semibold">{t("dialogue_custom_topic")}</WText>
+					<TextInput
+						value={customTopic}
+						onChangeText={setCustomTopic}
+						editable={!active && !starting}
+						placeholder={t("dialogue_custom_placeholder")}
+						placeholderTextColor={Colors.greys.grey6}
+						style={styles.input}
+						maxLength={500}
+					/>
+					<Pressable
+						style={[
+							styles.startButton,
+							(!customTopic.trim() || active || !online) && styles.disabled,
+						]}
+						disabled={
+							!customTopic.trim() ||
+							Boolean(active) ||
+							!online ||
+							Boolean(starting)
+						}
+						onPress={() => void start()}
+					>
+						{starting === customTopic.trim() ? (
+							<ActivityIndicator color={Colors.greys.grey10} />
+						) : (
+							<WText mode="inverted" weight="semibold">
+								{t("dialogue_start")}
+							</WText>
+						)}
+					</Pressable>
+				</View>
+
+				{history.length > 0 ? (
+					<View style={{ gap: 10 }}>
+						<WText size="lg" weight="semibold">
+							{t("dialogue_history")}
+						</WText>
+						{history
+							.filter((item) => item.id !== active?.id)
+							.map((item) => (
+								<Pressable
+									key={item.id}
+									style={styles.historyRow}
+									onPress={() =>
+										router.push({
+											pathname: "/authorized/dialogues/[id]",
+											params: { id: item.id },
+										})
+									}
+								>
+									<View style={{ flex: 1, gap: 3 }}>
+										<WText weight="medium" wrap>
+											{item.scenario_title}
+										</WText>
+										<WText size="xs" mode="tertiary">
+											{new Date(item.updated_at).toLocaleDateString()} ·{" "}
+											{t("dialogue_history_turns", { count: item.turn_count })}
+										</WText>
+									</View>
+									<FontAwesome5
+										name="chevron-right"
+										color={Colors.greys.grey6}
+									/>
+								</Pressable>
+							))}
+					</View>
+				) : null}
+			</ScrollView>
+		</View>
+	);
+}
+
+const styles = StyleSheet.create({
+	page: { flex: 1, backgroundColor: Colors.backgrounds.primaryBackground },
+	content: {
+		paddingTop: 60,
+		paddingHorizontal: 18,
+		paddingBottom: 40,
+		gap: 16,
+	},
+	heading: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "flex-start",
+	},
+	levelPill: {
+		paddingHorizontal: 12,
+		paddingVertical: 7,
+		borderRadius: 14,
+		backgroundColor: Colors.dark.dark2,
+		borderWidth: 1,
+		borderColor: Colors.primary.disabled,
+	},
+	infoCard: {
+		flexDirection: "row",
+		gap: 10,
+		padding: 13,
+		borderRadius: 14,
+		backgroundColor: Colors.dark.dark2,
+		alignItems: "center",
+	},
+	activeCard: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 12,
+		backgroundColor: Colors.dark.dark2,
+		padding: 17,
+		borderRadius: 20,
+		borderColor: Colors.primary.disabled,
+		borderWidth: 1,
+	},
+	sectionTitle: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		marginTop: 4,
+	},
+	loadingCard: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 12,
+		padding: 14,
+		borderRadius: 18,
+		backgroundColor: Colors.dark.dark2,
+	},
+	loadingIcon: {
+		width: 38,
+		height: 38,
+		alignItems: "center",
+		justifyContent: "center",
+		borderRadius: 12,
+		backgroundColor: Colors.dark.dark3,
+	},
+	scenarioCard: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 13,
+		padding: 15,
+		borderRadius: 18,
+		backgroundColor: Colors.dark.dark2,
+	},
+	icon: {
+		width: 42,
+		height: 42,
+		borderRadius: 13,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	customCard: {
+		gap: 12,
+		padding: 16,
+		backgroundColor: Colors.dark.dark2,
+		borderRadius: 18,
+	},
+	input: {
+		minHeight: 48,
+		color: Colors.greys.white,
+		backgroundColor: Colors.dark.dark3,
+		borderRadius: 14,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+		fontSize: 16,
+	},
+	startButton: {
+		minHeight: 48,
+		borderRadius: 14,
+		alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: Colors.primary.base,
+	},
+	disabled: { opacity: 0.4 },
+	historyRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 12,
+		borderBottomColor: Colors.dark.dark3,
+		borderBottomWidth: 1,
+		paddingVertical: 12,
+	},
+});

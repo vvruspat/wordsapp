@@ -1,7 +1,10 @@
 import { Q } from "@nozbe/watermelondb";
-import type { DialogueDetail, DialogueSession } from "@/api/dialogues";
-import database from "../database";
-import DialogueCache from "../models/DialogueCache";
+import type {
+	DialogueDetail,
+	DialogueSession,
+} from "@/features/dialogues/model/types";
+import database from "@/db/database";
+import DialogueCache from "@/db/models/DialogueCache";
 
 const collection = database.collections.get<DialogueCache>("dialogue_cache");
 
