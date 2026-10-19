@@ -5,6 +5,7 @@ import {
 	Pressable,
 	Text,
 	TextInput,
+	type TextInputInstance,
 	TextInputProps,
 	View,
 } from "react-native";
@@ -38,7 +39,7 @@ export const WCharInput = ({
 	...inputProps
 }: WCharInputProps) => {
 	const [val, setVal] = useState(defaultValue ?? "");
-	const inputRef = useRef<TextInput>(null);
+	const inputRef = useRef<TextInputInstance>(null);
 	const onChangeTextRef = useRef(onChangeText);
 	const isMounted = useRef(false);
 	useEffect(() => {

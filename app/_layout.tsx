@@ -1,10 +1,10 @@
 import { DatabaseProvider } from "@nozbe/watermelondb/DatabaseProvider";
 import { setAudioModeAsync } from "expo-audio";
 import { File, Paths } from "expo-file-system";
+import { NavigationBar } from "expo-navigation-bar";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, Platform } from "react-native";
-import { SystemBars } from "react-native-edge-to-edge";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -117,9 +117,7 @@ export default Sentry.wrap(function RootLayout() {
 						<BackgroundProvider>
 							<WZStack>
 								<StatusBar style="light" />
-								{Platform.OS === "android" && (
-									<SystemBars hidden={{ navigationBar: true }} />
-								)}
+								{Platform.OS === "android" && <NavigationBar hidden />}
 								<ScreenBackground />
 								{children}
 							</WZStack>

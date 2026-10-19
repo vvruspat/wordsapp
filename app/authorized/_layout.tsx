@@ -126,7 +126,7 @@ export default function RootLayout() {
 	useDefaultCatalogSelection(user?.userId, user?.language_learn);
 
 	useEffect(() => {
-		if (!user || !user.email_verified) {
+		if (!user?.email_verified) {
 			lastSyncedLanguageRef.current = null;
 			return;
 		}

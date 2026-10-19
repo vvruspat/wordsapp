@@ -113,8 +113,7 @@ function BranchThread({
 			async run({ messages }) {
 				if (!online) throw new Error("No network connection");
 				const last = messages.at(-1);
-				if (!last || last.role !== "user")
-					throw new Error("User message is missing");
+				if (last?.role !== "user") throw new Error("User message is missing");
 				const content = last.content
 					.map((part) => (part.type === "text" ? part.text : ""))
 					.join("");

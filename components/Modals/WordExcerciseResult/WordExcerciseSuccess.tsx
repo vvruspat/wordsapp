@@ -6,7 +6,11 @@ import { useTranslation } from "react-i18next";
 import { Modal, type ModalProps, View } from "react-native";
 import { ThumbsUpIcon } from "./assets/ThumbsUpIcon";
 
-export type WordExcerciseSuccessModalProps = ModalProps & {
+export type WordExcerciseSuccessModalProps = Omit<
+	ModalProps,
+	"onRequestClose"
+> & {
+	onRequestClose?: () => void;
 	word?: string;
 	translation?: string;
 };

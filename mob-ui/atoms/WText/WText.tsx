@@ -1,4 +1,10 @@
-import { StyleSheet, Text, TextProps } from "react-native";
+import {
+	Platform,
+	StyleSheet,
+	Text,
+	TextProps,
+	type TextStyle,
+} from "react-native";
 import { typography } from "@/mob-ui/brand/typography";
 import { styles } from "./WText.styles";
 
@@ -22,6 +28,12 @@ export const WText = ({
 	style,
 	...rest
 }: WTextProps) => {
+	const layoutStyle: TextStyle & { whiteSpace?: "normal" | "nowrap" } = {
+		textAlign: align,
+		...(Platform.OS === "web"
+			? { whiteSpace: wrap ? "normal" : "nowrap" }
+			: {}),
+	};
 	return (
 		<Text
 			{...rest}
@@ -31,12 +43,9 @@ export const WText = ({
 					styles.text,
 					styles[`${mode}`],
 					styles[`${weight}`],
-					{ textAlign: align },
+					layoutStyle,
 					{ fontSize: typography.fontSize[size] },
 					uppercase && { textTransform: "uppercase" },
-					wrap
-						? { textWrap: "wrap", whiteSpace: "wrap" }
-						: { textWrap: "nowrap", whiteSpace: "nowrap" },
 				],
 				style,
 			)}

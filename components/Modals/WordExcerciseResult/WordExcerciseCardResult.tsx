@@ -16,7 +16,11 @@ const SLIDE_DISTANCE = 500;
 const FADE_DURATION = 250;
 const SLIDE_DURATION = 320;
 
-export type WordExcerciseCardResultModalProps = ModalProps & {
+export type WordExcerciseCardResultModalProps = Omit<
+	ModalProps,
+	"onRequestClose"
+> & {
+	onRequestClose?: () => void;
 	word?: string;
 	translation?: string;
 };
