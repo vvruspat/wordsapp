@@ -234,6 +234,17 @@ export const learningRepository = {
 		return records;
 	},
 
+	async getByUserAndWordIds(
+		userId: number,
+		wordIds: number[],
+	): Promise<LearningProgress[]> {
+		if (wordIds.length === 0) return [];
+		return database
+			.get<LearningProgress>("learning_progress")
+			.query(Q.where("user_id", userId), Q.where("word_id", Q.oneOf(wordIds)))
+			.fetch();
+	},
+
 	observeByUser(userId: number) {
 		return database
 			.get<LearningProgress>("learning_progress")

@@ -189,5 +189,9 @@
 	"dialogue_branch_not_cached": "Αυτή η εξήγηση δεν έχει αποθηκευτεί ακόμη στη συσκευή",
 	"dialogue_branch_error": "Δεν ήταν δυνατό το άνοιγμα της εξήγησης",
 	"dialogue_correction_review": "Ανάλυση διόρθωσης",
-	"dialogue_writing": "Γραφή"
+	"dialogue_writing": "Γραφή",
+	"mix_training_completed": "Όλες οι λέξεις αυτής της μίξης έχουν ολοκληρωθεί σε κάθε διαθέσιμη άσκηση.",
+	"mix_training_error": "Δεν ήταν δυνατή η φόρτωση της προόδου. Δοκιμάστε ξανά.",
+	"button_retry": "Δοκιμή ξανά",
+	"button_close": "Κλείσιμο"
 }

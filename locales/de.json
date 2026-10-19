@@ -189,5 +189,9 @@
 	"dialogue_branch_not_cached": "Diese Erklärung ist noch nicht auf dem Gerät gespeichert",
 	"dialogue_branch_error": "Erklärung konnte nicht geöffnet werden",
 	"dialogue_correction_review": "Korrektur erklären",
-	"dialogue_writing": "Schreiben"
+	"dialogue_writing": "Schreiben",
+	"mix_training_completed": "Alle Wörter in diesem Mix sind in jeder verfügbaren Übung abgeschlossen.",
+	"mix_training_error": "Der Trainingsfortschritt konnte nicht geladen werden. Bitte versuche es erneut.",
+	"button_retry": "Erneut versuchen",
+	"button_close": "Schließen"
 }

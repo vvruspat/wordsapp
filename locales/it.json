@@ -189,5 +189,9 @@
 	"dialogue_branch_not_cached": "Questa spiegazione non è ancora salvata sul dispositivo",
 	"dialogue_branch_error": "Impossibile aprire la spiegazione",
 	"dialogue_correction_review": "Analisi della correzione",
-	"dialogue_writing": "Scrittura"
+	"dialogue_writing": "Scrittura",
+	"mix_training_completed": "Tutte le parole di questo mix sono completate in ogni esercizio disponibile.",
+	"mix_training_error": "Impossibile caricare i progressi. Riprova.",
+	"button_retry": "Riprova",
+	"button_close": "Chiudi"
 }

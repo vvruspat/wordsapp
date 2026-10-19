@@ -189,5 +189,9 @@
 	"dialogue_branch_not_cached": "Cette explication n'est pas encore enregistrée sur cet appareil",
 	"dialogue_branch_error": "Impossible d'ouvrir l'explication",
 	"dialogue_correction_review": "Analyse de la correction",
-	"dialogue_writing": "Écriture"
+	"dialogue_writing": "Écriture",
+	"mix_training_completed": "Tous les mots de ce mix sont terminés dans chaque exercice disponible.",
+	"mix_training_error": "Impossible de charger la progression. Veuillez réessayer.",
+	"button_retry": "Réessayer",
+	"button_close": "Fermer"
 }

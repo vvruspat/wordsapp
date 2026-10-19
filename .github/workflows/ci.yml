@@ -30,5 +30,8 @@ jobs:
       - name: Run Biome lint
         run: npm run lint
 
+      - name: Run regression tests
+        run: npm test
+
       - name: Run TypeScript typecheck
         run: npm run typecheck
