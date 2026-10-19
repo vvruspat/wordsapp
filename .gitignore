@@ -46,3 +46,4 @@ android
 assets/audio
 .env.local
 docs/*
+!docs/architecture.md
