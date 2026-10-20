@@ -87,10 +87,10 @@ export function TrueOrFalseExercise() {
 	}, [translationText, alternativeText]);
 
 	useEffect(() => {
-		if (word && translation) {
+		if (currentPairs.length > 0) {
 			notifyContentChanged();
 		}
-	}, [word, translation, notifyContentChanged]);
+	}, [currentPairs, notifyContentChanged]);
 
 	const handleAnswer = useCallback(
 		(choice: "yes" | "no") => {

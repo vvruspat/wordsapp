@@ -157,6 +157,7 @@
 	"dialogue_history": "Verlauf",
 	"dialogue_history_turns": "{{count}} Beiträge",
 	"dialogue_load_error": "Dialoge konnten nicht geladen werden",
+	"dialogue_reply_error": "Die Antwort konnte nicht geladen werden. Versuche es erneut.",
 	"dialogue_start_error": "Dialog konnte nicht gestartet werden",
 	"dialogue_finish_error": "Dialog konnte nicht beendet werden",
 	"dialogue_finish_title": "Dialog beenden?",

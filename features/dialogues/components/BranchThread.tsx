@@ -11,6 +11,7 @@ import { TappableText } from "@/features/dialogues/components/TappableText";
 import { VocabularyResultCard } from "@/features/dialogues/components/VocabularyResultCard";
 import { WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
+import { DialogueReplyFeedback } from "./DialogueReplyFeedback";
 
 type RenderMessage = {
 	role: "user" | "assistant" | "system";
@@ -74,6 +75,17 @@ export function BranchThread({
 											: (word) => void addWord(word, content, serverMessageId)
 									}
 								/>
+								<DialogueReplyFeedback
+									status={message.status}
+									onRetry={
+										online
+											? () => {
+													if (!runtime.thread.getState().isRunning)
+														runtime.thread.getMessageById(message.id).reload();
+												}
+											: undefined
+									}
+								/>
 							</View>
 						);
 					}}
@@ -92,7 +104,10 @@ export function BranchThread({
 						placeholderTextColor={Colors.greys.grey6}
 						style={styles.input}
 					/>
-					<ComposerPrimitive.Send style={styles.send} disabled={!online}>
+					<ComposerPrimitive.Send
+						style={styles.send}
+						disabled={online ? undefined : true}
+					>
 						<FontAwesome5
 							name="arrow-up"
 							size={16}

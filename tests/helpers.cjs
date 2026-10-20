@@ -14,6 +14,7 @@ function loadSource(relativePath, mocks = {}, cache = new Map()) {
 	if (cache.has(filename)) return cache.get(filename);
 	const localRequire = createRequire(filename);
 	const source = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
+		fileName: filename,
 		compilerOptions: {
 			module: ts.ModuleKind.CommonJS,
 			jsx: ts.JsxEmit.ReactJSX,

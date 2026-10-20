@@ -27,12 +27,14 @@ import { Colors } from "@/mob-ui/brand/colors";
 import { CorrectionCard } from "@/features/dialogues/components/CorrectionCard";
 import { TappableText } from "@/features/dialogues/components/TappableText";
 import { VocabularyResultCard } from "@/features/dialogues/components/VocabularyResultCard";
+import { DialogueReplyFeedback } from "./DialogueReplyFeedback";
 
 type RenderMessage = {
+	id: string;
 	role: "user" | "assistant" | "system";
 	content: ReadonlyArray<{ type: string; text?: string }>;
 	metadata: { custom?: Record<string, unknown> };
-	status?: { type: string };
+	status?: { type: string; reason?: string };
 };
 
 const textOf = (message: RenderMessage) =>
@@ -46,11 +48,13 @@ const DialogueMessageBubble = ({
 	sessionId,
 	onOpenBranch,
 	onWordPress,
+	onRetry,
 }: {
 	message: RenderMessage;
 	sessionId: string;
 	onOpenBranch: (id: string) => void;
 	onWordPress: (word: string, context: string, messageId?: string) => void;
+	onRetry?: () => void;
 }) => {
 	const recordInteraction = useInteractionTracking(sessionId);
 	const [showTranslation, setShowTranslation] = useState(false);
@@ -150,9 +154,7 @@ const DialogueMessageBubble = ({
 								: (word) => onWordPress(word, content, serverMessageId)
 						}
 					/>
-					{!content && message.status?.type === "running" ? (
-						<ActivityIndicator color={Colors.primary.base} size="small" />
-					) : null}
+					<DialogueReplyFeedback status={message.status} onRetry={onRetry} />
 					{!isUser && translation ? (
 						<View style={styles.revealBlock}>
 							<Pressable
@@ -323,6 +325,14 @@ export const DialogueChat = ({
 									})
 								}
 								onWordPress={addWord}
+								onRetry={
+									online
+										? () => {
+												if (!runtime.thread.getState().isRunning)
+													runtime.thread.getMessageById(message.id).reload();
+											}
+										: undefined
+								}
 							/>
 						)}
 					</ThreadPrimitive.MessagesFlatList>
@@ -345,7 +355,10 @@ export const DialogueChat = ({
 								multiline
 								style={styles.input}
 							/>
-							<ComposerPrimitive.Send style={styles.send} disabled={!online}>
+							<ComposerPrimitive.Send
+								style={styles.send}
+								disabled={online ? undefined : true}
+							>
 								{({ pressed }) =>
 									pressed ? (
 										<ActivityIndicator color={Colors.greys.grey10} />

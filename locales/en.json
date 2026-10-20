@@ -157,6 +157,7 @@
 	"dialogue_history": "History",
 	"dialogue_history_turns": "{{count}} turns",
 	"dialogue_load_error": "Could not load dialogues",
+	"dialogue_reply_error": "Could not get a reply. Try again.",
 	"dialogue_start_error": "Could not start the dialogue",
 	"dialogue_finish_error": "Could not finish the dialogue",
 	"dialogue_finish_title": "Finish this dialogue?",
