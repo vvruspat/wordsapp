@@ -1,0 +1,60 @@
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.cpp b/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.cpp
+index e74e802..d2dffdc 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.cpp
++++ b/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.cpp
+@@ -181,6 +181,8 @@ Scheduler::~Scheduler() {
+   LOG(WARNING) << "Scheduler::~Scheduler() was called (address: " << this
+                << ").";
+ 
++  delegateInvalidated_->store(true, std::memory_order_release);
++
+   auto weakRuntimeScheduler =
+       contextContainer_->find<std::weak_ptr<RuntimeScheduler>>(
+           RuntimeSchedulerKey);
+@@ -270,6 +272,10 @@ Scheduler::findComponentDescriptorByHandle_DO_NOT_USE_THIS_IS_BROKEN(
+ #pragma mark - Delegate
+ 
+ void Scheduler::setDelegate(SchedulerDelegate* delegate) {
++  if (delegate_ != delegate) {
++    delegateInvalidated_->store(true, std::memory_order_release);
++    delegateInvalidated_ = std::make_shared<std::atomic<bool>>(false);
++  }
+   delegate_ = delegate;
+ }
+ 
+@@ -304,7 +310,9 @@ void Scheduler::uiManagerDidFinishTransaction(
+       runtimeScheduler_->scheduleRenderingUpdate(
+           surfaceId,
+           [delegate = delegate_,
++           invalidated = delegateInvalidated_,
+            mountingCoordinator = std::move(mountingCoordinator)]() {
++            if (invalidated->load(std::memory_order_acquire)) return;
+             delegate->schedulerShouldRenderTransactions(mountingCoordinator);
+           });
+     } else {
+@@ -330,9 +338,11 @@ void Scheduler::uiManagerDidDispatchCommand(
+     runtimeScheduler_->scheduleRenderingUpdate(
+         shadowNode->getSurfaceId(),
+         [delegate = delegate_,
++         invalidated = delegateInvalidated_,
+          shadowView = std::move(shadowView),
+          commandName,
+          args]() {
++          if (invalidated->load(std::memory_order_acquire)) return;
+           delegate->schedulerDidDispatchCommand(shadowView, commandName, args);
+         });
+   }
+diff --git a/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.h b/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.h
+index 1f5a59d..9059394 100644
+--- a/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.h
++++ b/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.h
+@@ -126,6 +126,9 @@ class Scheduler final : public UIManagerDelegate {
+   friend class SurfaceHandler;
+ 
+   SchedulerDelegate *delegate_;
++  // Deferred UI commands must not outlive the delegate they captured.
++  std::shared_ptr<std::atomic<bool>> delegateInvalidated_ =
++      std::make_shared<std::atomic<bool>>(false);
+   SharedComponentDescriptorRegistry componentDescriptorRegistry_;
+   RuntimeExecutor runtimeExecutor_;
+   std::shared_ptr<UIManager> uiManager_;

@@ -27,7 +27,8 @@ npm ci
 ```
 
 Установка применяет патчи из [`patches/`](patches/) для воспроизведения аудио
-в `expo-audio` и совместимости установщика WatermelonDB с React Native,
+в `expo-audio`, совместимости установщика WatermelonDB с React Native
+и отмены устаревших UI-команд при уничтожении нативной сессии React Native,
 а также подключает Git hooks через Husky.
 
 ### 2. Подключить API
@@ -70,6 +71,9 @@ npm run android
 ```
 
 Эти команды собирают нативный development client и запускают приложение.
+На iOS React Native и Expo-модули собираются из исходников, чтобы применить
+нативный патч Scheduler; настройка находится в
+[`withSchedulerLifetimeFix`](plugins/withSchedulerLifetimeFix.js).
 Если клиент уже установлен, для работы с JavaScript достаточно Metro:
 
 ```bash
@@ -116,6 +120,8 @@ npm run architecture
 ```
 
 `npm run architecture` проверяет границы модулей и циклические зависимости.
+Нативная регрессионная проверка Scheduler использует компилятор C++20:
+`c++` в PATH или путь к компилятору в переменной `CXX`.
 `npm run format` применяет форматирование. Перед коммитом Husky форматирует
 и проверяет staged-файлы через lint-staged, затем запускает typecheck всего
 проекта; вручную этот hook запускается командой `npm run precommit`.
