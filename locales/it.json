@@ -157,6 +157,7 @@
 	"dialogue_history": "Cronologia",
 	"dialogue_history_turns": "{{count}} turni",
 	"dialogue_load_error": "Impossibile caricare i dialoghi",
+	"dialogue_reply_error": "Impossibile ricevere una risposta. Riprova.",
 	"dialogue_start_error": "Impossibile iniziare il dialogo",
 	"dialogue_finish_error": "Impossibile terminare il dialogo",
 	"dialogue_finish_title": "Terminare il dialogo?",

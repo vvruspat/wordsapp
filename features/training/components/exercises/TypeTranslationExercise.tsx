@@ -77,10 +77,10 @@ export function TypeTranslationExercise() {
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
 	useEffect(() => {
-		if (word && translation) {
+		if (currentPairs.length > 0) {
 			notifyContentChanged();
 		}
-	}, [word, translation, notifyContentChanged]);
+	}, [currentPairs, notifyContentChanged]);
 
 	const evaluateStatus = useCallback(
 		(text: string): CharInputStatus => {

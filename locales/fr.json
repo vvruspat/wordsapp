@@ -157,6 +157,7 @@
 	"dialogue_history": "Historique",
 	"dialogue_history_turns": "{{count}} tours",
 	"dialogue_load_error": "Impossible de charger les dialogues",
+	"dialogue_reply_error": "Impossible de recevoir une réponse. Réessayez.",
 	"dialogue_start_error": "Impossible de commencer le dialogue",
 	"dialogue_finish_error": "Impossible de terminer le dialogue",
 	"dialogue_finish_title": "Terminer ce dialogue ?",

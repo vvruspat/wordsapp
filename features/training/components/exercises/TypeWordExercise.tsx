@@ -106,10 +106,11 @@ export function TypeWordExercise() {
 	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
 
 	useEffect(() => {
-		if (word && translation) {
+		// A retry can reuse both model objects; the task snapshot still changes.
+		if (currentPairs.length > 0) {
 			notifyContentChanged();
 		}
-	}, [word, translation, notifyContentChanged]);
+	}, [currentPairs, notifyContentChanged]);
 
 	const evaluateStatus = useCallback(
 		(text: string): CharInputStatus => {

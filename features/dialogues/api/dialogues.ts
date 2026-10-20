@@ -22,6 +22,10 @@ export class DialogueApiError extends Error {
 
 const server = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
 
+// assistant-ui creates seven-character IDs; the API requires 8–100 characters.
+// Preserve established IDs and use a deterministic prefix so retries reuse a key.
+const clientMessageKey = (id: string) => (id.length < 8 ? `message:${id}` : id);
+
 const request = async <T>(
 	path: string,
 	options: RequestInit = {},
@@ -102,7 +106,10 @@ export const sendDialogueMessage = (
 ) =>
 	request<SendMessageResponse>(`/dialogues/${sessionId}/messages`, {
 		method: "POST",
-		body: JSON.stringify({ content, clientMessageId }),
+		body: JSON.stringify({
+			content,
+			clientMessageId: clientMessageKey(clientMessageId),
+		}),
 	});
 
 export const addDialogueWord = (
@@ -144,7 +151,10 @@ export const sendBranchMessage = (
 		addedWords?: VocabularyResult[];
 	}>(`/dialogues/threads/${threadId}/messages`, {
 		method: "POST",
-		body: JSON.stringify({ content, clientMessageId }),
+		body: JSON.stringify({
+			content,
+			clientMessageId: clientMessageKey(clientMessageId),
+		}),
 	});
 
 export const deleteDialogue = (sessionId: string) =>

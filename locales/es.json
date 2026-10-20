@@ -157,6 +157,7 @@
 	"dialogue_history": "Historial",
 	"dialogue_history_turns": "{{count}} turnos",
 	"dialogue_load_error": "No se pudieron cargar los diálogos",
+	"dialogue_reply_error": "No se pudo recibir una respuesta. Inténtalo de nuevo.",
 	"dialogue_start_error": "No se pudo iniciar el diálogo",
 	"dialogue_finish_error": "No se pudo finalizar el diálogo",
 	"dialogue_finish_title": "¿Finalizar el diálogo?",

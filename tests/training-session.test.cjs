@@ -126,3 +126,37 @@ test("refreshing durable progress during a review preserves pass coverage and is
 	assert.equal(session.mastered("type_word"), 1);
 	assert.equal(session.status, "completed");
 });
+
+test("failed words go to the tail until every other unfinished word has had its turn", () => {
+	const session = new TrainingSession([1, 2, 3, 4, 5], ["type_word"], []);
+	const shown = [];
+	for (let i = 0; i < 7; i++) {
+		const step = session.select("type_word", 1);
+		shown.push(step.wordIds[0]);
+		session.apply(step.id, step.wordIds[0], false);
+	}
+	assert.deepEqual(shown, [1, 2, 3, 4, 5, 1, 2]);
+});
+
+test("mixed exercise switches preserve each exercise's pending word order", () => {
+	const session = new TrainingSession([1, 2, 3, 4], ["cards", "type_word"], []);
+	for (const training of ["cards", "type_word"]) {
+		const step = session.select(training, 1);
+		assert.deepEqual(step.wordIds, [1]);
+		session.apply(step.id, 1, false);
+	}
+	for (const expected of [2, 3, 4, 1]) {
+		const step = session.select("cards", 1);
+		assert.deepEqual(step.wordIds, [expected]);
+		session.apply(step.id, expected, false);
+	}
+});
+
+test("matching moves failed words behind unserved words and preserves a partially answered step", () => {
+	const session = new TrainingSession([1, 2, 3, 4, 5, 6], ["match_words"], []);
+	const step = session.select("match_words", 4);
+	for (const wordId of [3, 1, 4]) session.apply(step.id, wordId, false);
+	assert.equal(session.select("match_words", 4).id, step.id);
+	session.apply(step.id, 2, true);
+	assert.deepEqual(session.select("match_words", 4).wordIds, [5, 6, 3, 1]);
+});

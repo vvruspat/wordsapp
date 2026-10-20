@@ -34,7 +34,7 @@ export class TrainingSession {
 	private coverage = new Set<string>();
 	private durableCoverage = new Set<string>();
 	private delivered = new Set<string>();
-	private order: number[] = [];
+	private wordQueues = new Map<ExerciseId, number[]>();
 	private sequence = 0;
 	private review = false;
 	currentStep: { id: number; training: ExerciseId; wordIds: number[] } | null =
@@ -76,7 +76,7 @@ export class TrainingSession {
 			this.reviewTraining = null;
 			this.coverage = new Set(this.durableCoverage);
 			this.currentStep = null;
-			this.order = [];
+			this.wordQueues.clear();
 		}
 		this.trainingIds = Object.freeze([...new Set(ids)]);
 		this.updateStatus();
@@ -100,22 +100,16 @@ export class TrainingSession {
 			)
 		)
 			return this.currentStep;
-		const unfinished = this.wordIds.filter(
+		const queue = this.wordQueues.get(training) ?? [...this.wordIds];
+		this.wordQueues.set(training, queue);
+		const unfinished = queue.filter(
 			(id) => !this.coverage.has(`${id}:${training}`),
 		);
-		const avoidImmediateRepeats = (ids: number[]) =>
-			ids.sort(
-				(a, b) =>
-					Number(this.order.includes(a)) - Number(this.order.includes(b)),
-			);
 		const candidates = [
-			...avoidImmediateRepeats(unfinished),
-			...avoidImmediateRepeats(
-				this.wordIds.filter((id) => !unfinished.includes(id)),
-			),
+			...unfinished,
+			...queue.filter((id) => this.coverage.has(`${id}:${training}`)),
 		];
 		const selected = candidates.slice(0, count);
-		this.order = selected;
 		this.currentStep = { id: ++this.sequence, training, wordIds: selected };
 		this.publish();
 		return this.currentStep;
@@ -130,6 +124,14 @@ export class TrainingSession {
 	apply(step: number, wordId: number, success: boolean) {
 		if (!this.canApply(step, wordId) || !this.currentStep) return false;
 		this.delivered.add(`${step}:${wordId}`);
+		// A delivered word waits behind all unserved words of this exercise.
+		// Keep this order across mixed exercise switches and progress refreshes.
+		const training = this.currentStep.training;
+		const queue = this.wordQueues.get(training) ?? [...this.wordIds];
+		this.wordQueues.set(training, [
+			...queue.filter((id) => id !== wordId),
+			wordId,
+		]);
 		const key = `${wordId}:${this.currentStep.training}`;
 		if (success) {
 			this.coverage.add(key);
@@ -145,7 +147,7 @@ export class TrainingSession {
 		this.review = true;
 		this.coverage = new Set();
 		this.currentStep = null;
-		this.order = [];
+		this.wordQueues.clear();
 		this.reviewTraining = training;
 		this.updateStatus();
 	}

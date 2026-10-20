@@ -157,6 +157,7 @@
 	"dialogue_history": "Ιστορικό",
 	"dialogue_history_turns": "{{count}} γύροι",
 	"dialogue_load_error": "Δεν ήταν δυνατή η φόρτωση των διαλόγων",
+	"dialogue_reply_error": "Δεν ήταν δυνατή η λήψη απάντησης. Δοκιμάστε ξανά.",
 	"dialogue_start_error": "Δεν ήταν δυνατή η έναρξη του διαλόγου",
 	"dialogue_finish_error": "Δεν ήταν δυνατή η ολοκλήρωση του διαλόγου",
 	"dialogue_finish_title": "Ολοκλήρωση διαλόγου;",

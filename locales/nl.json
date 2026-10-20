@@ -157,6 +157,7 @@
 	"dialogue_history": "Geschiedenis",
 	"dialogue_history_turns": "{{count}} beurten",
 	"dialogue_load_error": "Dialogen konden niet worden geladen",
+	"dialogue_reply_error": "Kon geen antwoord krijgen. Probeer het opnieuw.",
 	"dialogue_start_error": "Dialoog kon niet worden gestart",
 	"dialogue_finish_error": "Dialoog kon niet worden beëindigd",
 	"dialogue_finish_title": "Dialoog beëindigen?",

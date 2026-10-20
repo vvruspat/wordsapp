@@ -157,6 +157,7 @@
 	"dialogue_history": "История",
 	"dialogue_history_turns": "{{count}} реплик",
 	"dialogue_load_error": "Не удалось загрузить диалоги",
+	"dialogue_reply_error": "Не удалось получить ответ. Попробуйте ещё раз.",
 	"dialogue_start_error": "Не удалось начать диалог",
 	"dialogue_finish_error": "Не удалось завершить диалог",
 	"dialogue_finish_title": "Завершить диалог?",
