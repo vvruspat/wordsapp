@@ -9,7 +9,6 @@ import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-	ActivityIndicator,
 	KeyboardAvoidingView,
 	Platform,
 	Pressable,
@@ -28,6 +27,7 @@ import { CorrectionCard } from "@/features/dialogues/components/CorrectionCard";
 import { TappableText } from "@/features/dialogues/components/TappableText";
 import { VocabularyResultCard } from "@/features/dialogues/components/VocabularyResultCard";
 import { DialogueReplyFeedback } from "./DialogueReplyFeedback";
+import { DialogueSendButton } from "./DialogueSendButton";
 
 type RenderMessage = {
 	id: string;
@@ -355,22 +355,7 @@ export const DialogueChat = ({
 								multiline
 								style={styles.input}
 							/>
-							<ComposerPrimitive.Send
-								style={styles.send}
-								disabled={online ? undefined : true}
-							>
-								{({ pressed }) =>
-									pressed ? (
-										<ActivityIndicator color={Colors.greys.grey10} />
-									) : (
-										<FontAwesome5
-											name="arrow-up"
-											size={16}
-											color={Colors.greys.grey10}
-										/>
-									)
-								}
-							</ComposerPrimitive.Send>
+							<DialogueSendButton style={styles.send} online={online} />
 						</ComposerPrimitive.Root>
 					) : null}
 				</ThreadPrimitive.Root>

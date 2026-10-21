@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
 const core = require("@assistant-ui/core/react");
+const { useAuiState } = require("@assistant-ui/store");
 const {
 	React,
 	act,
@@ -74,8 +75,26 @@ function setup(send) {
 			),
 		);
 	});
+	function Pressable({ children, ...props }) {
+		const [pressed, setPressed] = React.useState(false);
+		return React.createElement(
+			"Pressable",
+			{
+				...props,
+				onPressIn: () => setPressed(true),
+				onPressOut: () => setPressed(false),
+			},
+			typeof children === "function" ? children({ pressed }) : children,
+		);
+	}
 	const mocks = {
-		"react-native": { ...native, FlatList, Text: "Text" },
+		"react-native": {
+			...native,
+			Pressable,
+			FlatList,
+			Text: "Text",
+			TextInput: "Input",
+		},
 		"react-i18next": translation,
 		"expo-router": { useRouter: () => ({ push() {}, replace() {} }) },
 		"@expo/vector-icons/FontAwesome5": "Icon",
@@ -102,13 +121,22 @@ function setup(send) {
 		"node_modules/@assistant-ui/react-native/src/primitives/composer/ComposerSend.tsx",
 		mocks,
 	);
+	const { ComposerInput } = loadSource(
+		"node_modules/@assistant-ui/react-native/src/primitives/composer/ComposerInput.tsx",
+		mocks,
+	);
 	mocks["@assistant-ui/react-native"] = {
 		AssistantRuntimeProvider: core.AssistantRuntimeProvider,
+		useAuiState,
 		useLocalRuntime: (...args) => {
 			runtime = core.useLocalRuntime(...args);
 			return runtime;
 		},
-		ComposerPrimitive: { Root: "Composer", Input: "Input", Send: ComposerSend },
+		ComposerPrimitive: {
+			Root: "Composer",
+			Input: ComposerInput,
+			Send: ComposerSend,
+		},
 		ThreadPrimitive: {
 			Root: "Thread",
 			MessagesFlatList: ThreadMessagesFlatList,
@@ -146,7 +174,7 @@ function setup(send) {
 	};
 }
 
-test("the first dialogue reply settles through the actual native message list without resetting the runtime", async () => {
+test("one send tap preserves its touch target and submits through the native composer without resetting the runtime", async () => {
 	const response = deferred();
 	const app = setup(() => response.promise);
 	let tree;
@@ -158,16 +186,32 @@ test("the first dialogue reply settles through the actual native message list wi
 			true,
 			"an empty message must not be sendable",
 		);
-		await act(async () => runtime.thread.composer.setText("koffie"));
+		await act(async () =>
+			tree.root.findByType("Input").props.onChangeText("koffie"),
+		);
 		assert.equal(app.sendButton(tree).props.disabled, false);
+		const arrow = app.sendButton(tree).findByType("Icon");
+		await act(async () => app.sendButton(tree).props.onPressIn());
+		assert.equal(app.sent.length, 0);
+		assert.equal(
+			app.sendButton(tree).findAllByType("ActivityIndicator").length,
+			0,
+			"touch-down is not a request and must not replace the tapped icon with loading",
+		);
+		assert.equal(app.sendButton(tree).findByType("Icon"), arrow);
+		await act(async () => app.sendButton(tree).props.onPressOut());
 		await act(async () => app.sendButton(tree).props.onPress());
+		assert.equal(app.sent.length, 1, "the first tap must reach the transport");
 		assert.equal(runtime.thread.getState().isRunning, true);
 		assert.equal(
 			app.sendButton(tree).props.disabled,
 			true,
 			"a pending response must block duplicate sends",
 		);
-		assert.equal(tree.root.findAllByType("ActivityIndicator").length, 1);
+		assert.equal(
+			app.sendButton(tree).findAllByType("ActivityIndicator").length,
+			1,
+		);
 		await act(async () => response.resolve(reply));
 		assert.equal(app.runtime, runtime);
 		assert.equal(runtime.thread.getState().isRunning, false);
