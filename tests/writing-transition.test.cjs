@@ -186,3 +186,27 @@ test("writing resets the answer and renders every cell of the next word after ex
 	);
 	await act(async () => tree.unmount());
 });
+
+test("repeated skips keep every next writing prompt visible, including reused words", async () => {
+	const app = setup(["gezin", "goedemorgen", "melk"]);
+	const tree = await mount(app.Screen);
+	await app.flushAnimations();
+	for (let index = 0; index < 15; index++) {
+		await act(async () => tree.root.findByType("Prompt").props.onSkip());
+		assert.equal(tree.root.findByType("Modal").props.visible, true);
+		await act(async () => tree.root.findByType("Modal").props.onRequestClose());
+		await app.flushAnimations();
+		await app.flushAnimations();
+		const prompt = tree.root.findByType("Prompt");
+		assert.equal(prompt.props.word, `translation ${((index + 1) % 3) + 1}`);
+		assert.equal(prompt.parent.props.style[1].transform[0].translateX.value, 0);
+		const cells = tree.root
+			.findAllByType("Pressable")
+			.filter((node) => node.props.testID?.startsWith("pin-input-"));
+		assert.ok(
+			cells.every((cell) => cell.findByType("Text").children.length === 0),
+		);
+	}
+	assert.equal(app.failures, 15);
+	await act(async () => tree.unmount());
+});

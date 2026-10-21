@@ -1,5 +1,4 @@
 import { useBranchRuntime } from "../hooks/useBranchRuntime";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import {
 	AssistantRuntimeProvider,
 	ComposerPrimitive,
@@ -12,6 +11,7 @@ import { VocabularyResultCard } from "@/features/dialogues/components/Vocabulary
 import { WText } from "@/mob-ui";
 import { Colors } from "@/mob-ui/brand/colors";
 import { DialogueReplyFeedback } from "./DialogueReplyFeedback";
+import { DialogueSendButton } from "./DialogueSendButton";
 
 type RenderMessage = {
 	role: "user" | "assistant" | "system";
@@ -104,16 +104,7 @@ export function BranchThread({
 						placeholderTextColor={Colors.greys.grey6}
 						style={styles.input}
 					/>
-					<ComposerPrimitive.Send
-						style={styles.send}
-						disabled={online ? undefined : true}
-					>
-						<FontAwesome5
-							name="arrow-up"
-							size={16}
-							color={Colors.greys.grey10}
-						/>
-					</ComposerPrimitive.Send>
+					<DialogueSendButton style={styles.send} online={online} />
 				</ComposerPrimitive.Root>
 			</ThreadPrimitive.Root>
 		</AssistantRuntimeProvider>

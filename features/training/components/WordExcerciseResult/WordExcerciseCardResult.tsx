@@ -1,7 +1,7 @@
 import { WButton, WCard, WText } from "@/mob-ui/atoms";
 import { Colors } from "@/mob-ui/brand/colors";
 import { getBiggestWordLength } from "@/utils/getBiggestWordLength";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	Animated,
@@ -37,13 +37,22 @@ export const WordExcerciseCardResultModal = ({
 	const [internalVisible, setInternalVisible] = useState(false);
 	const overlayOpacity = useRef(new Animated.Value(0)).current;
 	const cardTranslateY = useRef(new Animated.Value(SLIDE_DISTANCE)).current;
+	const closeRequested = useRef(false);
+	const requestClose = useCallback(() => {
+		if (!visible || closeRequested.current) return;
+		closeRequested.current = true;
+		onRequestClose?.();
+	}, [visible, onRequestClose]);
 
 	useEffect(() => {
+		let active = true;
+		let animation: Animated.CompositeAnimation;
 		if (visible) {
+			closeRequested.current = false;
 			overlayOpacity.setValue(0);
 			cardTranslateY.setValue(SLIDE_DISTANCE);
 			setInternalVisible(true);
-			Animated.parallel([
+			animation = Animated.parallel([
 				Animated.timing(overlayOpacity, {
 					toValue: 1,
 					duration: FADE_DURATION,
@@ -56,9 +65,10 @@ export const WordExcerciseCardResultModal = ({
 					useNativeDriver: true,
 					easing: Easing.out(Easing.ease),
 				}),
-			]).start();
+			]);
+			animation.start();
 		} else {
-			Animated.parallel([
+			animation = Animated.parallel([
 				Animated.timing(overlayOpacity, {
 					toValue: 0,
 					duration: FADE_DURATION,
@@ -71,10 +81,15 @@ export const WordExcerciseCardResultModal = ({
 					useNativeDriver: true,
 					easing: Easing.in(Easing.ease),
 				}),
-			]).start(({ finished }) => {
-				if (finished) setInternalVisible(false);
+			]);
+			animation.start(({ finished }) => {
+				if (active && finished) setInternalVisible(false);
 			});
 		}
+		return () => {
+			active = false;
+			animation.stop();
+		};
 	}, [visible, overlayOpacity, cardTranslateY]);
 
 	const wordLength = getBiggestWordLength(word || "");
@@ -94,7 +109,7 @@ export const WordExcerciseCardResultModal = ({
 			animationType="none"
 			statusBarTranslucent
 			visible={internalVisible}
-			onRequestClose={onRequestClose}
+			onRequestClose={requestClose}
 			{...modalProps}
 		>
 			{/* Overlay — fade only */}
@@ -162,7 +177,7 @@ export const WordExcerciseCardResultModal = ({
 								</WText>
 							</View>
 						</View>
-						<WButton mode="primary" fullWidth onPress={onRequestClose}>
+						<WButton mode="primary" fullWidth onPress={requestClose}>
 							<WText mode="inverted">{t("button_continue")}</WText>
 						</WButton>
 					</WCard>

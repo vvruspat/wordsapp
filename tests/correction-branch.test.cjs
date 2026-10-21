@@ -80,6 +80,7 @@ function setup({
 		{
 			"@assistant-ui/react-native": {
 				AssistantRuntimeProvider: core.AssistantRuntimeProvider,
+				useAuiState,
 				useLocalRuntime: (...args) => {
 					runtime = core.useLocalRuntime(...args);
 					return runtime;
