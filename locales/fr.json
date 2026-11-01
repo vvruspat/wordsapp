@@ -194,5 +194,10 @@
 	"mix_training_completed": "Tous les mots de ce mix sont terminés dans chaque exercice disponible.",
 	"mix_training_error": "Impossible de charger la progression. Veuillez réessayer.",
 	"button_retry": "Réessayer",
-	"button_close": "Fermer"
+	"button_close": "Fermer",
+	"social_sign_in_or": "ou",
+	"social_sign_in_google": "Continuer avec Google",
+	"social_sign_in_loading": "Connexion en cours",
+	"social_sign_in_error": "La connexion a échoué. Vérifiez votre connexion et réessayez.",
+	"social_sign_in_use_email": "Connectez-vous par e-mail pour utiliser votre compte existant."
 }

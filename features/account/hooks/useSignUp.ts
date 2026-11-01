@@ -5,9 +5,13 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TextInputChangeEvent } from "react-native";
+import { useSocialSignIn } from "./useSocialSignIn";
+import type { SocialProvider } from "@/shared/session/socialAuth";
 
 export function useSignUp() {
 	const beginOperation = useAccountOperation();
+	const social = useSocialSignIn(beginOperation);
+	const [emailPending, setEmailPending] = useState(false);
 	const router = useRouter();
 
 	const [email, setEmail] = useState("");
@@ -17,8 +21,11 @@ export function useSignUp() {
 	const { getErrorMessage } = useApiError();
 
 	const handleContinueClick = async () => {
-		const operation = beginOperation("handleContinueClick");
+		const operation = beginOperation("authentication");
 		if (!operation) return;
+		setError(undefined);
+		social.clearError();
+		setEmailPending(true);
 		try {
 			try {
 				const response = await requestTmpPassword(email);
@@ -41,6 +48,7 @@ export function useSignUp() {
 			if (operation.current())
 				setError(error instanceof Error ? error.message : String(error));
 		} finally {
+			if (operation.mounted()) setEmailPending(false);
 			operation.finish();
 		}
 	};
@@ -49,5 +57,17 @@ export function useSignUp() {
 		setEmail(e.nativeEvent.text);
 	};
 
-	return { error, t, handleContinueClick, onEmailChange };
+	const handleSocialSignIn = (provider: SocialProvider) => {
+		setError(undefined);
+		return social.signIn(provider);
+	};
+	return {
+		error: social.error ?? error,
+		t,
+		handleContinueClick,
+		onEmailChange,
+		handleSocialSignIn,
+		pendingProvider: social.pendingProvider,
+		isBusy: emailPending || social.pendingProvider !== null,
+	};
 }

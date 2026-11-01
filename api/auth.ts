@@ -1,4 +1,15 @@
 import { $fetch } from "@/utils/fetch";
+import type { SocialSignInRequest } from "./socialAuthContract";
+import type { SocialProvider } from "@/shared/session/socialAuth";
+
+export const requestSocialChallenge = (provider: SocialProvider) =>
+	$fetch("/auth/social/challenge", "post", {
+		body: { provider },
+		noAuth: true,
+	});
+
+export const signInSocial = (body: SocialSignInRequest) =>
+	$fetch("/auth/social/signin", "post", { body, noAuth: true });
 
 export const signUp = (body: {
 	name: string;

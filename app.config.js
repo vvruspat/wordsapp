@@ -1,6 +1,15 @@
 import "dotenv/config";
 
 export default ({ config }) => {
+	const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+	if (
+		googleIosClientId &&
+		!/^[a-zA-Z0-9-]+\.apps\.googleusercontent\.com$/.test(googleIosClientId)
+	) {
+		throw new Error(
+			"EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID must be an iOS OAuth client ID",
+		);
+	}
 	return {
 		...config,
 		expo: {
@@ -15,6 +24,7 @@ export default ({ config }) => {
 			ios: {
 				supportsTablet: true,
 				bundleIdentifier: "digital.whitesquirrel.wordsapp",
+				usesAppleSignIn: true,
 				infoPlist: {
 					ITSAppUsesNonExemptEncryption: false,
 				},
@@ -34,6 +44,8 @@ export default ({ config }) => {
 				favicon: "./assets/images/favicon.png",
 			},
 			plugins: [
+				"expo-apple-authentication",
+				["./plugins/withGoogleSignIn", { iosClientId: googleIosClientId }],
 				"./plugins/withSchedulerLifetimeFix",
 				"expo-navigation-bar",
 				"expo-asset",

@@ -194,5 +194,10 @@
 	"mix_training_completed": "Todas las palabras de esta mezcla están completadas en todos los ejercicios disponibles.",
 	"mix_training_error": "No se pudo cargar el progreso. Inténtalo de nuevo.",
 	"button_retry": "Reintentar",
-	"button_close": "Cerrar"
+	"button_close": "Cerrar",
+	"social_sign_in_or": "o",
+	"social_sign_in_google": "Continuar con Google",
+	"social_sign_in_loading": "Iniciando sesión",
+	"social_sign_in_error": "No se pudo iniciar sesión. Comprueba tu conexión e inténtalo de nuevo.",
+	"social_sign_in_use_email": "Inicia sesión por correo electrónico para usar tu cuenta existente."
 }

@@ -7,6 +7,7 @@ const {
 	deferred,
 	mount,
 	translation,
+	native,
 } = require("./helpers.cjs");
 for (const kind of ["SignIn", "Verify"]) {
 	test(`${kind} ignores a pending auth response after logout and blocks duplicate submission`, async () => {
@@ -21,6 +22,7 @@ for (const kind of ["SignIn", "Verify"]) {
 			return gate.promise;
 		};
 		const hook = loadSource(`features/account/hooks/use${kind}.ts`, {
+			"react-native": native,
 			"@/shared/session/sessionOwner": {
 				sessionOwner: { getGeneration: () => generation },
 			},
