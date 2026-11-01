@@ -4,6 +4,7 @@ const {
 	React,
 	act,
 	loadSource,
+	deferred,
 	mount,
 	native,
 	ui,
@@ -57,6 +58,9 @@ function setup(words = ["gezin"]) {
 	}));
 	let value;
 	let failed = 0;
+	let loadGate;
+	let loads = 0;
+	let refreshTask;
 	const context = React.createContext(null);
 	const { TypeWordExercise } = loadSource(
 		"features/training/components/exercises/TypeWordExercise.tsx",
@@ -91,11 +95,21 @@ function setup(words = ["gezin"]) {
 		},
 	);
 	function Screen() {
-		const [currentPairs, setPairs] = React.useState([pairs[0]]);
+		const [wordsPool, setPool] = React.useState({
+			currentPairs: [pairs[0]],
+			taskKey: "1:0",
+		});
+		refreshTask = () =>
+			setPool((pool) => ({ ...pool, currentPairs: [...pool.currentPairs] }));
 		const cursor = React.useRef(-1);
 		const loadData = React.useCallback(async () => {
+			loads++;
+			if (loadGate) await loadGate.promise;
 			cursor.current++;
-			setPairs([pairs[cursor.current % pairs.length]]);
+			setPool({
+				currentPairs: [pairs[cursor.current % pairs.length]],
+				taskKey: `1:${cursor.current}`,
+			});
 		}, []);
 		const events = React.useMemo(
 			() => ({
@@ -113,7 +127,10 @@ function setup(words = ["gezin"]) {
 			}),
 			[loadData],
 		);
-		value = { ...events, wordsPool: { currentPairs } };
+		value = {
+			...events,
+			wordsPool,
+		};
 		return React.createElement(
 			context.Provider,
 			{ value },
@@ -122,6 +139,14 @@ function setup(words = ["gezin"]) {
 	}
 	return {
 		Screen,
+		refresh: () => refreshTask(),
+		get loads() {
+			return loads;
+		},
+		delayNextLoad() {
+			loadGate = deferred();
+			return loadGate;
+		},
 		get failures() {
 			return failed;
 		},
@@ -134,23 +159,54 @@ function setup(words = ["gezin"]) {
 	};
 }
 
+function assertVisible(node) {
+	for (let ancestor = node; ancestor; ancestor = ancestor.parent) {
+		const styles = [ancestor.props.style].flat(Infinity).filter(Boolean);
+		for (const style of styles) {
+			if (style.opacity != null)
+				assert.equal(style.opacity.value ?? style.opacity, 1);
+			for (const transform of style.transform ?? []) {
+				if (transform.translateX != null)
+					assert.equal(transform.translateX.value ?? transform.translateX, 0);
+			}
+		}
+	}
+}
+
+test("writing opens with a visible prompt and every cell even when native animations never finish", async () => {
+	const app = setup(["goedemorgen"]);
+	const tree = await mount(app.Screen);
+	assertVisible(tree.root.findByType("Prompt"));
+	const cells = tree.root.findAllByType("Pressable");
+	assert.equal(cells.length, 11);
+	for (const cell of cells) assertVisible(cell);
+	await act(async () => tree.unmount());
+});
+
+test("a correct answer advances without waiting for any native animation callback", async () => {
+	const app = setup(["gezin", "goedemorgen"]);
+	const tree = await mount(app.Screen);
+	await act(async () =>
+		tree.root.findByType("TextInput").props.onChangeText("gezin"),
+	);
+	assert.equal(tree.root.findByType("Prompt").props.word, "translation 2");
+	assertVisible(tree.root.findByType("Prompt"));
+	for (const cell of tree.root.findAllByType("Pressable")) {
+		assertVisible(cell);
+		assert.equal(cell.findByType("Text").children.length, 0);
+	}
+	await act(async () => tree.unmount());
+});
+
 test("writing shows the prompt again when a failed last unfinished word is retried with the same models", async () => {
 	const app = setup();
 	const tree = await mount(app.Screen);
-	await app.flushAnimations();
 	await act(async () =>
 		tree.root.findByType("TextInput").props.onChangeText("zzz"),
 	);
 	assert.equal(app.failures, 1);
 	await act(async () => app.complete());
-	await app.flushAnimations();
-	await app.flushAnimations();
-	const card = tree.root.findByType("Prompt").parent;
-	assert.equal(
-		card.props.style[1].transform[0].translateX.value,
-		0,
-		"the next prompt must be on screen even when the word object is reused",
-	);
+	assertVisible(tree.root.findByType("Prompt"));
 	assert.equal(tree.root.findByType("TextInput").props.maxLength, 5);
 	assert.equal(
 		tree.root
@@ -164,13 +220,10 @@ test("writing shows the prompt again when a failed last unfinished word is retri
 test("writing resets the answer and renders every cell of the next word after exhausting attempts", async () => {
 	const app = setup(["gezin", "goedemorgen"]);
 	const tree = await mount(app.Screen);
-	await app.flushAnimations();
 	await act(async () =>
 		tree.root.findByType("TextInput").props.onChangeText("zzz"),
 	);
 	await act(async () => app.complete());
-	await app.flushAnimations();
-	await app.flushAnimations();
 	assert.equal(app.failures, 1);
 	assert.equal(tree.root.findByType("Prompt").props.word, "translation 2");
 	assert.equal(tree.root.findByType("TextInput").props.maxLength, 11);
@@ -179,27 +232,22 @@ test("writing resets the answer and renders every cell of the next word after ex
 		.filter((node) => node.props.style?.opacity);
 	assert.equal(cells.length, 11);
 	assert.ok(cells.every((cell) => cell.props.style.opacity.value === 1));
-	assert.equal(
-		tree.root.findByType("Prompt").parent.props.style[1].transform[0].translateX
-			.value,
-		0,
-	);
+	assertVisible(tree.root.findByType("Prompt"));
 	await act(async () => tree.unmount());
 });
 
 test("repeated skips keep every next writing prompt visible, including reused words", async () => {
 	const app = setup(["gezin", "goedemorgen", "melk"]);
 	const tree = await mount(app.Screen);
-	await app.flushAnimations();
 	for (let index = 0; index < 15; index++) {
 		await act(async () => tree.root.findByType("Prompt").props.onSkip());
 		assert.equal(tree.root.findByType("Modal").props.visible, true);
 		await act(async () => tree.root.findByType("Modal").props.onRequestClose());
-		await app.flushAnimations();
-		await app.flushAnimations();
 		const prompt = tree.root.findByType("Prompt");
 		assert.equal(prompt.props.word, `translation ${((index + 1) % 3) + 1}`);
-		assert.equal(prompt.parent.props.style[1].transform[0].translateX.value, 0);
+		assertVisible(prompt);
+		for (const cell of tree.root.findAllByType("Pressable"))
+			assertVisible(cell);
 		const cells = tree.root
 			.findAllByType("Pressable")
 			.filter((node) => node.props.testID?.startsWith("pin-input-"));
@@ -208,5 +256,56 @@ test("repeated skips keep every next writing prompt visible, including reused wo
 		);
 	}
 	assert.equal(app.failures, 15);
+	await act(async () => tree.unmount());
+});
+
+test("a delayed next task keeps the prompt visible and ignores repeated skip/close events", async () => {
+	const app = setup(["gezin", "goedemorgen"]);
+	const tree = await mount(app.Screen);
+	await act(async () =>
+		tree.root.findByType("TextInput").props.onChangeText("ge"),
+	);
+	const gate = app.delayNextLoad();
+	const skip = tree.root.findByType("Prompt").props.onSkip;
+	await act(async () => {
+		skip();
+		skip();
+	});
+	const close = tree.root.findByType("Modal").props.onRequestClose;
+	await act(async () => {
+		close();
+		close();
+	});
+	assert.equal(app.failures, 1);
+	assert.equal(app.loads, 2);
+	assert.equal(tree.root.findByType("Prompt").props.word, "translation 1");
+	assertVisible(tree.root.findByType("Prompt"));
+	assert.equal(tree.root.findByType("TextInput").props.editable, false);
+	assert.equal(
+		tree.root.findAllByType("Pressable")[0].findByType("Text").children[0],
+		"g",
+	);
+	await act(async () => gate.resolve());
+	assert.equal(tree.root.findByType("Prompt").props.word, "translation 2");
+	assert.equal(tree.root.findByType("TextInput").props.editable, true);
+	for (const cell of tree.root.findAllByType("Pressable")) {
+		assertVisible(cell);
+		assert.equal(cell.findByType("Text").children.length, 0);
+	}
+	await act(async () => tree.unmount());
+});
+
+test("republishing the same task preserves a partially typed answer", async () => {
+	const app = setup();
+	const tree = await mount(app.Screen);
+	await act(async () =>
+		tree.root.findByType("TextInput").props.onChangeText("ge"),
+	);
+	await act(async () => app.refresh());
+	const letters = tree.root
+		.findAllByType("Pressable")
+		.map((cell) => cell.findByType("Text").children.join(""));
+	assert.deepEqual(letters, ["g", "e", "", "", ""]);
+	assertVisible(tree.root.findByType("Prompt"));
 	await act(async () => tree.unmount());
 });

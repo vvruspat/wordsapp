@@ -52,7 +52,9 @@ export function useTrainingManager(mode: "mixed" | "single") {
 		};
 	}, [controller]);
 	const awaitingVocabulary = isSyncing && state.allPairs.length === 0;
-	const step = state.session?.currentStep;
+	// select() advances the session before async distractors are ready. Events
+	// must still belong to the task on screen until its replacement is published.
+	const step = state.displayedStep;
 	return {
 		currentTrainingId: state.currentTrainingId,
 		setCurrentTrainingId: controller.setCurrentTrainingId,

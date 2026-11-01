@@ -11,6 +11,7 @@ import { logger } from "@/utils/logger";
 import type { TrainingSession, SessionStatus } from "../model/session";
 import { trainingService, type TrainingConditions } from "./trainingService";
 export type WordsPool = {
+	taskKey: string | null;
 	currentPairs: WordPair[];
 	currentRandomWords: Word[];
 	currentRandomTranslations: Translation[];
@@ -22,6 +23,7 @@ type State = {
 	status: SessionStatus;
 	error: unknown;
 	session: TrainingSession | null;
+	displayedStep: TrainingSession["currentStep"];
 	allPairs: WordPair[];
 	wordsPool: WordsPool;
 	sessionStats: {
@@ -32,6 +34,7 @@ type State = {
 	};
 };
 const emptyWords = (): WordsPool => ({
+	taskKey: null,
 	currentPairs: [],
 	currentRandomWords: [],
 	currentRandomTranslations: [],
@@ -49,6 +52,7 @@ export function createTrainingController(
 		status: "loading",
 		error: null,
 		session: null,
+		displayedStep: null,
 		allPairs: [],
 		wordsPool: emptyWords(),
 		sessionStats: {
@@ -107,6 +111,7 @@ export function createTrainingController(
 			status: "loading",
 			error: null,
 			session: null,
+			displayedStep: null,
 			allPairs: [],
 			wordsPool: emptyWords(),
 		});
@@ -165,7 +170,9 @@ export function createTrainingController(
 			)
 				return;
 			store.setState({
+				displayedStep: step,
 				wordsPool: {
+					taskKey: `${version}:${step.id}`,
 					currentPairs: pairs,
 					currentRandomWords: extras.words,
 					currentRandomTranslations: extras.translations,
@@ -185,7 +192,11 @@ export function createTrainingController(
 		failures.clear();
 		pendingFailures.clear();
 		successEvents = 0;
-		store.setState({ currentTrainingId: id, wordsPool: emptyWords() });
+		store.setState({
+			currentTrainingId: id,
+			displayedStep: null,
+			wordsPool: emptyWords(),
+		});
 		if (id && conditions.mode === "single")
 			store.getState().session?.configureTrainings([id as ExerciseId]);
 		publish();
