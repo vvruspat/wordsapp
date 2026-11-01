@@ -1,5 +1,6 @@
 import { evaluateTypedAnswer } from "../../model/answers";
-import { TrainingCharInput as WCharInput } from "../TrainingCharInput";
+import { WCharInput } from "@/mob-ui/molecules/WCharInput/WCharInput";
+import type { WordPair } from "@/shared/vocabulary/wordsService";
 import { useAcceptedAnswers } from "@/shared/vocabulary/useAcceptedAnswers";
 import {
 	useCallback,
@@ -10,10 +11,9 @@ import {
 	useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Animated, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { WordExcerciseCardResultModal } from "@/features/training/components/WordExcerciseResult";
 import { ExerciseContext } from "@/features/training/components/ExerciseProvider";
-import { useSwipeAnimation } from "@/shared/ui/useSwipeAnimation";
 import { WCharInputProps, WText } from "@/mob-ui";
 import { TrainingPromptCard } from "@/features/training/components/exercises/TrainingPromptCard";
 
@@ -22,52 +22,48 @@ type CharInputStatus = WCharInputProps["status"];
 const score = 0.2;
 
 export function TypeWordExercise() {
+	const { wordsPool, loadData, addCompleteListener, removeCompleteListener } =
+		useContext(ExerciseContext);
+	const load = useCallback(() => {
+		void loadData(1, 0, 4);
+	}, [loadData]);
+
+	useEffect(() => {
+		load();
+		addCompleteListener(load);
+		return () => removeCompleteListener(load);
+	}, [load, addCompleteListener, removeCompleteListener]);
+
+	const pair = wordsPool.currentPairs[0];
+	if (!pair || wordsPool.taskKey === null) return null;
+
+	// Reset the entire answer only when the prepared task changes, including a
+	// retry of the same word. Native animation callbacks never gate task delivery.
+	return <TypeWordTask key={wordsPool.taskKey} pair={pair} />;
+}
+
+function TypeWordTask({ pair: { word, translation } }: { pair: WordPair }) {
 	const { t } = useTranslation();
+	const { onFailure, onSuccess, complete, triggerLike } =
+		useContext(ExerciseContext);
 	const [status, setStatus] = useState<CharInputStatus>("default");
 	const [modalVisible, setModalVisible] = useState(false);
-	const [modalPair, setModalPair] = useState<{
-		word: string;
-		translation: string;
-	} | null>(null);
 	const [answered, setAnswered] = useState(false);
+	const answeredRef = useRef(false);
+	const completedRef = useRef(false);
 	const [wrongAttempts, setWrongAttempts] = useState(0);
-	const [inputResetKey, setInputResetKey] = useState(0);
 	const wrongAttemptsRef = useRef(0);
 	const previousInputLengthRef = useRef(0);
 
-	const { translateX, swipeOut, notifyContentChanged } = useSwipeAnimation();
-
-	const {
-		addCompleteListener,
-		removeCompleteListener,
-		loadData,
-		onFailure,
-		onSuccess,
-		complete,
-		triggerLike,
-	} = useContext(ExerciseContext);
-	const { currentPairs } = useContext(ExerciseContext).wordsPool;
-
-	const { word, translation } = currentPairs[0] ?? {
-		word: null,
-		translation: null,
-	};
-
-	const wordRemoteId = word?.remoteId;
-	const wordLanguage = word?.language;
-	const translationText = translation?.translation;
-	const translationLanguage = translation?.language;
-	const targetAnswerLength = word?.word.trim().length ?? 0;
+	const wordRemoteId = word.remoteId;
+	const wordLanguage = word.language;
+	const translationText = translation.translation;
+	const translationLanguage = translation.language;
+	const targetAnswerLength = word.word.trim().length;
 	const maxWrongAttempts = useMemo(
 		() => Math.max(1, Math.ceil(targetAnswerLength / 2)),
 		[targetAnswerLength],
 	);
-
-	const resetAttempts = useCallback(() => {
-		wrongAttemptsRef.current = 0;
-		previousInputLengthRef.current = 0;
-		setWrongAttempts(0);
-	}, []);
 
 	const acceptedWords = useAcceptedAnswers(
 		"words",
@@ -77,44 +73,8 @@ export function TypeWordExercise() {
 		translationText,
 	);
 
-	const [loadKey, setLoadKey] = useState(0);
-
-	const load = useCallback(async () => {
-		setStatus("default");
-		resetAttempts();
-		await loadData(1, 0, 4);
-	}, [loadData, resetAttempts]);
-
-	const onExerciseComplete = useCallback(() => {
-		swipeOut(() => {
-			setAnswered(false);
-			setStatus("default");
-			resetAttempts();
-			setInputResetKey((k) => k + 1);
-			setLoadKey((k) => k + 1);
-		});
-	}, [resetAttempts, swipeOut]);
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: loadKey is a re-trigger counter, not used inside the effect body
-	useEffect(() => {
-		load();
-	}, [load, loadKey]);
-
-	useEffect(() => {
-		addCompleteListener(onExerciseComplete);
-		return () => removeCompleteListener(onExerciseComplete);
-	}, [addCompleteListener, removeCompleteListener, onExerciseComplete]);
-
-	useEffect(() => {
-		// A retry can reuse both model objects; the task snapshot still changes.
-		if (currentPairs.length > 0) {
-			notifyContentChanged();
-		}
-	}, [currentPairs, notifyContentChanged]);
-
 	const evaluateStatus = useCallback(
 		(text: string): CharInputStatus => {
-			if (!word) return "default";
 			return evaluateTypedAnswer(text, word.word, acceptedWords);
 		},
 		[word, acceptedWords],
@@ -122,7 +82,7 @@ export function TypeWordExercise() {
 
 	const handleChange = useCallback(
 		(text: string) => {
-			if (!word || !translation || answered) return;
+			if (answeredRef.current) return;
 
 			const nextStatus = evaluateStatus(text);
 			const currentInputLength = text.trim().length;
@@ -134,9 +94,11 @@ export function TypeWordExercise() {
 			setStatus(nextStatus);
 
 			if (nextStatus === "success") {
+				answeredRef.current = true;
 				setAnswered(true);
 				triggerLike();
 				onSuccess?.(word.remoteId, score, false);
+				completedRef.current = true;
 				complete();
 			} else if (nextStatus === "error" && addedCharacters > 0) {
 				const nextWrongAttempts = Math.min(
@@ -147,6 +109,7 @@ export function TypeWordExercise() {
 				setWrongAttempts(nextWrongAttempts);
 
 				if (nextWrongAttempts >= maxWrongAttempts) {
+					answeredRef.current = true;
 					setAnswered(true);
 					onFailure?.(word.remoteId, score);
 					return;
@@ -155,8 +118,6 @@ export function TypeWordExercise() {
 		},
 		[
 			word,
-			translation,
-			answered,
 			complete,
 			triggerLike,
 			evaluateStatus,
@@ -167,37 +128,35 @@ export function TypeWordExercise() {
 	);
 
 	const handleSkip = useCallback(() => {
-		if (!word || !translation) return;
+		if (answeredRef.current) return;
+		answeredRef.current = true;
+		setAnswered(true);
 		onFailure?.(word.remoteId, score, false);
-		setModalPair({ word: word.word, translation: translation.translation });
 		setModalVisible(true);
-	}, [word, translation, onFailure]);
+	}, [word, onFailure]);
 
 	const handleModalClose = useCallback(() => {
+		if (completedRef.current) return;
+		completedRef.current = true;
 		setModalVisible(false);
 		complete();
 	}, [complete]);
 
-	if (!word || !translation) {
-		return null;
-	}
-
 	return (
 		<View style={styles.wrapper}>
-			<Animated.View style={[styles.content, { transform: [{ translateX }] }]}>
+			<View style={styles.content}>
 				<TrainingPromptCard
 					word={translation.translation}
 					wordId={word.remoteId}
 					onSkip={handleSkip}
 				/>
-			</Animated.View>
+			</View>
 
 			<WCharInput
-				key={`${word.remoteId}-${inputResetKey}`}
 				length={word.word.length}
 				onChangeText={handleChange}
 				status={status}
-				animateIn
+				editable={!answered}
 				displayUppercase={false}
 			/>
 
@@ -212,8 +171,8 @@ export function TypeWordExercise() {
 
 			<WordExcerciseCardResultModal
 				visible={modalVisible}
-				word={modalPair?.word}
-				translation={modalPair?.translation}
+				word={word.word}
+				translation={translation.translation}
 				onRequestClose={handleModalClose}
 			/>
 		</View>

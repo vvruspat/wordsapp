@@ -45,6 +45,7 @@ function setup({
 	wordIds = [1, 2],
 	trainings = ["true_or_false", "type_word"],
 	save,
+	distractors,
 	available = true,
 	syncing = false,
 	mode = "mixed",
@@ -128,7 +129,10 @@ function setup({
 			"@/db/repositories/translations.repository": {
 				translationsRepository: {
 					getByWordIds: async () => translations,
-					getRandomTranslations: async () => [],
+					getRandomTranslations: async () => {
+						if (distractors) await distractors();
+						return [];
+					},
 				},
 			},
 			"@/shared/vocabulary/vocabularyStore": {
@@ -449,5 +453,56 @@ test("a failed persistence blocks completion and a deliberate retry reloads dura
 			[],
 		),
 	);
+	await act(async () => tree.unmount());
+});
+
+test("displayed task identity and answer handlers change only after the next task is prepared", async () => {
+	let gate;
+	let writes = 0;
+	const app = setup({
+		mode: "single",
+		wordIds: [1],
+		save: async () => {
+			writes++;
+		},
+		distractors: async () => {
+			if (gate) await gate.promise;
+		},
+	});
+	const tree = await mount(app.App, { fixedExercise: "type_word" });
+	const firstKey = app.context.wordsPool.taskKey;
+	assert.ok(firstKey);
+	await act(async () => app.context.loadData(1, 0, 0));
+	assert.equal(
+		app.context.wordsPool.taskKey,
+		firstKey,
+		"reloading an unanswered task preserves its identity",
+	);
+	await act(async () => app.context.onFailure(1, 0.2, false));
+	assert.equal(writes, 1);
+	gate = deferred();
+	let loading;
+	await act(async () => {
+		loading = app.context.loadData(1, 0, 0);
+	});
+	assert.equal(app.context.wordsPool.taskKey, firstKey);
+	// The session has already selected the retry, but the old prompt is still on screen.
+	await act(async () => app.context.onSuccess(1, 0.2, false));
+	assert.equal(
+		writes,
+		1,
+		"a visible old task cannot submit an answer for its pending replacement",
+	);
+	await act(async () => {
+		gate.resolve();
+		await loading;
+	});
+	assert.notEqual(
+		app.context.wordsPool.taskKey,
+		firstKey,
+		"same-word retry gets fresh input state",
+	);
+	await act(async () => app.context.onSuccess(1, 0.2, false));
+	assert.equal(writes, 2);
 	await act(async () => tree.unmount());
 });

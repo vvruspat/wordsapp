@@ -3,6 +3,7 @@ import type { Word } from "@vvruspat/words-types";
 import type { LearningTrainingName } from "@/shared/progress/exercises";
 export type ExerciseType = {
 	wordsPool: {
+		taskKey: string | null;
 		currentPairs: import("@/shared/vocabulary/wordsService").WordPair[];
 		currentRandomWords: import("@/db/models/Word").default[];
 		currentRandomTranslations: import("@/db/models/WordTranslation").default[];
@@ -40,6 +41,7 @@ export type ExerciseType = {
 
 const ExerciseContext = createContext<ExerciseType>({
 	wordsPool: {
+		taskKey: null,
 		currentPairs: [],
 		currentRandomWords: [],
 		currentRandomTranslations: [],
