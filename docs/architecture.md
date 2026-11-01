@@ -81,6 +81,16 @@ Controller публикует `displayedStep`, `wordsPool.taskKey` и данны
 
 `sessionOwner` единолично восстанавливает и обновляет токены и наблюдает
 пользователя в БД. Обновление токенов запускается за семь дней до expiry.
+Email и Apple/Google вход используют один `sessionOwner.authUser` и один
+формат SecureStore tokens. `useSocialSignIn` получает одноразовый server nonce,
+запрашивает нативный ID token и обменивает его на API tokens. Backend проверяет
+подпись, issuer, audience и nonce; постоянная связь provider/subject с пользователем
+хранится на сервере. Клиентские email/name не служат подтверждением личности.
+Один operation lock на форме сериализует email и оба provider-входа; результаты
+после logout или unmount игнорируются. Отмена провайдера возвращает к форме.
+Новый аккаунт проходит существующий onboarding. `api/socialAuthContract.ts`
+содержит временный типизированный контракт новых маршрутов до публикации
+следующей версии `words-types`. Auth request/response bodies не пишутся в логи.
 Logout отменяет публикацию устаревших операций, снимает подписку, очищает
 временный выбор и состояние сессии, сериализует удаление SecureStore tokens.
 Локальные таблицы словаря, прогресса и кеша сохраняются.

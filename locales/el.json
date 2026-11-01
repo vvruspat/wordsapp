@@ -194,5 +194,10 @@
 	"mix_training_completed": "Όλες οι λέξεις αυτής της μίξης έχουν ολοκληρωθεί σε κάθε διαθέσιμη άσκηση.",
 	"mix_training_error": "Δεν ήταν δυνατή η φόρτωση της προόδου. Δοκιμάστε ξανά.",
 	"button_retry": "Δοκιμή ξανά",
-	"button_close": "Κλείσιμο"
+	"button_close": "Κλείσιμο",
+	"social_sign_in_or": "ή",
+	"social_sign_in_google": "Συνέχεια με Google",
+	"social_sign_in_loading": "Γίνεται σύνδεση",
+	"social_sign_in_error": "Η σύνδεση απέτυχε. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.",
+	"social_sign_in_use_email": "Συνδεθείτε μέσω email για να χρησιμοποιήσετε τον υπάρχοντα λογαριασμό σας."
 }

@@ -194,5 +194,10 @@
 	"mix_training_completed": "Alle Wörter in diesem Mix sind in jeder verfügbaren Übung abgeschlossen.",
 	"mix_training_error": "Der Trainingsfortschritt konnte nicht geladen werden. Bitte versuche es erneut.",
 	"button_retry": "Erneut versuchen",
-	"button_close": "Schließen"
+	"button_close": "Schließen",
+	"social_sign_in_or": "oder",
+	"social_sign_in_google": "Weiter mit Google",
+	"social_sign_in_loading": "Anmeldung läuft",
+	"social_sign_in_error": "Anmeldung fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.",
+	"social_sign_in_use_email": "Melde dich per E-Mail an, um dein bestehendes Konto zu verwenden."
 }

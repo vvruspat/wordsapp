@@ -56,6 +56,67 @@ LAN-адрес компьютера с API. `.env.local` исключён из G
 `EXPO_PUBLIC_*` входят в клиентскую сборку и не предназначены для секретов.
 После изменения адреса перезапустите Metro и перезагрузите приложение.
 
+### Вход через Apple и Google
+
+Вход через Apple доступен на поддерживаемых iOS-устройствах, через Google —
+на iOS и Android. Оба варианта получают обычную сессию API; новым пользователям
+нужно выбрать языки на onboarding. Email-вход остаётся доступным.
+
+Сначала разверните серверную поддержку `POST /auth/social/challenge` и
+`POST /auth/social/signin` из репозитория `words` и настройте на сервере:
+
+```dotenv
+APPLE_CLIENT_IDS=digital.whitesquirrel.wordsapp
+GOOGLE_WEB_CLIENT_IDS=702357136848-1kh65sr1dj4ci1lrj0mij2fg03bpcfor.apps.googleusercontent.com
+```
+
+Для Apple включите **Sign in with Apple** для App ID
+`digital.whitesquirrel.wordsapp` в Apple Developer. Конфигурация Expo уже содержит
+`ios.usesAppleSignIn` и плагин AppleAuthentication; EAS обновит entitlements
+и provisioning profile при новой сборке.
+
+Для Google создайте OAuth consent screen и OAuth-клиенты Web, iOS и Android
+в одном Google Cloud проекте. Для iOS укажите bundle ID, для Android — package
+`digital.whitesquirrel.wordsapp` и SHA-1 каждого используемого сертификата
+(development, EAS upload, Google Play App Signing). Добавьте в `.env.local`
+и окружение соответствующего профиля EAS:
+
+```dotenv
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=702357136848-1kh65sr1dj4ci1lrj0mij2fg03bpcfor.apps.googleusercontent.com
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=702357136848-qalkcfa0ppmfvo5hgpqmusm2a40778kn.apps.googleusercontent.com
+```
+
+В Google Cloud проекте `words-482321` созданы клиенты ParaNoun API, iOS
+и Android для подписей Google Play, EAS upload и локального development build.
+Оба публичных Client ID добавлены в EAS project environments `development`,
+`preview`, `production`. Для локального запуска используйте значения выше.
+OAuth пока работает в режиме **Testing**: разрешённые тестовые аккаунты
+добавляются на странице Audience в Google Auth Platform. Разрешены только
+`openid`, `userinfo.email` и `userinfo.profile`; sensitive/restricted scopes
+не используются.
+
+| Android-сборка | SHA-1 зарегистрированного сертификата |
+| --- | --- |
+| Google Play | `6D:3C:1E:94:F1:E5:22:33:27:1F:C8:08:22:4E:EB:D3:08:80:B5:32` |
+| EAS upload | `8D:3A:47:3D:3B:45:74:F2:DD:45:84:12:E0:A9:F2:E7:F1:45:06:F3` |
+| Локальный debug keystore | `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25` |
+
+При смене keystore зарегистрируйте его SHA-1 отдельным Android OAuth client.
+Web Client ID должен совпадать с серверным `GOOGLE_WEB_CLIENT_IDS`.
+Client ID — публичные идентификаторы; client secrets и Apple private keys
+в приложение не добавляются. Firebase-файлы для этого сценария не нужны.
+Плагин `withGoogleSignIn` регистрирует обратную iOS URL-схему, подключает
+необходимые CocoaPods-настройки и передаёт callback в GoogleSignIn SDK.
+Кнопка Google скрыта, пока для платформы не заданы Client ID.
+
+После изменения Client ID пересоберите development client (`npm run ios`
+или `npm run android`); для EAS создайте новую сборку. Metro reload не обновляет
+нативную URL-схему и entitlements. Полный вход проверяйте реальными Apple/Google
+аккаунтами на устройстве с доступом к настроенному API.
+
+Документация: [AppleAuthentication SDK 58](https://docs.expo.dev/versions/v58.0.0/sdk/apple-authentication/),
+[Google authentication в Expo](https://docs.expo.dev/guides/google-authentication/).
+
 ### 3. Собрать и открыть приложение
 
 Для iOS Simulator:

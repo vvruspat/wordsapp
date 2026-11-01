@@ -1,9 +1,11 @@
-import type { paths as Paths } from "@vvruspat/words-types";
+import type { paths as GeneratedPaths } from "@vvruspat/words-types";
+import type { SocialAuthPaths } from "@/api/socialAuthContract";
 import { logger } from "./logger";
 import { genericErrorMessage } from "./genericErrorMessage";
 import { getAccessToken } from "./authTokenStorage";
 
 const server = process.env.EXPO_PUBLIC_API_URL;
+type Paths = GeneratedPaths & SocialAuthPaths;
 
 type ValidUrl = keyof Paths;
 type ValidMethod<U extends ValidUrl> = keyof Paths[U];
@@ -137,7 +139,9 @@ export const $fetch = async <U extends ValidUrl, M extends ValidMethod<U>>(
 				: undefined,
 		});
 
-		const bodyInfo = body ? `Body: ${JSON.stringify(body)}` : "";
+		const isAuthRequest = url.startsWith("/auth/");
+		const bodyInfo =
+			body && !isAuthRequest ? `Body: ${JSON.stringify(body)}` : "";
 		const logMsg = `$fetch: ${method as string} ${urlWithParams}, Status: ${res.status} ${bodyInfo}`;
 
 		if (res.status >= 400) logger.error(logMsg, undefined, "network");
@@ -146,7 +150,7 @@ export const $fetch = async <U extends ValidUrl, M extends ValidMethod<U>>(
 
 		const textResponse = await res.text();
 
-		if (res.status >= 400) {
+		if (res.status >= 400 && !isAuthRequest) {
 			logger.error(
 				`Error response from ${method as string} ${urlWithParams}`,
 				textResponse,

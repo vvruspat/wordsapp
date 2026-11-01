@@ -194,5 +194,10 @@
 	"mix_training_completed": "Alle woorden in deze mix zijn voltooid in elke beschikbare oefening.",
 	"mix_training_error": "De trainingsvoortgang kon niet worden geladen. Probeer het opnieuw.",
 	"button_retry": "Opnieuw proberen",
-	"button_close": "Sluiten"
+	"button_close": "Sluiten",
+	"social_sign_in_or": "of",
+	"social_sign_in_google": "Doorgaan met Google",
+	"social_sign_in_loading": "Bezig met inloggen",
+	"social_sign_in_error": "Inloggen is mislukt. Controleer je verbinding en probeer het opnieuw.",
+	"social_sign_in_use_email": "Log in met je e-mailadres om je bestaande account te gebruiken."
 }

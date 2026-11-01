@@ -194,5 +194,10 @@
 	"mix_training_completed": "Tutte le parole di questo mix sono completate in ogni esercizio disponibile.",
 	"mix_training_error": "Impossibile caricare i progressi. Riprova.",
 	"button_retry": "Riprova",
-	"button_close": "Chiudi"
+	"button_close": "Chiudi",
+	"social_sign_in_or": "oppure",
+	"social_sign_in_google": "Continua con Google",
+	"social_sign_in_loading": "Accesso in corso",
+	"social_sign_in_error": "Accesso non riuscito. Controlla la connessione e riprova.",
+	"social_sign_in_use_email": "Accedi tramite email per usare il tuo account esistente."
 }

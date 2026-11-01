@@ -6,9 +6,13 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TextInputChangeEvent } from "react-native";
+import { useSocialSignIn } from "./useSocialSignIn";
+import type { SocialProvider } from "@/shared/session/socialAuth";
 
 export function useSignIn() {
 	const beginOperation = useAccountOperation();
+	const social = useSocialSignIn(beginOperation);
+	const [emailPending, setEmailPending] = useState(false);
 	const { authUser } = useSessionUser();
 	const router = useRouter();
 
@@ -21,8 +25,11 @@ export function useSignIn() {
 	const { getErrorMessage } = useApiError();
 
 	const handleContinueClick = async () => {
-		const operation = beginOperation("handleContinueClick");
+		const operation = beginOperation("authentication");
 		if (!operation) return;
+		setError(undefined);
+		social.clearError();
+		setEmailPending(true);
 		try {
 			const response = await requestTmpPassword(email);
 			if (!operation.current()) return;
@@ -40,13 +47,17 @@ export function useSignIn() {
 			if (operation.current())
 				setError(error instanceof Error ? error.message : String(error));
 		} finally {
+			if (operation.mounted()) setEmailPending(false);
 			operation.finish();
 		}
 	};
 
 	const handleSignInClick = async () => {
-		const operation = beginOperation("handleSignInClick");
+		const operation = beginOperation("authentication");
 		if (!operation) return;
+		setError(undefined);
+		social.clearError();
+		setEmailPending(true);
 		try {
 			try {
 				const response = await apiSignIn({ email, password });
@@ -89,6 +100,7 @@ export function useSignIn() {
 			if (operation.current())
 				setError(error instanceof Error ? error.message : String(error));
 		} finally {
+			if (operation.mounted()) setEmailPending(false);
 			operation.finish();
 		}
 	};
@@ -113,8 +125,15 @@ export function useSignIn() {
 		}
 	};
 
+	const handleSocialSignIn = (provider: SocialProvider) => {
+		setError(undefined);
+		return social.signIn(provider);
+	};
 	return {
-		error,
+		error: social.error ?? error,
+		handleSocialSignIn,
+		pendingProvider: social.pendingProvider,
+		isBusy: emailPending || social.pendingProvider !== null,
 		stage,
 		t,
 		handleContinueClick,

@@ -194,5 +194,10 @@
 	"mix_training_completed": "Все слова в этом миксе пройдены во всех доступных упражнениях.",
 	"mix_training_error": "Не удалось загрузить прогресс тренировки. Попробуйте ещё раз.",
 	"button_retry": "Повторить",
-	"button_close": "Закрыть"
+	"button_close": "Закрыть",
+	"social_sign_in_or": "или",
+	"social_sign_in_google": "Продолжить с Google",
+	"social_sign_in_loading": "Выполняется вход",
+	"social_sign_in_error": "Не удалось войти. Проверьте соединение и попробуйте снова.",
+	"social_sign_in_use_email": "Чтобы войти в существующий аккаунт, используйте email."
 }

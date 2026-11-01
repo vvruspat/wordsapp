@@ -194,5 +194,10 @@
 	"mix_training_completed": "All words in this mix are completed in every available exercise.",
 	"mix_training_error": "Unable to load training progress. Please try again.",
 	"button_retry": "Try again",
-	"button_close": "Close"
+	"button_close": "Close",
+	"social_sign_in_or": "or",
+	"social_sign_in_google": "Continue with Google",
+	"social_sign_in_loading": "Signing in",
+	"social_sign_in_error": "Could not sign in. Check your connection and try again.",
+	"social_sign_in_use_email": "Please sign in by email to use your existing account."
 }
