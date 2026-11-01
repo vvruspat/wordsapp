@@ -90,6 +90,10 @@ EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=702357136848-qalkcfa0ppmfvo5hgpqmusm2a40778kn.a
 и Android для подписей Google Play, EAS upload и локального development build.
 Оба публичных Client ID добавлены в EAS project environments `development`,
 `preview`, `production`. Для локального запуска используйте значения выше.
+OAuth пока работает в режиме **Testing**: разрешённые тестовые аккаунты
+добавляются на странице Audience в Google Auth Platform. Разрешены только
+`openid`, `userinfo.email` и `userinfo.profile`; sensitive/restricted scopes
+не используются.
 
 | Android-сборка | SHA-1 зарегистрированного сертификата |
 | --- | --- |
